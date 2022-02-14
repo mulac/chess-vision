@@ -5,9 +5,10 @@ import pickle
 
 def main():
     pipeline = setup_pipeline()
-    moves = []
-    picklefile = f'{input("Name of Game: ")}.pkl'
+    picklefile = f'games/{input("Name of Game: ")}.pkl'
 
+    moves = []
+    
     try:
         while True:
             input()
