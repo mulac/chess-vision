@@ -8,13 +8,15 @@ def main():
     picklefile = f'games/{input("Name of Game: ")}.pkl'
 
     moves = []
-    
+
     try:
+        pipeline.wait_for_frames()
+
         while True:
+            # wait for user input to trigger next capture
             input()
-            # Wait for a coherent pair of frames: depth and color
+
             frames = pipeline.wait_for_frames()
-            
             print(frames.get_frame_number(), int(frames.get_timestamp()))
 
             depth_frame = frames.get_depth_frame()

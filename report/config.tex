@@ -1,0 +1,116 @@
+\usepackage{setspace}
+\usepackage{geometry}
+\usepackage[toc]{appendix}
+\usepackage{lipsum}
+\usepackage[export]{adjustbox}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{epsfig,graphics}
+\usepackage{graphicx}
+\usepackage{titlesec}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Details of your dissertation
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Fill in the following fields.
+\newcommand{\projectTitle}{<ss title of project>}
+\newcommand{\fullname}{<Full name of author>}
+\newcommand{\degreeTitle}{<Name of degree programme>}
+	% e.g. "BSc Computer Science"
+\newcommand{\session}{<Session/Academic year>}
+	% "Session" means the academic year, i.e. 2021/22.
+\newcommand{\module}{<Module code and name>}
+	% e.g. "COMP3931 Individual Project".
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Change the geometry of the page to have a 25 mm binding edge
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ \geometry{
+ a4paper,
+ total={210mm,297mm},
+ left=25mm,
+ right=25mm,
+ top=25mm,
+ bottom=20mm,
+ }
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Commands to set the line spacing
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %\singlespacing
+ \onehalfspacing
+ %\doublespacing
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Spacing for the chapter header
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ \titleformat{\chapter}[display]
+    {\normalfont\Huge\bfseries}{\vspace*{-1\baselineskip}\chaptertitlename\ \thechapter}{15pt}{\huge}
+\titlespacing*{\chapter}{0pt}{0pt}{15pt}
+
+\renewcommand\bibname{References}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Some shortcuts that maybe useful
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\DeclareTextCommandDefault{\textcopyright}{\textcircled{c}}
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Bibliography style: choose one and make sure you have the relevant .bst file
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{abbrv}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Layout for the front cover !!!!! YOU SHOULD NOT HAVE TO CHANGE THIS!!!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+\newcommand{\frontcover}{
+% The title page:
+\begin{titlepage}
+\newgeometry{left=25mm,right=25mm,top=45mm,bottom=0.1cm}
+
+\begin{minipage}[t]{6cm}
+\noindent\textbf{\Large{School of Computing}}\\
+{\fontfamily{ptm}\selectfont 
+\uppercase{faculty of engineering and physical sciences}
+}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{7cm}
+\vspace*{-15pt}
+\includegraphics[scale=0.2,right]{logo_black.png}
+\vspace*{-1pt}
+\end{minipage}
+
+\noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}
+
+\centering
+\vspace*{20mm}
+\textbf{\huge Final Report}\\
+\vspace*{20mm}
+\textbf{\Large\projectTitle}\\
+\vspace*{10mm}
+\textbf{\large\fullname}\\
+\vspace*{10mm}
+\textbf{Submitted in accordance with the requirements for the degree of}\\
+\textbf{\degreeTitle}\\
+\vspace*{10mm}
+\session\\
+\vspace*{10mm}
+\module\\
+\restoregeometry
+\end{titlepage}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Define a new environment for the dissertation summary
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newenvironment{dissertationsummary}
+ 	{\cleardoublepage \null 
+ 		\begin{center}%
+			\textbf{Summary}
+		\end{center}}%
+	{\vfill \null }

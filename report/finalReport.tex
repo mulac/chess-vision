@@ -1,0 +1,29 @@
+\documentclass[11pt,a4paper,oneside]{book}
+
+% Include the configuration file for layout.
+\input{config.tex}
+
+\begin{document}
+
+% The prelude is everything up to the start of chapter 1, and is contained
+% in a file called "prelude.tex".
+\include{prelude}
+
+% Include as many chapters as you have.
+% The "chapter1.tex" etc. files should be in a directory called "chapters"
+\include{./chapter1}
+\include{./chapter2}
+\include{./chapter3}
+\include{./chapter4}
+
+% Adds references to the table of contents.
+\addcontentsline{toc}{chapter}{References}
+
+% All your bibtex entries should go in the file called "refs.bib".
+\bibliography{refs}
+
+% All appendices you have go in a file called "appendices.tex".
+\include{appendices}
+
+\end{document}
+
