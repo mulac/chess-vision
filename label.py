@@ -17,9 +17,9 @@ class Game:
         self.game_dir = game_dir
 
         self.pgn_path = os.path.abspath(os.path.join(
-            self.games_dir, f"{self.name}.pgn"))
+            self.game_dir, f"{self.name}.pgn"))
         self.pkl_path = os.path.abspath(os.path.join(
-            self.games_dir, f"{self.name}_{self.number}.pkl"))
+            self.game_dir, f"{self.name}_{self.number}.pkl"))
 
     @property
     def pgn(self):
@@ -31,7 +31,11 @@ class Game:
     @property
     def images(self):
         with open(self.pkl_path, "rb") as pkl:
-            return pickle.load(pkl)
+            while True:
+                try:
+                    yield pickle.load(pkl)
+                except EOFError:
+                    break
 
 
 def label(game):

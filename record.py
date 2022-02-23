@@ -9,14 +9,10 @@ def main(args):
     pipeline = setup_pipeline()
     picklefile = f'{args.dir}/{args.game_name}.pkl'
 
-    moves = []
-
     try:
-        while True:
-            # wait for user input to trigger next capture
-            if input() == 'q':
-                break
+        pkl_file = open(picklefile, "wb")
 
+        while True:
             frames = pipeline.wait_for_frames()
             print(frames.get_frame_number(), int(frames.get_timestamp()))
 
@@ -29,16 +25,13 @@ def main(args):
 
             cv2.imwrite("data/current.jpg", np.asanyarray(color_frame.get_data()).copy())
 
-            moves.append({
+            pickle.dump({
                 "color": np.asanyarray(color_frame.get_data()).copy(),
                 "depth": np.asanyarray(depth_frame.get_data()).copy()
-            })
-
+            }, pkl_file)
     finally:
-        # Stop streaming
         pipeline.stop()
-        with open(picklefile, "wb") as pkl_wb_obj:
-            pickle.dump(moves, pkl_wb_obj)
+        pkl_file.close()
 
 
 def setup_pipeline():
