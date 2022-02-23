@@ -2,6 +2,7 @@ import os
 import enum
 import pickle
 import itertools
+import argparse
 import numpy as np
 import cv2
 
@@ -24,7 +25,7 @@ class DetectionError(Exception):
 
 
 _detection_params = cv2.aruco.DetectorParameters_create()
-_detection_params.polygonalApproxAccuracyRate = 0.09
+_detection_params.polygonalApproxAccuracyRate = 0.02
 _detection_params.minMarkerPerimeterRate = 0.05
 _detection_params.maxMarkerPerimeterRate = 0.25
 _detection_params.adaptiveThreshConstant = 7
@@ -63,7 +64,7 @@ def _detect(path="images/markers/test.jpg", out="images/markers/test_out.jpg"):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (7, 7), 0)
     thresh = cv2.adaptiveThreshold(blurred, 255,
-	cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 23, 7)
+	cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 99, _detection_params.adaptiveThreshConstant)
     cv2.imwrite("test_out_thresh.jpg", thresh)
 
     corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(blurred, markers, parameters=_detection_params)
@@ -72,18 +73,26 @@ def _detect(path="images/markers/test.jpg", out="images/markers/test_out.jpg"):
     cv2.imwrite("test_out_fail.jpg", cv2.aruco.drawDetectedMarkers(img.copy(), rejectedImgPoints))
 
 
-def detect_pkl():
-    game = f'games/{input("Enter game name: ")}.pkl'
-    move = int(input("move number: "))
+def detect_pkl(args):
+    game = f'{args.dir}/{args.game_name}.pkl'
 
     with open(game, "rb") as pkl_wb_obj:
         moves = pickle.load(pkl_wb_obj)
 
-    img = moves[move]["color"]
+    img = moves[args.move]["color"]
 
     cv2.imwrite("test.jpg", img)
     _detect("test.jpg", "test_out.jpg")
 
 
 if __name__ == '__main__':
-    detect_pkl()
+    parser = argparse.ArgumentParser(
+        description='Will attempt to detect aruco markers from a recorded chess game.')
+    parser.add_argument('game_name', type=str,
+                        help='the name of the game to get the image from')
+    parser.add_argument('--move', type=int, default=0,
+                        help='the move number of that game')
+    parser.add_argument('--dir', type=str, metavar='directory', default='games',
+                        help='the directory the game file can be found in')
+
+    detect_pkl(parser.parse_args())

@@ -1,12 +1,13 @@
 import pyrealsense2 as rs
 import numpy as np
+import argparse
 import pickle
 import cv2
 
 
-def main():
+def main(args):
     pipeline = setup_pipeline()
-    picklefile = f'games/{input("Name of Game: ")}.pkl'
+    picklefile = f'{args.dir}/{args.game_name}.pkl'
 
     moves = []
 
@@ -76,4 +77,12 @@ def setup_pipeline():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(
+        description='Will record a recorded chess game, saving it to disk. \
+                        [ENTER] will take a screenshot.')
+    parser.add_argument('game_name', type=str,
+                        help='the name of the game to replay')
+    parser.add_argument('--dir', type=str, metavar='directory', default='games',
+                        help='the directory the game file can be found in')
+
+    main(parser.parse_args())
