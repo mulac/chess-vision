@@ -1,48 +1,65 @@
 import os
 import pickle
-import chess.pgn
+import itertools
+import tempfile
 import numpy as np
 import cv2
+import chess.pgn
 import aruco
 
+from storage import Storage
 
 _size = 800
 _margin = 0
 
+LABELS =  [
+    chess.Piece(piece_type, color) 
+    for piece_type, color in itertools.product(chess.PIECE_TYPES, chess.COLORS)
+]
+
 
 class Game:
-    def __init__(self, name, number, game_dir="games"):
-        self.name = name
-        self.number = number
-        self.game_dir = game_dir
-
+    def __init__(self, name, number, game_dir="games", skip_moves=2, board_size=_size, margin=_margin):
+        self.__dict__.update(locals())
         self.pgn_path = os.path.abspath(os.path.join(
             self.game_dir, f"{self.name}.pgn"))
         self.pkl_path = os.path.abspath(os.path.join(
             self.game_dir, f"{self.name}_{self.number}.pkl"))
+        self.length = sum(1 for _ in self.images) - 2
 
     @property
     def pgn(self):
-        with open(self.pgn_path) as pgn:
+        with open(Storage(self.pgn_path)) as pgn:
             for i in range(self.number):
                 chess.pgn.skip_game(pgn)
             return chess.pgn.read_game(pgn)
 
     @property
     def images(self):
-        with open(self.pkl_path, "rb") as pkl:
+        with open(Storage(self.pkl_path), "rb") as pkl:
             while True:
                 try:
                     yield pickle.load(pkl)
                 except EOFError:
                     break
 
+    def __len__(self):
+        return self.length
 
-def label(game):
-    return _label(game.pgn, get_corners(game.images), game.images)
+    def label(self):
+        return label(
+            self.pgn, 
+            get_corners(self.images), 
+            self.images,
+            skip_moves=self.skip_moves,
+            size=self.board_size,
+            margin=self.margin
+        )
 
 
-def _label(pgn_game, corners, images, size=_size, margin=_margin):
+def label(pgn_game, corners, images, skip_moves=2, size=_size, margin=_margin):
+    for _ in range(skip_moves):
+        next(images)
     for move, img in zip(pgn_game.mainline(), images):
         yield label_move(move, img["color"], corners, size=size, margin=margin)
 
@@ -100,3 +117,21 @@ def get_squares(img, size=_size, margin=_margin):
             bot_x = (j+1)*square_size + 2*margin
             squares.append(img[top_y:bot_y, top_x:bot_x])
     return squares
+
+
+def save_games(games, root_dir=None):
+    root_dir, label_dirs = create_dirs(root_dir)
+    for game in games:
+        for img, lbl in game.label():
+            _, path = tempfile.mkstemp(suffix=".jpg", dir=label_dirs[lbl])
+            cv2.imwrite(path, img)
+    return root_dir
+
+
+def create_dirs(root_dir=None):
+    if root_dir is None:
+        root_dir = tempfile.mkdtemp(prefix="chess-vision-")
+    label_dirs = {lbl: os.path.join(root_dir, str(hash(lbl))) for lbl in LABELS}
+    for label in label_dirs:
+        os.mkdir(label_dirs[label])
+    return root_dir, label_dirs
