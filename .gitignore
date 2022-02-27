@@ -180,3 +180,5 @@ cython_debug/
 *.fdb_latexmk
 
 runs/
+games/
+data/
