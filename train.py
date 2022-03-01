@@ -32,6 +32,8 @@ config = TrainerConfig(
     ])
 )
 
+print(config)
+
 model = models.LeNet(3, len(label.LABELS))
 writer = SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
@@ -42,12 +44,12 @@ trainer = Trainer(
 )
 
 # Train
-print("Begin training...")
+print("\nBegin training...")
 trainer.train()
 
 
 # Evaluate
-print("Evaluating...")
+print("\nEvaluating...")
 test_loader = DataLoader(trainer.test_dataset, batch_size=100, num_workers=4)
 accuracy = evaluate.accuracy(trainer.model, test_loader)
 print(f"Accuracy: {accuracy:.2f}")

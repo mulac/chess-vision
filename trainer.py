@@ -1,7 +1,8 @@
-from typing import Tuple
+import os
 import torch
 import numpy as np
 
+from typing import Tuple
 from tqdm import trange
 from dataclasses import dataclass
 from torch.utils.data import DataLoader
@@ -19,7 +20,8 @@ class ChessFolder(datasets.ImageFolder):
 @dataclass
 class TrainerConfig:
     train_games: Tuple[Game] = (
-    #     Game("Adams", 0),
+        Game("Bird", 0, flipped=True),
+        Game("Adams", 0, flipped=True),
         Game("Adams", 1),
         Game("Adams", 2),
         Game("Adams", 3),

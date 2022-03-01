@@ -19,7 +19,7 @@ LABELS =  [
 
 
 class Game:
-    def __init__(self, name, number, game_dir="games", skip_moves=2, board_size=_size, margin=_margin):
+    def __init__(self, name, number, flipped=False, game_dir="games", skip_moves=2, board_size=_size, margin=_margin):
         self.__dict__.update(locals())
         self.pgn_path = os.path.abspath(os.path.join(
             self.game_dir, f"{self.name}.pgn"))
@@ -46,21 +46,30 @@ class Game:
     def __len__(self):
         return self.length
 
+    def __repr__(self):
+        return (
+            f'Game({self.name}, {self.number}, '
+            f'flipped={self.flipped}, skip_moves={self.skip_moves}, '
+            f'board_size={self.board_size}, margin={self.margin})'
+        )
+
     def label(self):
         return label(
             self.pgn, 
             get_corners(self.images), 
             self.images,
+            flipped=self.flipped,
             skip_moves=self.skip_moves,
             size=self.board_size,
             margin=self.margin
         )
 
 
-def label(pgn_game, corners, images, skip_moves=2, size=_size, margin=_margin):
+def label(pgn_game, corners, images, flipped=False, skip_moves=2, size=_size, margin=_margin):
     for _ in range(skip_moves):
         next(images)
     for move, img in zip(pgn_game.mainline(), images):
+        img = img["color"] if not flipped else np.flip(img["color"])
         yield label_move(move, img["color"], corners, size=size, margin=margin)
 
 
