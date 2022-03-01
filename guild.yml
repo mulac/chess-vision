@@ -6,3 +6,4 @@ train:
     - '*.yml'
   requires:
     - file: games/
+      target-type: link

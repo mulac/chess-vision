@@ -3,8 +3,10 @@ import torch.nn as nn
 
 
 class LeNet(nn.Module):
-    def __init__(self, channels, classes):
+    def __init__(self, channels, classes, loss_fn=torch.nn.CrossEntropyLoss()):
         super(LeNet, self).__init__()
+        self.loss_fn = loss_fn
+
         self.relu = nn.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
 
@@ -25,3 +27,6 @@ class LeNet(nn.Module):
         x = self.fc2(x)
 
         return self.logSoftmax(x)
+
+    def configure_optimizers(self, config):
+        return torch.optim.SGD(self.parameters(), lr=config.learning_rate, momentum=config.momentum)
