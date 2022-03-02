@@ -6,8 +6,9 @@ import cv2
 
 
 class Camera:
+    cancel_signal = True
+
     def __init__(self, pipeline=None, depth=False):
-        self.cancel_signal = True
         self.depth = depth
         if pipeline is None:
             pipeline = self.setup_pipeline()
@@ -40,13 +41,14 @@ class Camera:
         return np.asanyarray(frame.get_data()).copy()
 
     def loop(self, callback):
+        """ loop will continually pass each frame to callback until callback returns True """
         while True:
             frames = self.pipeline.wait_for_frames()
             color_frame = frames.get_color_frame()
             if self.depth:
                 depth_frame = frames.get_depth_frame()
             
-            if not color_frame or (not depth_frame and self.depth):
+            if not color_frame or (self.depth and not depth_frame):
                 print(f"ERROR: failed to fetch frames")
                 continue
 
@@ -69,9 +71,11 @@ def main(args):
     def record(color, depth):
         cv2.imwrite("data/current.jpg", color.copy())
         pickle.dump({"color": color.copy(), "depth": depth.copy()}, pkl_file)
+        input("\nwaiting...")
         
     try:
         pkl_file = open(picklefile, "wb")
+        input("Press [ENTER] to begin:")
         camera.loop(record)
     except KeyboardInterrupt:
         pass

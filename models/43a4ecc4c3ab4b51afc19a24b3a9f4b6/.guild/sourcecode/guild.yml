@@ -1,0 +1,9 @@
+train:
+  main: chess-vision/train
+  flags-import: all
+  sourcecode:
+    - '*.py'
+    - '*.yml'
+  requires:
+    - file: games/
+      target-type: link

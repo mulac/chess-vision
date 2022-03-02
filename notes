@@ -1,1 +1,3 @@
 Bird_1 - is really Bird_0
+
+we need two types of transforms in config (inference and training)

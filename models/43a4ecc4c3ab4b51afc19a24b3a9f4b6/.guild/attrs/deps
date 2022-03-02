@@ -1,0 +1,5 @@
+file:games/:
+  file:games/:
+    paths:
+    - ../../../../games
+    uri: file:games/
