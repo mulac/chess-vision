@@ -17,6 +17,11 @@ LABELS =  [
     for piece_type, color in itertools.product(chess.PIECE_TYPES, chess.COLORS)
 ]
 
+def to_label(i):
+    for label in LABELS:
+        if hash(label) == i:
+            return label
+
 
 class Game:
     def __init__(self, name, number, flipped=False, game_dir="games", skip_moves=2, board_size=_size, margin=_margin):
@@ -66,11 +71,15 @@ class Game:
 
 
 def label(pgn_game, corners, images, flipped=False, skip_moves=2, size=_size, margin=_margin):
-    for _ in range(skip_moves):
-        next(images)
+    skip(images, skip_moves)
     for move, img in zip(pgn_game.mainline(), images):
         img = img["color"] if not flipped else np.flip(img["color"])
-        yield label_move(move, img["color"], corners, size=size, margin=margin)
+        yield label_move(move.board(), get_board(img, corners, size, margin), move.move.to_square, size, margin)
+
+
+def skip(iterator, i):
+    for _ in range(i):
+        next(iterator)
 
 
 def get_corners(images):
@@ -87,10 +96,9 @@ def _get_corners(image):
     return np.array([c[1][0][0] for c in aruco.detect(image)])
 
 
-def label_move(move, img, corners, size=_size, margin=_margin):
-    board_img = get_board(img, corners, size, margin)
-    piece_img = get_square(move.move.to_square, board_img, size, margin)
-    label = move.board().piece_at(move.move.to_square)
+def label_move(pgn_board, board_img, square, size=_size, margin=_margin):
+    piece_img = get_square(square, board_img, size, margin)
+    label = pgn_board.piece_at(square)
     return piece_img, label
 
 

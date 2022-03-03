@@ -14,7 +14,7 @@ class Camera:
             pipeline = self.setup_pipeline()
         self.pipeline = pipeline
 
-    def setup_pipeline(cls):
+    def setup_pipeline(self):
         # Configure depth and color streams
         pipeline = rs.pipeline()
         config = rs.config()
@@ -27,8 +27,11 @@ class Camera:
         if not any(s.get_info(rs.camera_info.name) == 'RGB Camera' for s in device.sensors):
             raise EnvironmentError("The demo requires Depth camera with Color sensor")
 
-        config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
         config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
+        if self.depth:
+            config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+            self.align = rs.align(rs.stream.color)
+        
 
         pipeline.start(config)
         # sensor = pipeline.get_active_profile().get_device().query_sensors()[1]
@@ -44,10 +47,10 @@ class Camera:
         """ loop will continually pass each frame to callback until callback returns True """
         while True:
             frames = self.pipeline.wait_for_frames()
-            color_frame = frames.get_color_frame()
             if self.depth:
+                frames = self.align.process(frames)
                 depth_frame = frames.get_depth_frame()
-            
+            color_frame = frames.get_color_frame()
             if not color_frame or (self.depth and not depth_frame):
                 print(f"ERROR: failed to fetch frames")
                 continue

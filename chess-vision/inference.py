@@ -2,6 +2,9 @@ import os
 import argparse
 import torch
 import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy
 
 import label
 import record
@@ -18,11 +21,11 @@ class LiveInference:
         self.camera = camera
         self.corners = None
 
-    def show_img(self, img):
-        cv2.imshow('chess-vision', cv2.resize(img, (960, 540)))
+    def show_img(self, img, size=(960, 540)):
+        cv2.imshow('chess-vision', cv2.resize(img, size))
         cv2.waitKey(1)
     
-    def get_corners(self, img):
+    def get_corners(self, img, _):
         self.show_img(img)
         try: 
             self.corners = label._get_corners(img)
@@ -30,15 +33,29 @@ class LiveInference:
             return
         return record.Camera.cancel_signal
 
-    def get_piece_predictions(self, img):
-        self.show_img(img)
-        squares = [self.config.infer_transform(square) for square in label.get_squares(img)]
+    def get_piece_predictions(self, img, depth):
+        self.depth(depth)
+        return
+        board = label.get_board(img, self.corners)
+        b = label.get_board(depth, self.corners)
+        self.show_img(board, size=(500, 500))
+        squares = [self.config.infer_transform(square) for square in label.get_squares(board)]
         squares = torch.stack(squares).to(self.device)
         pred = self.model(squares)
         self.print_fen(pred.argmax(dim=1))
 
+    def depth(self, depth):
+        board = label.get_board(depth, self.corners)
+        board = cv2.applyColorMap(cv2.convertScaleAbs(board, alpha=0.03), cv2.COLORMAP_JET)
+        self.show_img(board, size=(500, 500))
+        squares = label.get_squares(board)
+
+        print(scipy.spatial.KDTree([np.sum(square) for square in squares]))
+
     def print_fen(self, pieces):
-        print(pieces)
+        labels = [str(label.to_label(i)) for i in pieces]
+        # bottom right, bottom left, top right, top left
+        print(labels[27], labels[28], labels[35], labels[36])
 
     def start(self):
         try:
@@ -58,7 +75,7 @@ def main(args):
         torch.load(model_path), 
         torch.load(config_path), 
         torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-        record.Camera()
+        record.Camera(depth=True)
     )
 
     game.start()

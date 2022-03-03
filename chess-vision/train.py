@@ -17,8 +17,8 @@ MOMENTUM = 0.9
 IMG_SIZE = 48
 
 config = TrainerConfig(
-    train_folder = '/tmp/chess-vision-0z_ulz3o',
-    test_folder = '/tmp/chess-vision-h77znuuu',
+    # train_folder = '/tmp/chess-vision-0z_ulz3o',
+    # test_folder = '/tmp/chess-vision-h77znuuu',
     epochs = EPOCHS,
     learning_rate = LR,
     momentum = MOMENTUM,

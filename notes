@@ -1,3 +1,6 @@
 Bird_1 - is really Bird_0
 
-we need two types of transforms in config (inference and training)
+How do we label empty squares?
+    we could do with a label class (tightly coupled with chess.Piece)
+
+Can we prove that it's much harder to detect empty squares?  paried t-tests?
