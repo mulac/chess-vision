@@ -28,7 +28,7 @@ class LiveInference:
     def get_corners(self, img, _):
         self.show_img(img)
         try: 
-            self.corners = label._get_corners(img)
+            self.corners = label.get_corners(img)
         except label.aruco.DetectionError:
             return
         return record.Camera.cancel_signal

@@ -4,10 +4,11 @@ import itertools
 import tempfile
 import numpy as np
 import cv2
+import jenkspy
 import chess.pgn
-import aruco
 
-from storage import Storage
+from .aruco import detect, DetectionError
+from .storage import Storage
 
 _size = 800
 _margin = 0
@@ -24,12 +25,12 @@ def to_label(i):
 
 
 class Game:
-    def __init__(self, name, number, flipped=False, game_dir="games", skip_moves=2, board_size=_size, margin=_margin):
+    def __init__(self, name, number=None, flipped=False, game_dir="games", skip_moves=2, board_size=_size, margin=_margin):
         self.__dict__.update(locals())
         self.pgn_path = os.path.abspath(os.path.join(
             self.game_dir, f"{self.name}.pgn"))
         self.pkl_path = os.path.abspath(os.path.join(
-            self.game_dir, f"{self.name}_{self.number}.pkl"))
+            self.game_dir, (f"{self.name}_{self.number}.pkl" if number else f"{self.name}.pkl")))
         self.length = sum(1 for _ in self.images) - 2
 
     @property
@@ -61,7 +62,7 @@ class Game:
     def label(self):
         return label(
             self.pgn, 
-            get_corners(self.images), 
+            find_corners(self.images), 
             self.images,
             flipped=self.flipped,
             skip_moves=self.skip_moves,
@@ -82,18 +83,18 @@ def skip(iterator, i):
         next(iterator)
 
 
-def get_corners(images):
+def find_corners(images):
     for img in images:
         try:
-            return _get_corners(img["color"])
-        except aruco.DetectionError:
+            return get_corners(img["color"])
+        except DetectionError:
             continue
 
-    raise aruco.DetectionError("failed to find markers from any move")
+    raise DetectionError("failed to find markers from any move")
 
 
-def _get_corners(image):
-    return np.array([c[1][0][0] for c in aruco.detect(image)])
+def get_corners(image):
+    return np.array([c[1][0][0] for c in detect(image)])
 
 
 def label_move(pgn_board, board_img, square, size=_size, margin=_margin):
@@ -112,6 +113,13 @@ def get_board(img, corners, size=_size, margin=_margin):
 
     transform = cv2.getPerspectiveTransform(corners, dest)
     return cv2.warpPerspective(img, transform, (size+2*margin, size+2*margin))
+
+
+def get_occupied_squares(depth_img, corners, size=_size, margin=_margin):
+    depth_squares = get_squares(get_board(depth_img, corners), size=size, margin=margin)
+    jnb = jenkspy.JenksNaturalBreaks(2)
+    jnb.fit([np.sum(square) for square in depth_squares])
+    return [i for i, square in enumerate(depth_squares) if not jnb.predict(np.sum(square))]
 
 
 def get_square(square, img, size=_size, margin=_margin):
