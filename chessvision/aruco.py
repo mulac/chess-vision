@@ -2,8 +2,6 @@ import os
 import enum
 import pickle
 import itertools
-import argparse
-import numpy as np
 import cv2
 
 
@@ -86,6 +84,7 @@ def detect_pkl(args):
 
 
 if __name__ == '__main__':
+    import argparse
     parser = argparse.ArgumentParser(
         description='Will attempt to detect aruco markers from a recorded chess game.')
     parser.add_argument('game_name', type=str,

@@ -5,10 +5,8 @@ from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms
 from datetime import datetime
 
-from trainer import Trainer, TrainerConfig
-import evaluate
-import models
-import label
+from . import evaluate, models, game
+from .trainer import Trainer, TrainerConfig
 
 
 EPOCHS = 300
@@ -38,7 +36,7 @@ config = TrainerConfig(
 
 print(config)
 
-model = models.LeNet(3, len(label.LABELS))
+model = models.LeNet(3, len(game.LABELS))
 writer = SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
 trainer = Trainer(

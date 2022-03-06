@@ -5,7 +5,7 @@ import pandas as pd
 
 from sklearn.metrics import confusion_matrix
 
-import label
+from .game import LABELS
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -28,7 +28,7 @@ def create_confusion_matrix(model, loader):
     return confusion_matrix(y_true, y_pred)
 
 def plot_confusion_matrix(cf_values):
-    classes = [piece.unicode_symbol() for piece in label.LABELS]
+    classes = [piece.unicode_symbol() for piece in LABELS]
     cf_weight = cf_values / cf_values.sum(axis=1)
     plt.figure(figsize=(12, 12))
     sn.set(font_scale=1.5)

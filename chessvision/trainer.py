@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from label import Game, save_games
+from .game import Game, save_games
 
 
 class ChessFolder(datasets.ImageFolder):

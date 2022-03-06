@@ -1,80 +1,24 @@
-import os
-import pickle
-import itertools
-import tempfile
 import numpy as np
 import cv2
 import jenkspy
-import chess.pgn
 
 from .aruco import detect, DetectionError
-from .storage import Storage
 
-_size = 800
-_margin = 0
-
-LABELS =  [
-    chess.Piece(piece_type, color) 
-    for piece_type, color in itertools.product(chess.PIECE_TYPES, chess.COLORS)
-]
-
-def to_label(i):
-    for label in LABELS:
-        if hash(label) == i:
-            return label
+SIZE = 800
+MARGIN = 0
 
 
-class Game:
-    def __init__(self, name, number=None, flipped=False, game_dir="games", skip_moves=2, board_size=_size, margin=_margin):
-        self.__dict__.update(locals())
-        self.pgn_path = os.path.abspath(os.path.join(
-            self.game_dir, f"{self.name}.pgn"))
-        self.pkl_path = os.path.abspath(os.path.join(
-            self.game_dir, (f"{self.name}_{self.number}.pkl" if number else f"{self.name}.pkl")))
-        self.length = sum(1 for _ in self.images) - 2
-
-    @property
-    def pgn(self):
-        with open(Storage(self.pgn_path)) as pgn:
-            for i in range(self.number):
-                chess.pgn.skip_game(pgn)
-            return chess.pgn.read_game(pgn)
-
-    @property
-    def images(self):
-        with open(Storage(self.pkl_path), "rb") as pkl:
-            while True:
-                try:
-                    yield pickle.load(pkl)
-                except EOFError:
-                    break
-
-    def __len__(self):
-        return self.length
-
-    def __repr__(self):
-        return (
-            f'Game({self.name}, {self.number}, '
-            f'flipped={self.flipped}, skip_moves={self.skip_moves}, '
-            f'board_size={self.board_size}, margin={self.margin})'
-        )
-
-    def label(self):
-        return label(
-            self.pgn, 
-            find_corners(self.images), 
-            self.images,
-            flipped=self.flipped,
-            skip_moves=self.skip_moves,
-            size=self.board_size,
-            margin=self.margin
-        )
-
-
-def label(pgn_game, corners, images, flipped=False, skip_moves=2, size=_size, margin=_margin):
+def label(pgn_game, corners, images, flipped=False, skip_moves=2, size=SIZE, margin=MARGIN):
     skip(images, skip_moves)
     for move, img in zip(pgn_game.mainline(), images):
         img = img["color"] if not flipped else np.flip(img["color"])
+        yield label_move(move.board(), get_board(img, corners, size, margin), move.move.to_square, size, margin)
+
+
+def label_occupied(pgn_game, corners, images, flipped=False, skip_moves=2, size=SIZE, margin=MARGIN):
+    skip(images, skip_moves)
+    for move, img in zip(pgn_game.mainline(), images):
+        img = img["depth"] if not flipped else np.flip(img["depth"])
         yield label_move(move.board(), get_board(img, corners, size, margin), move.move.to_square, size, margin)
 
 
@@ -97,13 +41,13 @@ def get_corners(image):
     return np.array([c[1][0][0] for c in detect(image)])
 
 
-def label_move(pgn_board, board_img, square, size=_size, margin=_margin):
+def label_move(pgn_board, board_img, square, size=SIZE, margin=MARGIN):
     piece_img = get_square(square, board_img, size, margin)
     label = pgn_board.piece_at(square)
     return piece_img, label
 
 
-def get_board(img, corners, size=_size, margin=_margin):
+def get_board(img, corners, size=SIZE, margin=MARGIN):
     dest = np.float32([
         [margin, margin],
         [size+margin, margin],
@@ -115,50 +59,34 @@ def get_board(img, corners, size=_size, margin=_margin):
     return cv2.warpPerspective(img, transform, (size+2*margin, size+2*margin))
 
 
-def get_occupied_squares(depth_img, corners, size=_size, margin=_margin):
+def get_occupied_squares(depth_img, corners, size=SIZE, margin=MARGIN):
     depth_squares = get_squares(get_board(depth_img, corners), size=size, margin=margin)
     jnb = jenkspy.JenksNaturalBreaks(2)
     jnb.fit([np.sum(square) for square in depth_squares])
-    return [i for i, square in enumerate(depth_squares) if not jnb.predict(np.sum(square))]
+    # return [i for i, square in enumerate(depth_squares) if not jnb.predict(np.sum(square))]
+    occupied_squares = np.where(np.logical_not(jnb.labels_))[0]
+    return occupied_squares.tolist()
 
 
-def get_square(square, img, size=_size, margin=_margin):
-    square_size = size // 8
+def get_square(square, img, size=SIZE, margin=MARGIN):
+    squareSIZE = size // 8
     i = 7 - square % 8
     j = 7 - square // 8
-    top_x = i * square_size
-    bot_x = (i+1)*square_size + 2*margin
-    top_y = j*square_size
-    bot_y = (j+1)*square_size + 2*margin
+    top_x = i * squareSIZE
+    bot_x = (i+1)*squareSIZE + 2*margin
+    top_y = j*squareSIZE
+    bot_y = (j+1)*squareSIZE + 2*margin
     return img[top_y:bot_y, top_x:bot_x]
 
 
-def get_squares(img, size=_size, margin=_margin):
-    square_size = size // 8
+def get_squares(img, size=SIZE, margin=MARGIN):
+    squareSIZE = size // 8
     squares = []
     for i in reversed(range(8)):
-        top_y = i*square_size
-        bot_y = (i+1)*square_size + 2*margin
+        top_y = i*squareSIZE
+        bot_y = (i+1)*squareSIZE + 2*margin
         for j in reversed(range(8)):
-            top_x = j*square_size
-            bot_x = (j+1)*square_size + 2*margin
+            top_x = j*squareSIZE
+            bot_x = (j+1)*squareSIZE + 2*margin
             squares.append(img[top_y:bot_y, top_x:bot_x])
     return squares
-
-
-def save_games(games, root_dir=None):
-    root_dir, label_dirs = create_dirs(root_dir)
-    for game in games:
-        for img, lbl in game.label():
-            _, path = tempfile.mkstemp(suffix=".jpg", dir=label_dirs[lbl])
-            cv2.imwrite(path, img)
-    return root_dir
-
-
-def create_dirs(root_dir=None):
-    if root_dir is None:
-        root_dir = tempfile.mkdtemp(prefix="chess-vision-")
-    label_dirs = {lbl: os.path.join(root_dir, str(hash(lbl))) for lbl in LABELS}
-    for label in label_dirs:
-        os.mkdir(label_dirs[label])
-    return root_dir, label_dirs

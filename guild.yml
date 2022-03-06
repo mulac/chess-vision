@@ -1,5 +1,5 @@
 train:
-  main: chess-vision/train
+  main: chessvision.train
   flags-import: all
   sourcecode:
     - '*.py'

@@ -1,13 +1,10 @@
 import os
-import argparse
 import torch
 import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-import scipy
 
-import label
-import record
+from . import label
+from .game import id_to_label
+from .record import Camera
 
 
 class LiveInference:
@@ -21,41 +18,35 @@ class LiveInference:
         self.camera = camera
         self.corners = None
 
-    def show_img(self, img, size=(960, 540)):
-        cv2.imshow('chess-vision', cv2.resize(img, size))
+    def show_img(self, img, name="chess-vision", size=(960, 540)):
+        cv2.imshow(name, cv2.resize(img, size))
         cv2.waitKey(1)
     
     def get_corners(self, img, _):
         self.show_img(img)
         try: 
             self.corners = label.get_corners(img)
-        except label.aruco.DetectionError:
+        except label.DetectionError:
             return
-        return record.Camera.cancel_signal
+        return Camera.cancel_signal
 
     def get_piece_predictions(self, img, depth):
-        self.depth(depth)
-        return
         board = label.get_board(img, self.corners)
-        b = label.get_board(depth, self.corners)
         self.show_img(board, size=(500, 500))
-        squares = [self.config.infer_transform(square) for square in label.get_squares(board)]
-        squares = torch.stack(squares).to(self.device)
-        pred = self.model(squares)
+        squares_idx = self.depth(depth)
+        squares = [self.config.infer_transform(label.get_square(i, board)) for i in squares_idx]
+        stacked_squares = torch.stack(squares).to(self.device)
+        pred = self.model(stacked_squares)
         self.print_fen(pred.argmax(dim=1))
 
     def depth(self, depth):
         board = label.get_board(depth, self.corners)
-        board = cv2.applyColorMap(cv2.convertScaleAbs(board, alpha=0.03), cv2.COLORMAP_JET)
-        self.show_img(board, size=(500, 500))
-        squares = label.get_squares(board)
-
-        print(scipy.spatial.KDTree([np.sum(square) for square in squares]))
+        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(board, alpha=0.03), cv2.COLORMAP_JET)
+        self.show_img(depth_colormap, name="depth", size=(500, 500))
+        return label.get_occupied_squares(depth, self.corners)
 
     def print_fen(self, pieces):
-        labels = [str(label.to_label(i)) for i in pieces]
-        # bottom right, bottom left, top right, top left
-        print(labels[27], labels[28], labels[35], labels[36])
+        print([id_to_label[i.item()].unicode_symbol() for i in pieces])
 
     def start(self):
         try:
@@ -75,13 +66,14 @@ def main(args):
         torch.load(model_path), 
         torch.load(config_path), 
         torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-        record.Camera(depth=True)
+        Camera(depth=True)
     )
 
     game.start()
 
 
 if __name__ == '__main__':
+    import argparse
     parser = argparse.ArgumentParser(
         description='Will load an archived model and begin inference from the camera stream.')
     parser.add_argument('model', type=str,

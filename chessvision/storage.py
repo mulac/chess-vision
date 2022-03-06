@@ -11,6 +11,7 @@ def Storage(object, dir="games", bucket="chess-vision", upload=False):
 
 
 def _get_s3():
+    global _s3
     if _s3 is None:
         import boto3
         _s3 = boto3.client('s3')
