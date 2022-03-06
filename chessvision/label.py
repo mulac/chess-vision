@@ -1,3 +1,4 @@
+from chess import square
 import numpy as np
 import cv2
 import jenkspy
@@ -47,6 +48,16 @@ def label_move(pgn_board, board_img, square, size=SIZE, margin=MARGIN):
     return piece_img, label
 
 
+def get_occupied_squares(depth_img, corners, size=SIZE, margin=MARGIN):
+    def occupied(img, cut=20):
+        img = img[cut:-cut, cut:-cut].flatten()
+        return np.sum(img * (img < 255))
+            
+
+    depth_squares = get_squares(get_board(depth_img, corners), size=size, margin=margin)
+    return [i for i, square in enumerate(depth_squares) if occupied(square)]
+
+
 def get_board(img, corners, size=SIZE, margin=MARGIN):
     dest = np.float32([
         [margin, margin],
@@ -59,34 +70,16 @@ def get_board(img, corners, size=SIZE, margin=MARGIN):
     return cv2.warpPerspective(img, transform, (size+2*margin, size+2*margin))
 
 
-def get_occupied_squares(depth_img, corners, size=SIZE, margin=MARGIN):
-    depth_squares = get_squares(get_board(depth_img, corners), size=size, margin=margin)
-    jnb = jenkspy.JenksNaturalBreaks(2)
-    jnb.fit([np.sum(square) for square in depth_squares])
-    # return [i for i, square in enumerate(depth_squares) if not jnb.predict(np.sum(square))]
-    occupied_squares = np.where(np.logical_not(jnb.labels_))[0]
-    return occupied_squares.tolist()
+def get_squares(img, size=SIZE, margin=MARGIN):
+    return (get_square(i, img, size, margin) for i in range(64))
 
 
 def get_square(square, img, size=SIZE, margin=MARGIN):
-    squareSIZE = size // 8
+    square_size = size // 8
     i = 7 - square % 8
     j = 7 - square // 8
-    top_x = i * squareSIZE
-    bot_x = (i+1)*squareSIZE + 2*margin
-    top_y = j*squareSIZE
-    bot_y = (j+1)*squareSIZE + 2*margin
+    top_x = i * square_size
+    bot_x = (i+1)*square_size + 2*margin
+    top_y = j*square_size
+    bot_y = (j+1)*square_size + 2*margin
     return img[top_y:bot_y, top_x:bot_x]
-
-
-def get_squares(img, size=SIZE, margin=MARGIN):
-    squareSIZE = size // 8
-    squares = []
-    for i in reversed(range(8)):
-        top_y = i*squareSIZE
-        bot_y = (i+1)*squareSIZE + 2*margin
-        for j in reversed(range(8)):
-            top_x = j*squareSIZE
-            bot_x = (j+1)*squareSIZE + 2*margin
-            squares.append(img[top_y:bot_y, top_x:bot_x])
-    return squares
