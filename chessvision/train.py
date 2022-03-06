@@ -20,6 +20,8 @@ config = TrainerConfig(
     epochs = EPOCHS,
     learning_rate = LR,
     momentum = MOMENTUM,
+    channels = 3,
+    classes = len(game.LABELS),
     transform = transforms.Compose([
         transforms.Resize(IMG_SIZE),
         # transforms.RandomSizedCrop(224),
@@ -36,7 +38,7 @@ config = TrainerConfig(
 
 print(config)
 
-model = models.LeNet(3, len(game.LABELS))
+model = models.LeNet(config.channels, config.classes)
 writer = SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
 trainer = Trainer(
