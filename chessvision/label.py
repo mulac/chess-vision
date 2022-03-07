@@ -1,7 +1,6 @@
-from chess import square
 import numpy as np
+import chess
 import cv2
-import jenkspy
 
 from .aruco import detect, DetectionError
 
@@ -9,23 +8,33 @@ SIZE = 800
 MARGIN = 0
 
 
-def label(pgn_game, corners, images, flipped=False, skip_moves=2, size=SIZE, margin=MARGIN):
-    skip(images, skip_moves)
-    for move, img in zip(pgn_game.mainline(), images):
-        img = img["color"] if not flipped else np.flip(img["color"])
-        yield label_move(move.board(), get_board(img, corners, size, margin), move.move.to_square, size, margin)
+def label(game):
+    corners = find_corners(game.images)
+    images = skip(game.images, game.skip_moves)
+    for move, img in zip(game.pgn.mainline(), images):
+        yield label_move(move.board(), img['color'], move.move.to_square, corners, game.flipped, game.board_size, game.margin)
 
 
-def label_occupied(pgn_game, corners, images, flipped=False, skip_moves=2, size=SIZE, margin=MARGIN):
-    skip(images, skip_moves)
-    for move, img in zip(pgn_game.mainline(), images):
-        img = img["depth"] if not flipped else np.flip(img["depth"])
-        yield label_move(move.board(), get_board(img, corners, size, margin), move.move.to_square, size, margin)
+def label_occupied(game, stream='color'):
+    corners = find_corners(game.images)
+    images = skip(game.images, game.skip_moves-1)
+    start = next(images)
+    for square in range(64):
+        yield label_occupied_move(chess.Board(), start[stream], square, corners, game.flipped, game.board_size, game.margin)
+    for move, img in zip(game.pgn.mainline(), images):
+        yield label_occupied_move(move.board(), img[stream], move.move.to_square, corners, game.flipped, game.board_size, game.margin)
+        yield label_occupied_move(move.board(), img[stream], move.move.from_square, corners, game.flipped, game.board_size, game.margin)
+ 
 
-
-def skip(iterator, i):
-    for _ in range(i):
+def skip(iterator, n):
+    for _ in range(n):
         next(iterator)
+    return iterator
+
+
+def label_occupied_move(pgn_board, img, square, corners=None, flipped=False, size=SIZE, margin=MARGIN):
+    piece_img, piece = label_move(pgn_board, img, square, corners, flipped, size, margin)
+    return piece_img, piece is not None
 
 
 def find_corners(images):
@@ -42,8 +51,10 @@ def get_corners(image):
     return np.array([c[1][0][0] for c in detect(image)])
 
 
-def label_move(pgn_board, board_img, square, size=SIZE, margin=MARGIN):
-    piece_img = get_square(square, board_img, size, margin)
+def label_move(pgn_board, img, square, corners=None, flipped=False, size=SIZE, margin=MARGIN):
+    board_img = get_board(img, corners, size, margin) if corners is not None else img
+    # BUG should we be flipping on axis 1?
+    piece_img = get_square(square, np.flip(board_img) if flipped else board_img, size, margin)
     label = pgn_board.piece_at(square)
     return piece_img, label
 
@@ -52,8 +63,6 @@ def get_occupied_squares(depth_img, corners, size=SIZE, margin=MARGIN):
     def occupied(img, cut=20):
         img = img[cut:-cut, cut:-cut].flatten()
         return np.sum(img * (img < 255))
-            
-
     depth_squares = get_squares(get_board(depth_img, corners), size=size, margin=margin)
     return [i for i, square in enumerate(depth_squares) if occupied(square)]
 
@@ -65,7 +74,6 @@ def get_board(img, corners, size=SIZE, margin=MARGIN):
         [margin, size+margin],
         [size+margin, size+margin]
     ])
-
     transform = cv2.getPerspectiveTransform(corners, dest)
     return cv2.warpPerspective(img, transform, (size+2*margin, size+2*margin))
 

@@ -2,13 +2,13 @@ import os
 import torch
 import numpy as np
 
-from typing import Tuple
+from typing import Tuple, Any, List
 from tqdm import trange
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from .game import Game, save_games
+from .game import LABELS, label_fn, Game, save_games
 
 
 class ChessFolder(datasets.ImageFolder):
@@ -29,6 +29,10 @@ class TrainerConfig:
     test_games: Tuple[Game] = (
         Game("Bird", 2),
     )
+    channels: int = 3
+    classes: int = len(LABELS)
+    labels: List[Any] = field(default_factory=LABELS)
+    label_fn: str = 'pieces'
     train_folder: str = None
     test_folder: str = None
     learning_rate: float = 0.001
@@ -45,8 +49,8 @@ class Trainer:
         self.config = config
         self.writer = writer
 
-        train_folder = config.train_folder if config.train_folder else save_games(config.train_games)
-        test_folder = config.test_folder if config.train_folder else save_games(config.test_games)
+        train_folder = config.train_folder if config.train_folder else save_games(config.train_games, label_fn[config.label_fn], config.labels)
+        test_folder = config.test_folder if config.train_folder else save_games(config.test_games, label_fn[config.label_fn], config.labels)
         self.train_dataset = ChessFolder(root=train_folder, transform=config.transform)
         self.test_dataset = ChessFolder(root=test_folder, transform=config.transform)
 

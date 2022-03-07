@@ -1,5 +1,7 @@
 Bird_1 - is really Bird_0
 
+https://www.pgnmentor.com/files.html
+
 How do we label empty squares?
     we could do with a label class (tightly coupled with chess.Piece)
 

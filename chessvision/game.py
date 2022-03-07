@@ -3,17 +3,21 @@ import pickle
 import itertools
 import tempfile
 import cv2
+import chess
 import chess.pgn
+import numpy as np
 
 from .storage import Storage
-from .label import label, find_corners, SIZE, MARGIN
+from .label import label, label_occupied, SIZE, MARGIN
 
-LABELS =  [
+LABELS = [
     chess.Piece(piece_type, color) 
     for piece_type, color in itertools.product(chess.PIECE_TYPES, chess.COLORS)
 ]
 
 id_to_label = {hash(l): l for l in LABELS}
+label_fn = {'pieces': label, 'occupied': label_occupied}
+
 
 class Game:
     def __init__(self, name, number, flipped=False, game_dir="games", skip_moves=2, board_size=SIZE, margin=MARGIN):
@@ -49,30 +53,20 @@ class Game:
             f'board_size={self.board_size}, margin={self.margin})'
         )
 
-    def label(self):
-        return label(
-            self.pgn, 
-            find_corners(self.images), 
-            self.images,
-            flipped=self.flipped,
-            skip_moves=self.skip_moves,
-            size=self.board_size,
-            margin=self.margin
-        )
 
-def save_games(games, root_dir=None):
-    root_dir, label_dirs = create_dirs(root_dir)
+def save_games(games, label_fn, labels, root_dir=None):
+    root_dir, label_dirs = create_dirs(labels, root_dir)
     for game in games:
-        for img, lbl in game.label():
+        for img, lbl in label_fn(game):
             _, path = tempfile.mkstemp(suffix=".jpg", dir=label_dirs[lbl])
             cv2.imwrite(path, img)
     return root_dir
 
 
-def create_dirs(root_dir=None):
+def create_dirs(labels, root_dir=None):
     if root_dir is None:
         root_dir = tempfile.mkdtemp(prefix="chess-vision-")
-    label_dirs = {lbl: os.path.join(root_dir, str(hash(lbl))) for lbl in LABELS}
+    label_dirs = {lbl: os.path.join(root_dir, str(hash(lbl))) for lbl in labels}
     for label in label_dirs:
         os.mkdir(label_dirs[label])
     return root_dir, label_dirs

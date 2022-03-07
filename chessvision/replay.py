@@ -9,6 +9,7 @@ def main(args):
     game = f'{args.dir}/{args.game_name}.pkl'
 
     with open(game, "rb") as pkl_wb_obj:
+        i = 0
         while True:
             try:
                 move = pickle.load(pkl_wb_obj)
@@ -21,7 +22,7 @@ def main(args):
 
             depth_colormap_dim = depth_colormap.shape
             color_colormap_dim = color_image.shape
-            print(color_colormap_dim, depth_colormap_dim)
+            print(i, color_colormap_dim, depth_colormap_dim)
             
             # If depth and color resolutions are different, resize color image to match depth image for display
             if depth_colormap_dim != color_colormap_dim:
@@ -35,6 +36,7 @@ def main(args):
             cv2.imshow('RealSense', cv2.resize(images, (1100, 350)))
             cv2.waitKey(1)
             input()
+            i += 1
 
 
 def translate_img(src_img, dest_img):
