@@ -4,14 +4,46 @@
 <Everything that comes under the `Methods' criterion in the mark scheme should be described in one, or possibly more than one, chapter(s).>
 
 \section{Data Collection}
-\lipsum[5]
+At the heart of any machine learning project is the data.  
+It is as important, often more important, than the code and presents many interesting
+challenges.  **Why is this?**
+Discussed in the following sections are some of the challenges and decisions that were considered.
 
 \subsection{Sensors}
-\lipsum[6]
+The eminent challenge is acquiring data in the first place.  This is highly context 
+dependant, but as vision is primarily focused on spatial awareness the discussion 
+will be limited to the sensors that can measure it.
+
+Sensor choice is an important choice for any robotics application as there are 
+important tradeoffs, as with any engineering challenge, which must be considered.
+
+**Outline some of the tradeoffs between spatial sensors**
+
+One important distinction to make is the difference between training and inference.
+Requirements at the time of training my differ significantly to the requirements at 
+inference.  Processing power, energy supply and realtime operation are some
+of the constraints that will have to be met when considering different sensors.
+
+The sensor used throughout this project is the RealSense SR305 which is a RGB-D camera
+using structured and coded light to determine depth, it functions best indoors or in a 
+controlled lighting situation.  For the reasons outlined above the RGB camera stream is 
+mainly relied upon but there will be some discussion and comparision of piece detection 
+with the depth sensor.  
+
+\subsection{Auto-Labelling}
+A closely related challenge of acquiring the data is that of labelling it too.
+It is widely known that neural networks scale with the number of examples \cite{}.  
+This will be explicitly explored for Chess Vision in section 3.1.
+This however poses the question about how do we get access to a lot of labelled data 
+for chess.  **Some examples of other auto labelling techniques**
+The overall approach I took...
 
 \subsection{Dataset Versioning}
-\lipsum[6]
-
+With all this data the next challenge becomes self evident.
+It is concerned with the question: How do we manage all of this?
+Some of the problems... and why you need versioning...
+Transitioning from git lfs to aws s3.  Perhaps a quick mention of other solutions.
+How the Game class solves some of these challenges for us.
 
 
 \section{Model Training}
@@ -20,7 +52,7 @@
 \subsection{Architectures}
 \lipsum[6]
 
-\subsection{Experiment Trakcing}
+\subsection{Experiment Tracking}
 \lipsum[6]
 
 
@@ -28,5 +60,8 @@
 \section{Realtime Inference}
 \lipsum[7]
 
-\subsection{Object Localisation}
+\subsection{The Realiable Approach}
+\lipsum[6]
+
+\subsection{The Not-So-Reliable Approach}
 \lipsum[6]

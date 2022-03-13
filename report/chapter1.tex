@@ -9,20 +9,44 @@
 % so many layers of section structure.
 \section{Introduction}
 
-<A brief introduction suitable for a non-specialist, {\em i.e.} without using technical terms or jargon, as far as possible. This may be similar/the same as that in the 'Outline and Plan' document. The remainder of this chapter will normally cover everything to be assessed under the `Background Research` criterion in the mark scheme.>
-
-Here is an example of how to cite a reference using the numeric system \cite{parikh1980adaptive}.
-
+Algorithms such as Deep Blue \cite{parikh1980adaptive}, AlphaZero \cite{} and more recently Player of Games\cite{}
+have enabled computers to out smart the smartest humans at the game of Chess.
+But all these algorithms are bound to the digital world, rendered useless when
+competing against humans on a real board. This project aims to solve a major
+component of this: vision.
+We consider the vision problem for chess to be two-fold; what is the current board
+state and where are all of the pieces?  With this information, in combination with the
+previous algorithms and a robot arm, the computer is no longer bounded to the
+digital world.
 
 % Must provide evidence of a literature review. Use sections
 % and subsections as they make sense for your project.
 \section{Literature review}
-<This section heading is purely a suggestion -- you should subdivide this chapter in whatever manner you think makes most sense for your project. It may also make sense to spread the `Background Research' over more than one chapter, in which case they should be named sensibly.>
+When we ask ourselves: what is the hard part of Chess?  
+One may think it's the stratergy, another may say anticipating what the opposition
+is going to do next is the hardest part and the more statistical amoung us may formulate it
+as choosing the most likely action for victory.  It is highly unlikely however, that one would say that it is locating
+where all the pieces are in 3D space.
 
-\subsection{Computer Vision}
+For computers this is amoung the hardest of the challenges.  
+Make reference to humans huge allocation of resources to vision. \cite{}
+Why is it so hard for computers then? It's an inverse problem. 
+Compare to solving the decision problem (minimax).  
+The statistal calculation of whether to trade Queen's or block with a pawn has now become trival.  
 
+\subsection{A Short History of Computer Vision}
+\subsubsection{Classical Techniques}
 \subsubsection{Image Recognition}
 \subsubsection{Object Detection}
+But in most applications there will be many things we want to recognise in an image.
 \subsubsection{Instance Segmentation}
+Why bounding boxes are not enough.  What is segmentation? Instance segmentation and then different approaches with pros and cons, i.e. YOLO and RCNN.
+\subsubsection{Adding More Dimensions}
+The real world is not percepived in static 2d images.  How do we add an understanding of 3 dimensions and time in our computer vision models?
+Important for localisation in the real world.  Important for understanding things like object permenance.
 
-\subsection{Chess Research}
+
+\subsection{Computer Vision for Chess}
+Finding the chess board is the first challenge, the most common solution as in \cite{} 
+is to use the `findChessboard` function in openCV for camera calibration.  This **how does 
+this work**.  
