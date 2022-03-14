@@ -38,6 +38,7 @@ This however poses the question about how do we get access to a lot of labelled 
 for chess.  **Some examples of other auto labelling techniques**
 The overall approach I took...
 
+
 \subsection{Dataset Versioning}
 With all this data the next challenge becomes self evident.
 It is concerned with the question: How do we manage all of this?
@@ -47,21 +48,30 @@ How the Game class solves some of these challenges for us.
 
 
 \section{Model Training}
-\lipsum[7]
+Due to how we are autolabelling and the process of finding the corners we can stick with simple
+image recognition and find a network that gets us the best result.
 
 \subsection{Architectures}
-\lipsum[6]
+We start with a baseline.
+
+Start with a super simple network and overfit.  Remove bug until training works.
+Add a feature... more layers, convolutional layers ect. and repeat process.
+
+Attempt using a ViT.
 
 \subsection{Experiment Tracking}
-\lipsum[6]
-
+Express importance of experiment tracking.  Some of the solutions \cite{} and their tradeoffs.
+Why guild was chosen and how it was used.
 
 
 \section{Realtime Inference}
-\lipsum[7]
 
 \subsection{The Realiable Approach}
-\lipsum[6]
+As in \cite{} the most reliable way to implement infrence during play is for a user to input when a move
+has been complete.
+This is not ideal because...
 
 \subsection{The Not-So-Reliable Approach}
-\lipsum[6]
+What if the system constantly updates with each new frame?
+Why this is what we want, but is not as important for finding board state.
+Some of the challenges involved and how we overcame them.

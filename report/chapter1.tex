@@ -12,23 +12,22 @@
 Algorithms such as Deep Blue \cite{parikh1980adaptive}, AlphaZero \cite{} and more recently Player of Games\cite{}
 have enabled computers to out smart the smartest humans at the game of Chess.
 But all these algorithms are bound to the digital world, rendered useless when
-competing against humans on a real board. This project aims to solve a major
+competing against humans on a real board. This project aims to explore a major
 component of this: vision.
 We consider the vision problem for chess to be two-fold; what is the current board
 state and where are all of the pieces?  With this information, in combination with the
-previous algorithms and a robot arm, the computer is no longer bounded to the
+previous algorithms, and a robot arm, the computer is no longer bound to the
 digital world.
 
 % Must provide evidence of a literature review. Use sections
 % and subsections as they make sense for your project.
 \section{Literature review}
 When we ask ourselves: what is the hard part of Chess?  
-One may think it's the stratergy, another may say anticipating what the opposition
-is going to do next is the hardest part and the more statistical amoung us may formulate it
-as choosing the most likely action for victory.  It is highly unlikely however, that one would say that it is locating
-where all the pieces are in 3D space.
+One may think it's the strategy, another may say anticipating what the opposition
+is going to do next and the more statistical among us may formulate it as choosing the most likely action for victory.  
+It is highly unlikely, however, that one would say it is locating where the pieces are in 3D space.
 
-For computers this is amoung the hardest of the challenges.  
+For computers this is among the hardest of the challenges.  
 Make reference to humans huge allocation of resources to vision. \cite{}
 Why is it so hard for computers then? It's an inverse problem. 
 Compare to solving the decision problem (minimax).  
@@ -36,13 +35,19 @@ The statistal calculation of whether to trade Queen's or block with a pawn has n
 
 \subsection{A Short History of Computer Vision}
 \subsubsection{Classical Techniques}
+How we can use classical techniques to understand images.  Neural networks have taken over almost all of the heavy lifting for high level inference.
+Give an indication of time scale here.
 \subsubsection{Image Recognition}
+Le Ye Cunn's work with convolutions \cite{} and MNIST \cite{} and more recently ImageNet \cite{} having become incredibly well known.
+New methods such as Transformers from the world have NLP have generalised the convolution operation have proved 
+very successful and lots of work here has been applied to vision. \cite{} \cite{} \cite{} (Attention is all you need, ViT, generic model from deepmind)
 \subsubsection{Object Detection}
-But in most applications there will be many things we want to recognise in an image.
+But in most applications there will be many things we want to recognise in an image.  The RCNN \cite{} enters.  How Faster-RCNN improves on this \cite{}.
+Why YOLO \cite{} has been so successful (realtime).  Transformers are applicable here too.
 \subsubsection{Instance Segmentation}
-Why bounding boxes are not enough.  What is segmentation? Instance segmentation and then different approaches with pros and cons, i.e. YOLO and RCNN.
+Why bounding boxes are not enough.  What is segmentation? Why instance segmentation is what we actually want. \cite{}
 \subsubsection{Adding More Dimensions}
-The real world is not percepived in static 2d images.  How do we add an understanding of 3 dimensions and time in our computer vision models?
+The real world is not percepived in static 2d images.  How do we add an understanding of 3 dimensions and time in our computer vision models? \cite{}
 Important for localisation in the real world.  Important for understanding things like object permenance.
 
 

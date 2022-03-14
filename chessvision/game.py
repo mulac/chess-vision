@@ -5,10 +5,10 @@ import tempfile
 import cv2
 import chess
 import chess.pgn
-import numpy as np
 
 from .storage import Storage
 from .label import label, label_occupied, SIZE, MARGIN
+
 
 LABELS = [
     chess.Piece(piece_type, color) 
@@ -20,12 +20,24 @@ label_fn = {'pieces': label, 'occupied': label_occupied}
 
 
 class Game:
-    def __init__(self, name, number, flipped=False, game_dir="games", skip_moves=2, board_size=SIZE, margin=MARGIN):
+    def __init__(self, name, number, flipped=False, game_dir="games",
+     skip_moves=2, board_size=SIZE, margin=MARGIN
+    ):
         self.__dict__.update(locals())
         self.pgn_path = os.path.abspath(os.path.join(
             self.game_dir, f"{self.name}.pgn"))
         self.pkl_path = os.path.abspath(os.path.join(
             self.game_dir, f"{self.name}_{self.number}.pkl"))
+
+    def __len__(self):
+        return sum(1 for _ in self.images) - 2
+
+    def __repr__(self):
+        return (
+            f'Game({self.name}, {self.number}, '
+            f'flipped={self.flipped}, skip_moves={self.skip_moves}, '
+            f'board_size={self.board_size}, margin={self.margin})'
+        )
 
     @property
     def pgn(self):
@@ -42,16 +54,6 @@ class Game:
                     yield pickle.load(pkl)
                 except EOFError:
                     break
-
-    def __len__(self):
-        return sum(1 for _ in self.images) - 2
-
-    def __repr__(self):
-        return (
-            f'Game({self.name}, {self.number}, '
-            f'flipped={self.flipped}, skip_moves={self.skip_moves}, '
-            f'board_size={self.board_size}, margin={self.margin})'
-        )
 
 
 def save_games(games, label_fn, labels, root_dir=None):

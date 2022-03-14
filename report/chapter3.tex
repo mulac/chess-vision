@@ -6,15 +6,31 @@
 \section{Model Evaluation}
 
 \subsection{Board Identification}
-\subsection{Piece Detection}
+Aruco vs Chessboard vs heatmap. 
+
+Compare results of 5 examples.  Why chessboard \cite{} will struggle with peices on the board.
+Breif intro to Aruco.  For capturing data Aruco is very reliable, but won't always be possible to add onto the board.
+Why heatmap solution looks like the best appraoch in the realword with unknown environments.  \cite{}
+
+Time comparision for the 3.  And compare accuracy of heatmap against aruco.
+
 \subsection{Piece Recognition}
-Will include basic evaluation.  What happens what you increase layers, use more data, ect.
+Will include basic evaluation.  What happens what you increase layers, use more data, data augmentation.
 Include Recall / Specificity / Sensitivity
 
+\subsection{Piece Detection}
+A benefit of having the depth sensor is an easier way to detech piece presence.  
+Fixed threshold vs clustering.  Adding a margin.  How we actually did it.
+Using paried T-test to evaulate.
+
+Using a neural network instead as an additional class with our piece recognition network.
+Compare that two having a two stage network, the first for piece detection and the second for recognition.
+
 \subsection{Deep Dive into CNNs}
-\lipsum[6]
+Visualising convolutional layers to analyse effectiveness.
 
 \section{Realtime Analysis}
+Frames per second.  Problems.
 
 \section{Comparison to Existing Solutions}
-\lipsum[12]
+Summaries how my solution compares to others.  Need a table?
