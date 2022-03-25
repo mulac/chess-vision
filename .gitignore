@@ -182,3 +182,4 @@ cython_debug/
 runs/
 games/
 data/
+*env

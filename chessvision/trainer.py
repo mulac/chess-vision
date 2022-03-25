@@ -1,15 +1,16 @@
 import os
 import torch
+import itertools
 import numpy as np
 
-from typing import Tuple, Any, List
+from typing import Tuple, Callable, Any, List
 from tqdm import trange
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from .game import LABELS, label_fn, Game, save_games
-
+from .game import Game, save_games
+from .label import LABEL_FN
 
 class ChessFolder(datasets.ImageFolder):
     def _find_classes(self, dir):
@@ -30,17 +31,21 @@ class TrainerConfig:
         Game("Bird", 2),
     )
     channels: int = 3
-    classes: int = len(LABELS)
-    labels: List[Any] = field(default_factory=LABELS)
-    label_fn: str = 'pieces'
-    train_folder: str = None
-    test_folder: str = None
     learning_rate: float = 0.001
     momentum: float = 0.9
     epochs: int = 300
+    learning_rate: float = 0.001
+    momentum: float = 0.9
+    epochs: int = 300
+    batch_size: int = 4
+    classes: List[Any] = None
+    image_shape: int = None
+    label_fn: Callable = None
+    train_folder: str = None
+    test_folder: str = None
     transform: transforms = None
     infer_transform: transforms = None
-    batch_size: int = 4
+    
 
 
 class Trainer:
@@ -49,8 +54,8 @@ class Trainer:
         self.config = config
         self.writer = writer
 
-        train_folder = config.train_folder if config.train_folder else save_games(config.train_games, label_fn[config.label_fn], config.labels)
-        test_folder = config.test_folder if config.train_folder else save_games(config.test_games, label_fn[config.label_fn], config.labels)
+        train_folder = config.train_folder if config.train_folder else save_games(config.train_games, config.label_fn, config.classes)
+        test_folder = config.test_folder if config.train_folder else save_games(config.test_games, config.label_fn, config.classes)
         self.train_dataset = ChessFolder(root=train_folder, transform=config.transform)
         self.test_dataset = ChessFolder(root=test_folder, transform=config.transform)
 

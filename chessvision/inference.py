@@ -7,12 +7,22 @@ import time
 from collections import deque
 
 from . import label
-from .game import id_to_label
 from .record import Camera
+
+id_to_label = {hash(lbl): lbl for lbl in label.PIECE_LABELS}
 
 
 class LiveInference:
-    def __init__(self, model, config, device, camera, history=20):
+    def __init__(self, config, model, occupancy_model, device, camera,
+        history=20, 
+        motion_thresh=0
+        ):
+        if occupancy_model is None:
+            self.occupancy_fn = self.depth
+        else:
+            self.occupancy_fn = self.occupancy_nn
+            occupancy_model.to(device)
+            occupancy_model.eval()
         model.to(device)
         model.eval()
 
@@ -21,8 +31,10 @@ class LiveInference:
         self.config = config
         self.device = device
         self.camera = camera
+        self.motion_thresh = motion_thresh
 
         self.corners = None
+        self.prev = None
         self.history = [deque((None for _ in range(history)), history) for _ in range(64)]
 
     def memory(self):
@@ -49,9 +61,26 @@ class LiveInference:
             preds = {occupied[i]: pred for i, pred in enumerate(self.model(squares).argmax(dim=1))}
         return preds
 
+    def has_motion(self, current):
+        if self.prev is None:
+            self.prev = current
+            return True
+
+        def prepare(img):
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            return cv2.GaussianBlur(gray, (7, 7), 0)
+
+        delta = cv2.absdiff(prepare(self.prev), prepare(current))
+        _, thresh = cv2.threshold(delta, 20, 255, cv2.THRESH_BINARY) 
+        self.prev = current
+        self.show_img(delta, "delta", size=(500, 500))
+        return thresh.mean() > self.motion_thresh
+
     def run_inference(self, img, depth):
         board = label.get_board(img, self.corners)
-        occupied = self.depth(depth)
+        if self.has_motion(board):
+            return
+        occupied = self.occupancy_fn(depth)
         preds = self.get_predictions(board, occupied)
         for i in range(64):
             self.history[i].append(preds.get(i))
@@ -61,6 +90,14 @@ class LiveInference:
     def depth(self, depth):
         board = label.get_board(depth, self.corners)
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(board, alpha=0.03), cv2.COLORMAP_JET)
+        square_offset = label.SIZE // 16
+        for i in range(1, 9):
+            for j in range(1, 9):
+                x = label.SIZE * i // 8 - square_offset
+                y = label.SIZE * j // 8 - square_offset
+                sp = (x - label.CUT, y - label.CUT)
+                ep = (x + label.CUT, y + label.CUT)
+                depth_colormap = cv2.rectangle(depth_colormap, sp, ep, (0, 0, 255), 2)
         self.show_img(depth_colormap, name="depth", size=(500, 500))
         return label.get_occupied_squares(depth, self.corners)
 
@@ -85,14 +122,17 @@ class LiveInference:
 
 
 def main(args):
-    model_path = os.path.join(args.dir, args.model, "model")
-    config_path = os.path.join(args.dir, args.model, "config")
+    model = torch.load(os.path.join(args.dir, args.model, "model"))
+    config = torch.load(os.path.join(args.dir, args.model, "config"))
+    occupancy_model = (torch.load(os.path.join(args.dir, args.occupancy_model, "model")) if
+        args.occupancy_model is not None else None)
 
     game = LiveInference(
-        torch.load(model_path), 
-        torch.load(config_path), 
+        config,
+        model,
+        occupancy_model,
         torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-        Camera(depth=True)
+        Camera(depth=True),
     )
 
     game.start()
@@ -103,7 +143,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Will load an archived model and begin inference from the camera stream.')
     parser.add_argument('model', type=str,
-                        help='the id of a run to use for inference')
+                        help='the id of a run to use for piece inference')
+    parser.add_argument('--occupancy-model', type=str, metavar='occupancy_model',
+                        help='the id of a run to use for occupancy inference')
     parser.add_argument('--dir', type=str, metavar='directory', default='models',
                         help='the directory the run can be found in')
 

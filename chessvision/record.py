@@ -32,7 +32,6 @@ class Camera:
             config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
             self.align = rs.align(rs.stream.color)
         
-
         pipeline.start(config)
         # sensor = pipeline.get_active_profile().get_device().query_sensors()[1]
         # sensor.set_option(rs.option.exposure, 200000) # Set the exposure anytime during the operation

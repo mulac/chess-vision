@@ -7,16 +7,7 @@ import chess
 import chess.pgn
 
 from .storage import Storage
-from .label import label, label_occupied, SIZE, MARGIN
-
-
-LABELS = [
-    chess.Piece(piece_type, color) 
-    for piece_type, color in itertools.product(chess.PIECE_TYPES, chess.COLORS)
-]
-
-id_to_label = {hash(l): l for l in LABELS}
-label_fn = {'pieces': label, 'occupied': label_occupied}
+from .label import SIZE, MARGIN
 
 
 class Game:

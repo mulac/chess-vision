@@ -1,3 +1,4 @@
+import itertools
 import numpy as np
 import chess
 import cv2
@@ -6,6 +7,14 @@ from .aruco import detect, DetectionError
 
 SIZE = 800
 MARGIN = 0
+CUT = 5
+
+PIECE_LABELS = [
+    chess.Piece(piece_type, color) 
+    for piece_type, color in itertools.product(chess.PIECE_TYPES, chess.COLORS)
+]
+
+OCCUPIED_LABELS = [True, False]
 
 
 def label(game):
@@ -25,6 +34,9 @@ def label_occupied(game, stream='color'):
         yield label_occupied_move(move.board(), img[stream], move.move.to_square, corners, game.flipped, game.board_size, game.margin)
         yield label_occupied_move(move.board(), img[stream], move.move.from_square, corners, game.flipped, game.board_size, game.margin)
  
+
+LABEL_FN = {'pieces': label, 'occupied': label_occupied}
+
 
 def skip(iterator, n):
     for _ in range(n):
@@ -59,8 +71,8 @@ def label_move(pgn_board, img, square, corners=None, flipped=False, size=SIZE, m
     return piece_img, label
 
 
-def get_occupied_squares(depth_img, corners, size=SIZE, margin=MARGIN):
-    def occupied(img, cut=20):
+def get_occupied_squares(depth_img, corners, size=SIZE, margin=MARGIN, cut=CUT):
+    def occupied(img):
         img = img[cut:-cut, cut:-cut].flatten()
         return np.sum(img * (img < 255))
     depth_squares = get_squares(get_board(depth_img, corners), size=size, margin=margin)
