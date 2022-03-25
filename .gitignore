@@ -183,3 +183,5 @@ runs/
 games/
 data/
 *env
+
+.vscode/
