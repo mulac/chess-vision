@@ -14,6 +14,8 @@ from .trainer import Trainer, TrainerConfig
 EPOCHS = 300
 LR = 0.001
 MOMENTUM = 0.9
+WEIGHT_DECAY = 1e-4
+BATCH_SIZE = 4
 IMG_SIZE = 48
 CHANNELS = 3
 LABELLER = 'peices'
@@ -24,10 +26,12 @@ label_info = {
 }
 
 config = TrainerConfig(
-    train_folder = '/tmp/chess-vision-3j1vgaxk',
-    test_folder = '/tmp/chess-vision-75e8b4qv',
+    train_folder = '/tmp/chess-vision-z_dt9src',
+    test_folder = '/tmp/chess-vision-h19hyyqc',
     epochs = EPOCHS,
+    batch_size=BATCH_SIZE,
     learning_rate = LR,
+    weight_decay=WEIGHT_DECAY,
     momentum = MOMENTUM,
     channels = CHANNELS,
     image_shape = torch.tensor((IMG_SIZE, IMG_SIZE, CHANNELS)),
@@ -48,7 +52,7 @@ config = TrainerConfig(
 )
 
 print(config)
-model = models.CNN(config.image_shape, len(config.classes))
+model = models.ConvNorm(config.image_shape, len(config.classes))
 writer = SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
 trainer = Trainer(

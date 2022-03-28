@@ -65,7 +65,17 @@ to the architecture.
 An immediate problem presented itself: overfitting.  Now 50\% accuracy is the best we are seeing, with overfitting
 beginning just 50 epochs in.
 
-Attempt using a ViT.
+ConvNext https://arxiv.org/pdf/2201.03545.pdf
+
+\subsubsection{Optimizer}
+AdamW was found produce more attractive results from comparing SGD with/without momentum and Adam and AdamW \cite{}
+Learning Rate, Weight Regularization.
+
+\subsubsection{Batch Normalization}
+https://arxiv.org/abs/1502.03167 and renorm for small batch sizes https://arxiv.org/abs/1702.03275
+
+\subsubsection{Dropouts}
+https://arxiv.org/abs/1207.0580
 
 \subsection{Experiment Tracking}
 Express importance of experiment tracking.  Some of the solutions \cite{} and their tradeoffs.
