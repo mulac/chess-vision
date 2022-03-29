@@ -1,4 +1,3 @@
-import os
 import torch
 
 from torch.utils.tensorboard import SummaryWriter
@@ -6,9 +5,10 @@ from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms
 from datetime import datetime
 
-from . import evaluate, models
+from . import models
 from .label import PIECE_LABELS, OCCUPIED_LABELS, label, label_occupied
 from .trainer import Trainer, TrainerConfig
+from .interpret import Interpreter
 
 
 EPOCHS = 300
@@ -26,8 +26,8 @@ label_info = {
 }
 
 config = TrainerConfig(
-    train_folder = '/tmp/chess-vision-z_dt9src',
-    test_folder = '/tmp/chess-vision-h19hyyqc',
+    train_folder = '/tmp/chess-vision-ndufnayo',
+    test_folder = '/tmp/chess-vision-b7nykw3s',
     epochs = EPOCHS,
     batch_size=BATCH_SIZE,
     learning_rate = LR,
@@ -52,7 +52,7 @@ config = TrainerConfig(
 )
 
 print(config)
-model = models.ConvNorm(config.image_shape, len(config.classes))
+model = models.MLP(config.image_shape, len(config.classes))
 writer = SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
 trainer = Trainer(
@@ -61,16 +61,11 @@ trainer = Trainer(
     writer
 )
 
-# Train
 print("\nBegin training...")
 trainer.train()
 
-
-# Evaluate
 print("\nEvaluating...")
-test_loader = DataLoader(trainer.test_dataset, batch_size=100, num_workers=4)
-accuracy = evaluate.accuracy(trainer.model, test_loader)
-print(f"Accuracy: {accuracy:.2f}")
-
-writer.add_figure("Confusion Matrix", evaluate.plot_confusion_matrix(evaluate.create_confusion_matrix(model, test_loader)))
+interp = Interpreter(trainer.model, DataLoader(trainer.test_dataset, batch_size=100, num_workers=4), label_info[LABELLER][0])
+print(f"Accuracy: {interp.accuracy():.2f}")
+writer.add_figure("Confusion Matrix", interp.plot_confusion_matrix())
 writer.close()

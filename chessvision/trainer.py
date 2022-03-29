@@ -42,6 +42,7 @@ class TrainerConfig:
     classes: List[Any] = None
     image_shape: int = None
     label_fn: Callable = None
+    loss_fn: Callable = torch.nn.CrossEntropyLoss()
     train_folder: str = None
     test_folder: str = None
     transform: transforms = None
@@ -75,14 +76,14 @@ class Trainer:
         for i, (x, y) in enumerate(loader):
             x, y = x.to(self.device), y.to(self.device)
             pred = self.model(x)
-            losses.append(self.model.loss_fn(pred, y).item())
+            losses.append(self.config.loss_fn(pred, y).item())
             correct += (pred.argmax(dim=1) == y).sum().item()
 
         return losses, correct / len(loader.dataset) * 100
 
     def train(self):
         optimizer = self.model.configure_optimizers(self.config)
-        loss_fn = self.model.loss_fn
+        loss_fn = self.config.loss_fn
 
         def train_one_epoch(loader):
             losses = []

@@ -18,7 +18,7 @@ class LiveInference:
         motion_thresh=0
         ):
         if occupancy_model is None:
-            self.occupancy_fn = self.depth
+            self.occupancy_fn = self.occupancy_depth
         else:
             self.occupancy_fn = self.occupancy_nn
             occupancy_model.to(device)
@@ -53,6 +53,10 @@ class LiveInference:
         return Camera.cancel_signal
 
     def get_predictions(self, board, occupied):
+        """ Sends in all the occupied squares into the model as a batch 
+        
+        Returns: Dict[square_id: prediciton_id]
+        """
         preds = {}
         if len(occupied) > 0:
             squares =torch.stack(
@@ -80,14 +84,24 @@ class LiveInference:
         board = label.get_board(img, self.corners)
         if self.has_motion(board):
             return
-        occupied = self.occupancy_fn(depth)
+        occupied = self.occupancy_fn(img, depth)
         preds = self.get_predictions(board, occupied)
         for i in range(64):
             self.history[i].append(preds.get(i))
         self.show_img(board, size=(500, 500))
         self.print_fen()
 
-    def depth(self, depth):
+    def occupancy_nn(self, img, _):
+        """ Uses a torch model to detect occupied squares 
+        
+        Returns: Dict[square_id: square_img]
+        """
+        squares = torch.stack(
+            [self.config.infer_transform(square) for square in label.get_squares(img)]
+        ).to(self.device)
+        return [i for i, occupied in enumerate(self.model(squares).argmax(dim=1)) if occupied]
+
+    def occupancy_depth(self, _, depth):
         board = label.get_board(depth, self.corners)
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(board, alpha=0.03), cv2.COLORMAP_JET)
         square_offset = label.SIZE // 16
@@ -122,16 +136,17 @@ class LiveInference:
 
 
 def main(args):
-    model = torch.load(os.path.join(args.dir, args.model, "model"))
-    config = torch.load(os.path.join(args.dir, args.model, "config"))
-    occupancy_model = (torch.load(os.path.join(args.dir, args.occupancy_model, "model")) if
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = torch.load(os.path.join(args.dir, args.model, "model"), device)
+    config = torch.load(os.path.join(args.dir, args.model, "config"), device)
+    occupancy_model = (torch.load(os.path.join(args.dir, args.occupancy_model, "model"), device) if
         args.occupancy_model is not None else None)
 
     game = LiveInference(
         config,
         model,
         occupancy_model,
-        torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+        device,
         Camera(depth=True),
     )
 
