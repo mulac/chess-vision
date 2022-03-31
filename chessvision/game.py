@@ -1,6 +1,7 @@
+""" An abstraction for interfacing with one unit of recorded data in a pickle file """
+
 import os
 import pickle
-import itertools
 import tempfile
 import cv2
 import chess
@@ -11,6 +12,7 @@ from .label import SIZE, MARGIN
 
 
 class Game:
+    """ Game is a wrapper for pulling images and pgn data from a pickle file """
     def __init__(self, name, number, flipped=False, game_dir="games",
      skip_moves=2, board_size=SIZE, margin=MARGIN
     ):
@@ -48,7 +50,10 @@ class Game:
 
 
 def save_games(games, label_fn, labels, root_dir=None):
-    root_dir, label_dirs = create_dirs(labels, root_dir)
+    """ Save a dataset from a set of game onto disk.
+    Images are grouped by label with the label being the parent directory name.
+    """
+    root_dir, label_dirs = _create_dirs(labels, root_dir)
     for game in games:
         for img, lbl in label_fn(game):
             _, path = tempfile.mkstemp(suffix=".jpg", dir=label_dirs[lbl])
@@ -56,7 +61,7 @@ def save_games(games, label_fn, labels, root_dir=None):
     return root_dir
 
 
-def create_dirs(labels, root_dir=None):
+def _create_dirs(labels, root_dir=None):
     if root_dir is None:
         root_dir = tempfile.mkdtemp(prefix="chess-vision-")
     label_dirs = {lbl: os.path.join(root_dir, str(hash(lbl))) for lbl in labels}

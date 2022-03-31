@@ -1,8 +1,9 @@
 import os
+import time
+import threading
 import torch
 import cv2
-import math
-import time
+import chess
 
 from collections import deque
 
@@ -33,8 +34,13 @@ class LiveInference:
         self.camera = camera
         self.motion_thresh = motion_thresh
 
+        self.game = chess.pgn.Game() 
+        # TODO: add game headers
+        self.game_node = self.game
+
         self.corners = None
-        self.prev = None
+        self.prev_img = None
+        self.prev_board = None
         self.history = [deque((None for _ in range(history)), history) for _ in range(64)]
 
     def memory(self):
@@ -44,7 +50,7 @@ class LiveInference:
         cv2.imshow(name, cv2.resize(img, size))
         cv2.waitKey(1)
     
-    def get_corners(self, img, _):
+    def get_corners(self, img):
         self.show_img(img)
         try: 
             self.corners = label.get_corners(img)
@@ -66,32 +72,32 @@ class LiveInference:
         return preds
 
     def has_motion(self, current):
-        if self.prev is None:
-            self.prev = current
+        if self.prev_img is None:
+            self.prev_img = current
             return True
 
         def prepare(img):
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             return cv2.GaussianBlur(gray, (7, 7), 0)
 
-        delta = cv2.absdiff(prepare(self.prev), prepare(current))
+        delta = cv2.absdiff(prepare(self.prev_img), prepare(current))
         _, thresh = cv2.threshold(delta, 20, 255, cv2.THRESH_BINARY) 
-        self.prev = current
+        self.prev_img = current
         self.show_img(delta, "delta", size=(500, 500))
-        return thresh.mean() > self.motion_thresh
+        return thresh.sum() > self.motion_thresh
 
-    def run_inference(self, img, depth):
+    def run_inference(self, img):
         board = label.get_board(img, self.corners)
         if self.has_motion(board):
             return
-        occupied = self.occupancy_fn(img, depth)
+        occupied = self.occupancy_fn(img)
         preds = self.get_predictions(board, occupied)
         for i in range(64):
             self.history[i].append(preds.get(i))
         self.show_img(board, size=(500, 500))
         self.print_fen()
 
-    def occupancy_nn(self, img, _):
+    def occupancy_nn(self, img):
         """ Uses a torch model to detect occupied squares 
         
         Returns: Dict[square_id: square_img]
@@ -99,7 +105,7 @@ class LiveInference:
         squares = torch.stack(
             [self.config.infer_transform(square) for square in label.get_squares(img)]
         ).to(self.device)
-        return [i for i, occupied in enumerate(self.model(squares).argmax(dim=1)) if occupied]
+        return [i for i, occupied in enumerate(self.model(squares).argmax(dim=1)) if occupied.item() == 1]
 
     def occupancy_depth(self, _, depth):
         board = label.get_board(depth, self.corners)
@@ -123,7 +129,33 @@ class LiveInference:
             print(self.count)
             self.count = 0
             self.begin = t
-        print([id_to_label[i.item()].unicode_symbol() for i in self.memory() if i is not None])
+        board = self.memory()
+        if self.prev_board != board:
+            print("changed:", [id_to_label[i.item()].unicode_symbol() for i in board if i is not None])
+            self.prev_board = board
+
+    def to_fen(self):
+        board = self.memory()
+        fen = ""
+        empty_count = 0
+        for i in range(8):
+            for j in range(8):
+                piece = board[i*8+j]
+                if piece is None:
+                    empty_count += 1
+                else:
+                    if empty_count:
+                        fen += str(empty_count)
+                    empty_count = 0
+                    fen += str(id_to_label[piece.item()])
+            fen += "/"
+
+    def to_fen(self):
+        board = self.memory()
+        for file in range(8):
+            board[file]
+
+
 
     def start(self):
         try:
@@ -147,7 +179,7 @@ def main(args):
         model,
         occupancy_model,
         device,
-        Camera(depth=True),
+        Camera(depth=False),
     )
 
     game.start()

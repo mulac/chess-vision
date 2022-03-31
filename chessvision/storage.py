@@ -1,3 +1,5 @@
+""" Storage facade for files.  Currently only implemented for aws s3 """
+
 import os
 
 

@@ -1,6 +1,7 @@
+""" Trainer and TrainerConfig for training pytorch models on Games """
+
 import os
 import torch
-import itertools
 import numpy as np
 
 from typing import Tuple, Callable, Any, List

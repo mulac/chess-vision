@@ -1,3 +1,5 @@
+""" Automatic labelling functions using the Game class """
+
 import itertools
 import numpy as np
 import chess

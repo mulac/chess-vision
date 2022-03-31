@@ -1,3 +1,5 @@
+""" An interface for locating chessboard corneres using aruco markers """
+
 import os
 import enum
 import pickle

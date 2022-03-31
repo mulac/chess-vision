@@ -1,3 +1,4 @@
+""" Tools for viewing recorded games from their pickle file """
 
 import argparse
 import pickle

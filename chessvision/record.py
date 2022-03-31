@@ -1,3 +1,5 @@
+""" Provides a realsense camera abstraction for recording games """
+
 import pyrealsense2 as rs
 import numpy as np
 import argparse
@@ -27,7 +29,7 @@ class Camera:
         if not any(s.get_info(rs.camera_info.name) == 'RGB Camera' for s in device.sensors):
             raise EnvironmentError("The demo requires Depth camera with Color sensor")
 
-        config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
+        config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 10)
         if self.depth:
             config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
             self.align = rs.align(rs.stream.color)
