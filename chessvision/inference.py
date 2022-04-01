@@ -1,22 +1,36 @@
 import os
 import time
-import threading
 import torch
 import cv2
 import chess
+import chess.pgn
 
 from collections import deque
 
 from . import label
 from .record import Camera
 
-id_to_label = {hash(lbl): lbl for lbl in label.PIECE_LABELS}
 
+class BoardState(chess.Board):
+    def update(self, board):
+        if not isinstance(board, VisionState):
+            board = VisionState(board)
+        if not board.is_valid: return False
+        for move in self.board.legal_moves:
+            self.board.push(move)
+            if self.board == board: return True
+            self.board.pop()
+        return False
+
+class VisionState(chess.Board):
+    def __init__(self, board):
+        super().__init__()
+        self.set_piece_map({i: label.from_id(piece) for i, piece in enumerate(board) if piece is not None})
 
 class LiveInference:
     def __init__(self, config, model, occupancy_model, device, camera,
         history=20, 
-        motion_thresh=0
+        motion_thresh=20
         ):
         if occupancy_model is None:
             self.occupancy_fn = self.occupancy_depth
@@ -34,17 +48,14 @@ class LiveInference:
         self.camera = camera
         self.motion_thresh = motion_thresh
 
-        self.game = chess.pgn.Game() 
-        # TODO: add game headers
-        self.game_node = self.game
+        self.board = chess.Board()
 
         self.corners = None
         self.prev_img = None
-        self.prev_board = None
         self.history = [deque((None for _ in range(history)), history) for _ in range(64)]
 
     def memory(self):
-        return [max(square, key=square.count) for square in self.history]
+        return VisionState([max(square, key=square.count) for square in self.history])
 
     def show_img(self, img, name="chess-vision", size=(960, 540)):
         cv2.imshow(name, cv2.resize(img, size))
@@ -63,13 +74,11 @@ class LiveInference:
         
         Returns: Dict[square_id: prediciton_id]
         """
-        preds = {}
-        if len(occupied) > 0:
-            squares =torch.stack(
-                [self.config.infer_transform(label.get_square(i, board)) for i in occupied]
-            ).to(self.device)
-            preds = {occupied[i]: pred for i, pred in enumerate(self.model(squares).argmax(dim=1))}
-        return preds
+        if len(occupied) == 0: return {}
+        squares = torch.stack(
+            [self.config.infer_transform(label.get_square(i, board)) for i in occupied]
+        ).to(self.device)
+        return {occupied[i]: pred for i, pred in enumerate(self.model(squares).argmax(dim=1))}
 
     def has_motion(self, current):
         if self.prev_img is None:
@@ -81,10 +90,10 @@ class LiveInference:
             return cv2.GaussianBlur(gray, (7, 7), 0)
 
         delta = cv2.absdiff(prepare(self.prev_img), prepare(current))
-        _, thresh = cv2.threshold(delta, 20, 255, cv2.THRESH_BINARY) 
+        _, thresh = cv2.threshold(delta, self.motion_thresh, 255, cv2.THRESH_BINARY) 
         self.prev_img = current
         self.show_img(delta, "delta", size=(500, 500))
-        return thresh.sum() > self.motion_thresh
+        return thresh.sum() > 0
 
     def run_inference(self, img):
         board = label.get_board(img, self.corners)
@@ -96,6 +105,8 @@ class LiveInference:
             self.history[i].append(preds.get(i))
         self.show_img(board, size=(500, 500))
         self.print_fen()
+        if self.board.is_game_over():
+            return Camera.cancel_signal
 
     def occupancy_nn(self, img):
         """ Uses a torch model to detect occupied squares 
@@ -122,46 +133,28 @@ class LiveInference:
         return label.get_occupied_squares(depth, self.corners)
 
     count = 0
-    def print_fen(self):
-        t = int(time.time())
+    def print_frame_rate(self):
         self.count += 1
-        if self.begin != t:
+        if t := int(time.time()) != self.begin:
             print(self.count)
             self.count = 0
             self.begin = t
-        board = self.memory()
-        if self.prev_board != board:
-            print("changed:", [id_to_label[i.item()].unicode_symbol() for i in board if i is not None])
-            self.prev_board = board
 
-    def to_fen(self):
-        board = self.memory()
-        fen = ""
-        empty_count = 0
-        for i in range(8):
-            for j in range(8):
-                piece = board[i*8+j]
-                if piece is None:
-                    empty_count += 1
-                else:
-                    if empty_count:
-                        fen += str(empty_count)
-                    empty_count = 0
-                    fen += str(id_to_label[piece.item()])
-            fen += "/"
-
-    def to_fen(self):
-        board = self.memory()
-        for file in range(8):
-            board[file]
-
-
+    def print_fen(self):
+        if vision := self.memory() != self.board:
+            print("\n\nVisionState:", vision)
+            print("\n\nVisionState:", self.board.update(vision))
+            # print("changed:", [label.from_id[i.item()].unicode_symbol() for i in board if i is not None])
 
     def start(self):
         try:
             self.camera.loop(self.get_corners)
             print(f"found corners... \n {self.corners}\n")
             self.camera.loop(self.run_inference)
+            
+            chess.pgn.Game.from_board(self.board).accept(
+                chess.pgn.FileExporter(open("game.pgn", "w", encoding="utf-8"))
+            )
         finally:
             cv2.destroyAllWindows()
             self.camera.close()

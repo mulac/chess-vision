@@ -18,6 +18,12 @@ PIECE_LABELS = [
 
 OCCUPIED_LABELS = [True, False]
 
+FROM_ID = {hash(lbl): lbl for lbl in PIECE_LABELS}
+STR_FROM_ID = {hash(lbl): str(lbl) for lbl in PIECE_LABELS}
+
+def from_id(id): return FROM_ID[id]
+def str_from_id(id): return STR_FROM_ID[id]
+
 
 def label(game):
     corners = find_corners(game.images)
