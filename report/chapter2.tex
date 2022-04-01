@@ -52,22 +52,31 @@ Due to how we are autolabelling and the process of finding the corners we can st
 image recognition and find a network that gets us the best result.
 
 \subsection{Architectures}
-We start with a baseline.
+To start, a good baseline is found.  A good baseline is a simple model to understand and easy to get decent results with.
+For classification, the pathological baseline could be a random model, which could easily be extended to be weighted by 
+count of examples for each class in the training set.  [Add mathematical formulation for demonstration (multinomial)]
 
-Start with a super simple network and overfit.  Remove bug until training works.
-Add a feature... more layers, convolutional layers ect. and repeat process.
+This is common practice in exploritory \cite{} machine learning as it keeps the research from getting lost, so that the transitions
+made are always from a known and working state.  It becomes very easy to see if an experiment is not working and easy to go back.
 
-With just a 3 layer fully connected neural network with no optimisations an accuracy of over 60\% can be achieved.
+Keeping to this strategy, the multilayer perceptron (MLP) or fully connected network \cite{} was the first neural network to be explored.
+By starting with the MLP, all complexity from the network is stripped away so the more extraneous elements such as the training loop and 
+evaluation metrics can be built and tested.  [perhaps mention purposeley overfitting]
 
-All the way back in 1980 \cite{} convolutions showed promise in simple computer vision tasks, 
-convolutions since have showed extreme promise \cite{}, so this was the first improvement made 
-to the architecture.  
-An immediate problem presented itself: overfitting.  Now 50\% accuracy is the best we are seeing, with overfitting
-beginning just 50 epochs in.
+Once the full training and evaluation structure is functional, new features can be incrementally added and architectures explored.
+
+As mentioned in \nameref{research} convolution operations, and in particular differentiable convolutional operations have had monumental 
+impact on the field of computer vision and so this was the first experiment.
+
+Quite quickly, especially with a limited dataset, overfitting becomes a major problem to overcome and so many experiments were positioned To
+solve this problem.  Pooling, dropout layers and skip connections are amoung some of these.
 
 ConvNext https://arxiv.org/pdf/2201.03545.pdf
 
 \subsubsection{Optimizer}
+An important part of any neural network training loop is the optimiser and so we will explore the effect of swapping these out.
+
+[put into results]
 AdamW was found produce more attractive results from comparing SGD with/without momentum and Adam and AdamW \cite{}
 Learning Rate, Weight Regularization.
 
@@ -80,10 +89,21 @@ https://arxiv.org/abs/1207.0580 shouldn't be used after convolution layers \cite
 Pooling and DropPaths
 
 \subsection{Transfer Learning}
+There appears to be a trend occuring in the deep learning space.  Some organisation spends millions training an impossibly large nerual network
+and others more and more are using these models, often fine-tuning for their own use cases.  \cite{} uses these large models as fixed feature extractors.
 
+This appraoch makes sense as it is inpractical to retrain huge nerual networks that take weeks, millions of dollars and wasteful amounts of energy
+to train \cite{}.
+
+In the case of CNNs we can see the features that kernals in the early layers learn \cite{} are often very simple shapes and will be common for all
+computer vision tasks.  This will explored this further in the results section as we visualise kernals from both random initalised models and 
+pretrained models.
 
 \subsection{Augmentation}
-
+Data augmentation is strategy every machine learning practioner wants to have in their aresonal.  It addresses the data problem, allows us to truly 
+leverage the data we have and generalise our models further.  The MINST \cite{} dataset itself was created using data augmentation.
+In the case of chess piece classification, the correct augmentations or transformations should be chosen.
+Go onto list the transformations used and why.
 
 \subsection{Experiment Tracking}
 Express importance of experiment tracking.  Some of the solutions \cite{} and their tradeoffs.
@@ -101,3 +121,7 @@ This is not ideal because...
 What if the system constantly updates with each new frame?
 Why this is what we want, but is not as important for finding board state.
 Some of the challenges involved and how we overcame them.
+
+\subsubsection{Detecting Motion}
+Difference between 2 frames.
+SIFT / SURF
