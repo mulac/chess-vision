@@ -29,7 +29,7 @@ class BaseCamera:
 
 
 class Camera(BaseCamera):
-    """ Default Camera using opencv VideoCapture
+    """ Default Camera using OpenCV VideoCapture
 
     Args:
         feed: (int) camera index || (str) video filepath
@@ -51,9 +51,8 @@ class Camera(BaseCamera):
 
 class RealsenseCamera(BaseCamera):
     def __init__(self, pipeline=None):
-        if pipeline is None:
-            pipeline = self.setup_pipeline()
-        self.pipeline = pipeline
+        self.pipeline = self.setup_pipeline() if pipeline is None else pipeline
+        self.resolution = self.width, self.height = 1920, 1080
 
     def setup_pipeline(self):
         # Configure depth and color streams
