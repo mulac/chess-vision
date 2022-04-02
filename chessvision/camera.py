@@ -1,3 +1,5 @@
+""" Interface for grabbing frames from a camera or disk """
+
 import abc
 import logging
 import pyrealsense2 as rs
@@ -10,15 +12,10 @@ class BaseCamera:
 
     cancel_signal = True
 
-    def __init__(self):
-        self._cancel = False
-
     def loop(self, callback):
         """ Will continually pass frames to callback.  
         Stops when callback returns True (Camera.cancel_signal) """
-        while not self._cancel:
-            frames = self.fetch()
-            self._cancel = callback(frames)
+        while callback(*self.fetch()) != self.cancel_signal: pass
 
     @abc.abstractmethod
     def fetch(self):
@@ -40,23 +37,20 @@ class Camera(BaseCamera):
     # TODO check ret value in fetch
     # TODO add camera parameters (fps)
     def __init__(self, feed=0):
-        super().__init__()
         self.feed = feed
         self.capture = cv2.VideoCapture(feed)
         
     def fetch(self):
         ret, frame = self.capture.read()
         if not ret: logging.warning(f"Camera {self.feed} failed to fetch frame")
-        return frame
+        return frame,
         
     def close(self):
         self.capture.release()
 
 
-class RealsenseCamera:
-    def __init__(self, pipeline=None, depth=False):
-        super().__init__()
-        self.depth = depth
+class RealsenseCamera(BaseCamera):
+    def __init__(self, pipeline=None):
         if pipeline is None:
             pipeline = self.setup_pipeline()
         self.pipeline = pipeline
@@ -73,9 +67,8 @@ class RealsenseCamera:
             raise EnvironmentError("The demo requires Depth camera with Color sensor")
 
         config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 10)
-        if self.depth:
-            config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-            self.align = rs.align(rs.stream.color)
+        config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+        self.align = rs.align(rs.stream.color)
         
         pipeline.start(config)
         # sensor = pipeline.get_active_profile().get_device().query_sensors()[1]
@@ -84,20 +77,19 @@ class RealsenseCamera:
 
         return pipeline
 
-    def nparray(cls, frame):
+    def ndarray(cls, frame):
         return np.asanyarray(frame.get_data()).copy()
 
     def fetch(self):
         frames = self.pipeline.wait_for_frames()
-        if self.depth:
-            frames = self.align.process(frames)
-            depth = frames.get_depth_frame()
+        frames = self.align.process(frames)
+        depth = frames.get_depth_frame()
         color = frames.get_color_frame()
 
-        if not color or (self.depth and not depth):
+        if not (color and depth):
             logging.warning(f"RealsenseCamera: failed to fetch frames")
         
-        return color, depth
+        return self.ndarray(color), self.ndarray(depth)
 
     def close(self):
         self.pipeline.stop()

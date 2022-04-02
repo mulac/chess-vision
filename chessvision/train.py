@@ -18,20 +18,20 @@ WEIGHT_DECAY = 1e-4
 BATCH_SIZE = 4
 IMG_SIZE = 48
 CHANNELS = 3
-LABELLER = 'peices'
+LABELLER = 'pieces'
 
 label_info = {
-    'peices': (PIECE_LABELS, label),
+    'pieces': (PIECE_LABELS, label),
     'occupied': (OCCUPIED_LABELS, label_occupied)
 }
 
 config = TrainerConfig(
-    train_folder = '/tmp/chess-vision-ndufnayo',
-    test_folder = '/tmp/chess-vision-b7nykw3s',
+    train_folder = '/tmp/chess-vision-xpnwnlej',
+    test_folder = '/tmp/chess-vision-rc9h3r3k',
     epochs = EPOCHS,
-    batch_size=BATCH_SIZE,
+    batch_size = BATCH_SIZE,
     learning_rate = LR,
-    weight_decay=WEIGHT_DECAY,
+    weight_decay = WEIGHT_DECAY,
     momentum = MOMENTUM,
     channels = CHANNELS,
     image_shape = torch.tensor((IMG_SIZE, IMG_SIZE, CHANNELS)),
@@ -52,7 +52,7 @@ config = TrainerConfig(
 )
 
 print(config)
-model = models.MLP(config.image_shape, len(config.classes))
+model = models.ConvRes(config.image_shape, len(config.classes), pretrained=True)
 writer = SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
 trainer = Trainer(

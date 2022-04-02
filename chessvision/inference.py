@@ -8,24 +8,25 @@ import chess.pgn
 from collections import deque
 
 from . import label
-from .record import Camera
-
+from .camera import RealsenseCamera as Camera
 
 class BoardState(chess.Board):
+    """ BoardState is what we update to keep track of a full valid game """
     def update(self, board):
         if not isinstance(board, VisionState):
             board = VisionState(board)
         if not board.is_valid: return False
-        for move in self.board.legal_moves:
-            self.board.push(move)
-            if self.board == board: return True
-            self.board.pop()
+        for move in self.legal_moves:
+            self.push(move)
+            if self == board: return True
+            self.pop()
         return False
 
 class VisionState(chess.Board):
+    """ VisionState is a potentially invalid board state """
     def __init__(self, board):
         super().__init__()
-        self.set_piece_map({i: label.from_id(piece) for i, piece in enumerate(board) if piece is not None})
+        self.set_piece_map({i: label.from_id(piece.item()) for i, piece in enumerate(board) if piece is not None})
 
 class LiveInference:
     def __init__(self, config, model, occupancy_model, device, camera,
@@ -48,7 +49,7 @@ class LiveInference:
         self.camera = camera
         self.motion_thresh = motion_thresh
 
-        self.board = chess.Board()
+        self.board = BoardState()
 
         self.corners = None
         self.prev_img = None
@@ -61,7 +62,7 @@ class LiveInference:
         cv2.imshow(name, cv2.resize(img, size))
         cv2.waitKey(1)
     
-    def get_corners(self, img):
+    def get_corners(self, img, _):
         self.show_img(img)
         try: 
             self.corners = label.get_corners(img)
@@ -95,7 +96,7 @@ class LiveInference:
         self.show_img(delta, "delta", size=(500, 500))
         return thresh.sum() > 0
 
-    def run_inference(self, img):
+    def run_inference(self, img, _):
         board = label.get_board(img, self.corners)
         if self.has_motion(board):
             return
@@ -106,6 +107,7 @@ class LiveInference:
         self.show_img(board, size=(500, 500))
         self.print_fen()
         if self.board.is_game_over():
+            print(self.board, self.board.is_game_over())
             return Camera.cancel_signal
 
     def occupancy_nn(self, img):
@@ -141,9 +143,9 @@ class LiveInference:
             self.begin = t
 
     def print_fen(self):
-        if vision := self.memory() != self.board:
-            print("\n\nVisionState:", vision)
-            print("\n\nVisionState:", self.board.update(vision))
+        if self.board != (vision := self.memory()):
+            print("\n\nVisionState:\n", vision)
+            print("\nBoardState Changed:", self.board.update(vision))
             # print("changed:", [label.from_id[i.item()].unicode_symbol() for i in board if i is not None])
 
     def start(self):
@@ -172,7 +174,7 @@ def main(args):
         model,
         occupancy_model,
         device,
-        Camera(depth=False),
+        Camera(),
     )
 
     game.start()
@@ -186,7 +188,7 @@ if __name__ == '__main__':
                         help='the id of a run to use for piece inference')
     parser.add_argument('--occupancy-model', type=str, metavar='occupancy_model',
                         help='the id of a run to use for occupancy inference')
-    parser.add_argument('--dir', type=str, metavar='directory', default='models',
+    parser.add_argument('--dir', type=str, metavar='directory', default='runs',
                         help='the directory the run can be found in')
 
     main(parser.parse_args())
