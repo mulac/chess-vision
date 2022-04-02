@@ -1,5 +1,6 @@
 import os
 import time
+import logging
 import torch
 import cv2
 import chess
@@ -8,7 +9,7 @@ import chess.pgn
 from collections import deque
 
 from . import label
-from .camera import RealsenseCamera as Camera
+from .camera import Camera as Camera, RealsenseCamera
 
 class BoardState(chess.Board):
     """ BoardState is what we update to keep track of a full valid game """
@@ -63,11 +64,11 @@ class LiveInference:
         cv2.waitKey(1)
     
     def get_corners(self, img, _):
+        if img is None: return
         self.show_img(img)
         try: 
             self.corners = label.get_corners(img)
-        except label.DetectionError:
-            return
+        except label.DetectionError: return
         return Camera.cancel_signal
 
     def get_predictions(self, board, occupied):
@@ -163,6 +164,11 @@ class LiveInference:
 
 
 def main(args):
+    if args.video:
+        if os.path.exists(args.video): camera = Camera(args.video)
+        else: exit(f"can't read video stream: {args.video} does not exist")
+    else:
+        camera = RealsenseCamera()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = torch.load(os.path.join(args.dir, args.model, "model"), device)
     config = torch.load(os.path.join(args.dir, args.model, "config"), device)
@@ -174,7 +180,7 @@ def main(args):
         model,
         occupancy_model,
         device,
-        Camera(),
+        camera,
     )
 
     game.start()
@@ -188,6 +194,8 @@ if __name__ == '__main__':
                         help='the id of a run to use for piece inference')
     parser.add_argument('--occupancy-model', type=str, metavar='occupancy_model',
                         help='the id of a run to use for occupancy inference')
+    parser.add_argument('--video', type=str, metavar='video',
+                        help='the path of a video stream to use')
     parser.add_argument('--dir', type=str, metavar='directory', default='runs',
                         help='the directory the run can be found in')
 

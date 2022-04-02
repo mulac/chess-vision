@@ -26,8 +26,7 @@ def game(args):
         pkl_file.close()
 
 
-def video(args):
-    camera = RealsenseCamera()
+def video(args, camera=RealsenseCamera()):
     videofile = f'{args.dir}/{args.file_name}.mp4'
     writer = cv2.VideoWriter(videofile, cv2.VideoWriter_fourcc(*'DIVX'), 10, camera.resolution)
 
@@ -41,7 +40,6 @@ def video(args):
     except KeyboardInterrupt:
         print(f"saving video file to {videofile}")
     finally:
-        print(f"saving video file to {videofile}")
         camera.close()
         writer.release()
         cv2.destroyAllWindows()
@@ -54,7 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('file_name', type=str,
         help='the file_name to save the game as')
     parser.add_argument('--video', action='store_true', default=False,
-        help='the directory the game file can be found in')
+        help='just record a .mp4 and not individual frames per move')
     parser.add_argument('--dir', type=str, metavar='directory', default='games',
         help='the directory the game file can be found in')
 

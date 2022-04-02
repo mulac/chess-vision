@@ -34,7 +34,6 @@ class Camera(BaseCamera):
     Args:
         feed: (int) camera index || (str) video filepath
     """
-    # TODO check ret value in fetch
     # TODO add camera parameters (fps)
     def __init__(self, feed=0):
         self.feed = feed
@@ -43,7 +42,7 @@ class Camera(BaseCamera):
     def fetch(self):
         ret, frame = self.capture.read()
         if not ret: logging.warning(f"Camera {self.feed} failed to fetch frame")
-        return frame,
+        return frame, None
         
     def close(self):
         self.capture.release()
