@@ -1,6 +1,0 @@
-architecture: 64bit ELF
-cpus: 12
-processor: x86_64
-python_version: 3.8.5 (default, Sep  4 2020, 07:30:14) [GCC 7.3.0]
-uname: 'Linux P1 5.13.0-30-generic #33~20.04.1-Ubuntu SMP Mon Feb 7 14:25:10 UTC 2022
-  x86_64 x86_64'
