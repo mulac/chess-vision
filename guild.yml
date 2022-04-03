@@ -1,4 +1,4 @@
-train:
+qtrain:
   main: chessvision.train
   flags-import: all
   sourcecode:
@@ -6,3 +6,10 @@ train:
   requires:
     - file: games/
       target-type: link
+
+train:
+  main: chessvision.train
+  flags-import: all
+  sourcecode:
+    - '*.py'
+

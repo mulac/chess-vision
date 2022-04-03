@@ -11,7 +11,7 @@ from .trainer import Trainer, TrainerConfig
 from .interpret import Interpreter
 
 
-EPOCHS = 300
+EPOCHS = 3
 LR = 0.001
 MOMENTUM = 0.9
 WEIGHT_DECAY = 1e-4
@@ -26,8 +26,8 @@ label_info = {
 }
 
 config = TrainerConfig(
-    train_folder = '/tmp/chess-vision-xpnwnlej',
-    test_folder = '/tmp/chess-vision-rc9h3r3k',
+    # train_folder = '/tmp/chess-vision-zfo1qipd',
+    # test_folder = '/tmp/chess-vision-2jsnf2u7',
     epochs = EPOCHS,
     batch_size = BATCH_SIZE,
     learning_rate = LR,

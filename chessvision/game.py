@@ -17,10 +17,8 @@ class Game:
      skip_moves=2, board_size=SIZE, margin=MARGIN
     ):
         self.__dict__.update(locals())
-        self.pgn_path = os.path.abspath(os.path.join(
-            self.game_dir, f"{self.name}.pgn"))
-        self.pkl_path = os.path.abspath(os.path.join(
-            self.game_dir, f"{self.name}_{self.number}.pkl"))
+        self.pgn_path = f"{self.name}.pgn"
+        self.pkl_path = f"{self.name}_{self.number}.pkl"
 
     def __len__(self):
         return sum(1 for _ in self.images) - 2

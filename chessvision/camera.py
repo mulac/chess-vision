@@ -7,9 +7,8 @@ import numpy as np
 import cv2
 
 
-class BaseCamera:
-    __metaclass__ = abc.ABCMeta
-
+class BaseCamera(metaclass=abc.ABCMeta):
+    
     cancel_signal = True
 
     def loop(self, callback):
