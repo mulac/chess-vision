@@ -3,9 +3,11 @@
 import os
 import logging
 
+from . import util
+
 
 class S3Storage():
-    def __init__(self, dir="games", bucket="chess-vision"):
+    def __init__(self, dir, bucket="chess-vision"):
         if not os.path.exists(dir): os.mkdir(dir)
         self.__s3 = None
         self.dir = dir
@@ -20,16 +22,26 @@ class S3Storage():
 
     def __call__(self, object):
         """ Fetches an object s3 if not already on disk """
-        if not os.path.exists(path := os.path.join(self.dir, object)):
-            from botocore.exceptions import ClientError
-            try:
-                self._s3().download_file(self.bucket, object, path)
-            except ClientError as e:
-                logging.error(f'failed to download {object} from {self.bucket} to {path}')
+        path = os.path.join(self.dir, object)
+        logging.info(f'{self}: fetching {object} from {path}...')
+        if not os.path.exists(path): self.download(object, path)
         return path
 
-    def upload(self, object):
-        self._s3().upload_file(os.path.join(self.dir, object), self.bucket, object)
+    def __repr__(self):
+        return f"S3Storage({self.dir} bucket={self.bucket})"
+
+    def download(self, object, path):
+        from botocore.exceptions import ClientError
+        try: self._s3().download_file(self.bucket, object, path)
+        except ClientError as e:
+            logging.error(f'{self}: failed to download {object} to {path} [{e}]')
+
+    def upload(self, object, path):
+        from botocore.exceptions import ClientError
+        try: self._s3().upload_file(path, self.bucket, object)
+        except ClientError as e:
+            logging.error(f'{self}: failed to upload {object} from {path} [{e}]')
+        
 
 
-Storage = S3Storage(dir="/tmp/chess-vision")
+Storage = S3Storage(os.getenv(util.STORAGE_ENV, "games"))

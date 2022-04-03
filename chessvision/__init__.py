@@ -1,5 +1,7 @@
 __all__ = [
     'record',
     'replay',
-    'inference'
+    'inference',
+    'trainer',
+    'game'
 ]

@@ -11,21 +11,39 @@ from .label import PIECE_LABELS
 
 
 class Interpreter:
-    def __init__(self, model, dataloader, classes=[piece.unicode_symbol() for piece in PIECE_LABELS]):
-        self.model, self.dataloader, self.classes = model, dataloader, classes
+    def __init__(self, model, dataloader, loss_fn, classes=[piece.unicode_symbol() for piece in PIECE_LABELS]):
+        self.model, self.dataloader, self.loss_fn, self.classes = model, dataloader, loss_fn, classes
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
+        self.loss_fn.reduction = 'none'
+
+    @property
+    def _data(self):
+        for x, y in self.dataloader:
+            yield x.cpu(), y.cpu(), self.model(x.to(self.device)).cpu()
 
     def accuracy(self):
         correct = 0
-        for x, y in self.dataloader:
-            x, y = x.to(self.device), y.to(self.device)
-            correct += (self.model(x).argmax(dim=1) == y).sum().item()
+        for _, y, o in self._data:
+            correct += (o.argmax(dim=1) == y).sum().item()
         
         return correct / len(self.dataloader.dataset) * 100
 
-    def top_losses(self):
-        raise NotImplementedError()
+    def plot_top_losses(self, shape=(3, 3)):
+        losses = sorted(self.losses(), reverse=True)[:sum(shape)]
+        f = plt.figure(figsize=(10, 10))
+        f.suptitle("Predicted | Actual | Loss", fontsize=20)
+        for i, (loss, pred, actual, img) in enumerate(losses):
+            plt.subplot(shape[0], shape[1], i+1)
+            plt.title(f"{self.classes[pred]} | {self.classes[actual]} | {loss:.2f}", fontsize=16)
+            plt.imshow(img)
+            plt.axis("off")
+        return f
+
+    def losses(self):
+        for x, y, o in self._data:
+            for i, loss in enumerate(self.loss_fn(o, y)):
+                yield (loss, o[i].argmax(), y[i], x[i].permute(1, 2, 0))
 
     def plot_confusion_matrix(self):
         cf_values = self.confusion_matrix()
@@ -44,12 +62,9 @@ class Interpreter:
     def confusion_matrix(self):
         preds = []
         labels = []
-
-        for x, y in self.dataloader:
-            x, y = x.to(self.device), y.to(self.device)
-            output = self.model(x)
-            preds.extend((torch.max(torch.exp(output), 1)[1]).data.cpu().numpy())
-            labels.extend(y.data.cpu().numpy())
+        for _, y, o in self._data:
+            preds.extend((torch.max(torch.exp(o), 1)[1]).data)
+            labels.extend(y.data)
 
         return confusion_matrix(labels, preds)
 

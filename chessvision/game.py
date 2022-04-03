@@ -13,12 +13,12 @@ from .label import SIZE, MARGIN
 
 class Game:
     """ Game is a wrapper for pulling images and pgn data from a pickle file """
-    def __init__(self, name, number, flipped=False, game_dir="games",
+    def __init__(self, name, number, flipped=False,
      skip_moves=2, board_size=SIZE, margin=MARGIN
     ):
         self.__dict__.update(locals())
-        self.pgn_path = f"{self.name}.pgn"
-        self.pkl_path = f"{self.name}_{self.number}.pkl"
+        self.pgn_file = f"{self.name}.pgn"
+        self.pkl_file = f"{self.name}_{self.number}.pkl"
 
     def __len__(self):
         return sum(1 for _ in self.images) - 2
@@ -32,14 +32,14 @@ class Game:
 
     @property
     def pgn(self):
-        with open(Storage(self.pgn_path)) as pgn:
+        with open(Storage(self.pgn_file)) as pgn:
             for i in range(self.number):
                 chess.pgn.skip_game(pgn)
             return chess.pgn.read_game(pgn)
 
     @property
     def images(self):
-        with open(Storage(self.pkl_path), "rb") as pkl:
+        with open(Storage(self.pkl_file), "rb") as pkl:
             while True:
                 try:
                     yield pickle.load(pkl)

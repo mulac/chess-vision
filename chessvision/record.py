@@ -7,9 +7,9 @@ import cv2
 from .camera import RealsenseCamera
 
 
-def game(args):
+def game(args, camera):
     picklefile = f'{args.dir}/{args.file_name}.pkl'
-    camera=RealsenseCamera()
+
     def record(color, depth):
         cv2.imwrite("data/current.jpg", color.copy())
         pickle.dump({"color": color.copy(), "depth": depth.copy()}, pkl_file)
@@ -26,7 +26,7 @@ def game(args):
         pkl_file.close()
 
 
-def video(args, camera=RealsenseCamera()):
+def video(args, camera):
     videofile = f'{args.dir}/{args.file_name}.mp4'
     writer = cv2.VideoWriter(videofile, cv2.VideoWriter_fourcc(*'DIVX'), 10, camera.resolution)
 
@@ -57,6 +57,6 @@ if __name__ == '__main__':
         help='the directory the game file can be found in')
 
     if (args := parser.parse_args()).video:  
-        video(args)
+        video(args, RealsenseCamera())
     else:
-        game(args)
+        game(args, RealsenseCamera())

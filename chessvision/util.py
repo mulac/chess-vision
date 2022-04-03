@@ -1,3 +1,7 @@
+
+STORAGE_ENV = "CHESSVISION_GAMES"
+
+
 from itertools import groupby
 
 def count(collection): 
