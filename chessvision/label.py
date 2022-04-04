@@ -31,6 +31,13 @@ def label(game):
     for move, img in zip(game.pgn.mainline(), images):
         yield label_move(move.board(), img['color'], move.move.to_square, corners, game.flipped, game.board_size, game.margin)
 
+def label_color(game):
+    for img, piece in label(game):
+        yield img, piece.color
+
+def label_type(game):
+    for img, piece in label(game):
+        yield img, piece.piece_type
 
 def label_occupied(game, stream='color'):
     corners = find_corners(game.images)
@@ -43,8 +50,11 @@ def label_occupied(game, stream='color'):
         yield label_occupied_move(move.board(), img[stream], move.move.from_square, corners, game.flipped, game.board_size, game.margin)
  
 
-LABEL_FN = {'pieces': label, 'occupied': label_occupied}
+LABEL_FN = {'pieces': label, 'occupied': label_occupied, 'color': label_color, 'type': label_type}
 
+# ===========================================================
+# The following are helpers for the above labelling functions
+# ===========================================================
 
 def skip(iterator, n):
     for _ in range(n):
@@ -77,7 +87,6 @@ def label_move(pgn_board, img, square, corners=None, flipped=False, size=SIZE, m
     piece_img = get_square(square, np.flip(board_img) if flipped else board_img, size, margin)
     label = pgn_board.piece_at(square)
     return piece_img, label
-
 
 def get_occupied_squares(depth_img, corners, size=SIZE, margin=MARGIN, cut=CUT):
     def occupied(img):
