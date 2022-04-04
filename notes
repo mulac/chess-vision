@@ -7,3 +7,10 @@ How do we label empty squares?
     Can we prove that it's much harder to detect empty squares?  paried t-tests?
 
 Are we flipping the board correctly?
+
+TODO:
+ - Add data transforms
+ - Collect more data<>
+ - Visualise CNN layers
+ - Calculate top-n accuracy
+ - Compare freezing layers in transfer learning
