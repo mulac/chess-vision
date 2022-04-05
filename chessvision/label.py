@@ -5,24 +5,26 @@ import numpy as np
 import chess
 import cv2
 
+from collections import namedtuple
+
 from .aruco import detect, DetectionError
 
 SIZE = 800
 MARGIN = 0
 CUT = 5
 
-PIECE_LABELS = [
-    chess.Piece(piece_type, color) 
-    for piece_type, color in itertools.product(chess.PIECE_TYPES, chess.COLORS)
-]
+Labeller = namedtuple('Labeller', ['labels', 'label_fn', 'names'])
 
+PIECE_LABELS = [chess.Piece(piece_t, col) for piece_t, col in itertools.product(chess.PIECE_TYPES, chess.COLORS)]
 OCCUPIED_LABELS = [True, False]
+COLOR_LABELS = chess.COLORS
+TYPE_LABELS = chess.PIECE_TYPES
 
-FROM_ID = {hash(lbl): lbl for lbl in PIECE_LABELS}
-STR_FROM_ID = {hash(lbl): str(lbl) for lbl in PIECE_LABELS}
+_piece_by_id = {hash(lbl): lbl for lbl in PIECE_LABELS}
+_piece_str_by_id = {hash(lbl): str(lbl) for lbl in PIECE_LABELS}
 
-def from_id(id): return FROM_ID[id]
-def str_from_id(id): return STR_FROM_ID[id]
+def from_id(id): return _piece_by_id[id]
+def str_from_id(id): return _piece_str_by_id[id]
 
 
 def label(game):
@@ -49,8 +51,6 @@ def label_occupied(game, stream='color'):
         yield label_occupied_move(move.board(), img[stream], move.move.to_square, corners, game.flipped, game.board_size, game.margin)
         yield label_occupied_move(move.board(), img[stream], move.move.from_square, corners, game.flipped, game.board_size, game.margin)
  
-
-LABEL_FN = {'pieces': label, 'occupied': label_occupied, 'color': label_color, 'type': label_type}
 
 # ===========================================================
 # The following are helpers for the above labelling functions

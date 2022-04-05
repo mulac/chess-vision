@@ -1,5 +1,5 @@
 
-STORAGE_ENV = "CHESSVISION_GAMES"
+STORAGE_ENV = "CV_DIR"
 
 
 from itertools import groupby

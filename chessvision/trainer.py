@@ -11,7 +11,6 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 from .game import Game, save_games
-from .label import LABEL_FN
 
 class ChessFolder(datasets.ImageFolder):
     def _find_classes(self, dir):
@@ -60,7 +59,7 @@ class Trainer:
         train_folder = config.train_folder if config.train_folder else save_games(config.train_games, config.label_fn, config.classes)
         test_folder = config.test_folder if config.train_folder else save_games(config.test_games, config.label_fn, config.classes)
         self.train_dataset = ChessFolder(root=train_folder, transform=config.transform)
-        self.test_dataset = ChessFolder(root=test_folder, transform=config.transform)
+        self.test_dataset = ChessFolder(root=test_folder, transform=config.infer_transform)
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)

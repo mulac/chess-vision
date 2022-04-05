@@ -12,6 +12,7 @@ class S3Storage():
         self.__s3 = None
         self.dir = dir
         self.bucket = bucket
+        logging.info(f'{self}: created.')
 
     def _s3(self):
         """ Avoids importing boto3 if s3 is never needed """
@@ -38,10 +39,10 @@ class S3Storage():
 
     def upload(self, object, path):
         from botocore.exceptions import ClientError
+        logging.info(f'{self}: downloading {object} from {path}...')
         try: self._s3().upload_file(path, self.bucket, object)
         except ClientError as e:
             logging.error(f'{self}: failed to upload {object} from {path} [{e}]')
         
 
-
-Storage = S3Storage(os.getenv(util.STORAGE_ENV, "games"))
+Storage = S3Storage(os.getenv(util.STORAGE_ENV) or "games")

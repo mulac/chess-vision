@@ -6,7 +6,10 @@ from torchvision import transforms
 from datetime import datetime
 
 from . import models
-from .label import PIECE_LABELS, OCCUPIED_LABELS, label, label_occupied
+from .game import Game
+from .label import (Labeller,
+    COLOR_LABELS, PIECE_LABELS, OCCUPIED_LABELS, TYPE_LABELS, 
+    label, label_color, label_occupied, label_type)
 from .trainer import Trainer, TrainerConfig
 from .interpret import Interpreter
 
@@ -17,17 +20,31 @@ MOMENTUM = 0.9
 WEIGHT_DECAY = 1e-4
 BATCH_SIZE = 4
 IMG_SIZE = 48
+AUG_CROP = .9
+AUG_BRIGHTNESS = .75
+AUG_HUE = .1
 CHANNELS = 3
 LABELLER = 'pieces'
 
+
 label_info = {
-    'pieces': (PIECE_LABELS, label),
-    'occupied': (OCCUPIED_LABELS, label_occupied)
+    'pieces': Labeller(PIECE_LABELS, label, [p.unicode_symbol() for p in PIECE_LABELS]),
+    'occupied': Labeller(OCCUPIED_LABELS, label_occupied, ["Occupied", "Empty"]),
+    'color': Labeller(COLOR_LABELS, label_color, ["White", "Black"]),
+    'type': Labeller(TYPE_LABELS, label_type, ["pawn", "knight", "bishop", "rook", "queen", "king"])
 }
 
 config = TrainerConfig(
-    # train_folder = '/tmp/chess-vision-zfo1qipd',
-    # test_folder = '/tmp/chess-vision-2jsnf2u7',
+    train_folder = '/tmp/chess-vision-2v49ovvp',
+    test_folder = '/tmp/chess-vision-5pqhxnnj',
+    train_games = (
+        Game("Adams", 1),
+        Game("Adams", 2),
+        Game("Adams", 3)
+    ),
+    test_games = (
+        Game("Bird", 2),
+    ),
     epochs = EPOCHS,
     batch_size = BATCH_SIZE,
     learning_rate = LR,
@@ -35,13 +52,21 @@ config = TrainerConfig(
     momentum = MOMENTUM,
     channels = CHANNELS,
     image_shape = torch.tensor((IMG_SIZE, IMG_SIZE, CHANNELS)),
-    classes = label_info[LABELLER][0],
-    label_fn = label_info[LABELLER][1],
+    classes = label_info[LABELLER].labels,
+    label_fn = label_info[LABELLER].label_fn,
     transform = transforms.Compose([
         transforms.Resize(IMG_SIZE),
-        # transforms.RandomSizedCrop(224),
-        # transforms.RandomHorizontalFlip(),
-        transforms.ToTensor()
+        # transforms.Grayscale(),
+        # transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
+        transforms.ColorJitter(brightness=AUG_BRIGHTNESS, hue=AUG_HUE),
+        transforms.RandomCrop((
+            int(IMG_SIZE*AUG_CROP), 
+            int(IMG_SIZE*AUG_CROP))
+        ),
+        # transforms.RandomAffine(180),
+        transforms.ToTensor(),
         # transforms.Normalize(mean=[0.485, 0.456, 0.406],
         #                      std=[0.229, 0.224, 0.225])
     ]),
@@ -52,20 +77,25 @@ config = TrainerConfig(
 )
 
 print(config)
-model = models.ConvRes(config.image_shape, len(config.classes), pretrained=True)
-writer = SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
 trainer = Trainer(
-    model,
+    models.ConvRes(config.image_shape, len(config.classes), pretrained=True),
     config,
-    writer
+    SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 )
 
 print("\nBegin training...")
 trainer.train()
 
 print("\nEvaluating...")
-interp = Interpreter(trainer.model, DataLoader(trainer.test_dataset, batch_size=100, num_workers=4), label_info[LABELLER][0])
+interp = Interpreter(
+    model=torch.load("model"), 
+    loader=DataLoader(trainer.test_dataset, batch_size=100, num_workers=4),
+    loss_fn=config.loss_fn,
+    classes=label_info[LABELLER].names
+)
+
 print(f"Accuracy: {interp.accuracy():.2f}")
-writer.add_figure("Confusion Matrix", interp.plot_confusion_matrix())
-writer.close()
+trainer.writer.add_figure("Confusion Matrix", interp.plot_confusion_matrix())
+trainer.writer.add_figure("Top Losses", interp.plot_top_losses((6, 6)))
+trainer.writer.close()

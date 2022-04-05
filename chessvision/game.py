@@ -21,7 +21,7 @@ class Game:
         self.pkl_file = f"{self.name}_{self.number}.pkl"
 
     def __len__(self):
-        return sum(1 for _ in self.images) - 2
+        return sum(1 for _ in self.images) - self.skip_moves
 
     def __repr__(self):
         return (

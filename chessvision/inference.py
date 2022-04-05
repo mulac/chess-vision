@@ -38,8 +38,9 @@ class LiveInference:
             self.occupancy_fn = self.occupancy_depth
         else:
             self.occupancy_fn = self.occupancy_nn
-            occupancy_model.to(device)
-            occupancy_model.eval()
+            self.occupancy_model = occupancy_model
+            self.occupancy_model.to(device)
+            self.occupancy_model.eval()
         model.to(device)
         model.eval()
 
@@ -101,7 +102,7 @@ class LiveInference:
         board = label.get_board(img, self.corners)
         if self.has_motion(board):
             return
-        occupied = self.occupancy_fn(img)
+        occupied = self.occupancy_fn(board)
         preds = self.get_predictions(board, occupied)
         for i in range(64):
             self.history[i].append(preds.get(i))
@@ -119,7 +120,7 @@ class LiveInference:
         squares = torch.stack(
             [self.config.infer_transform(square) for square in label.get_squares(img)]
         ).to(self.device)
-        return [i for i, occupied in enumerate(self.model(squares).argmax(dim=1)) if occupied.item() == 1]
+        return [i for i, occupied in enumerate(self.occupancy_model(squares).argmax(dim=1)) if occupied.item() == 1]
 
     def occupancy_depth(self, _, depth):
         board = label.get_board(depth, self.corners)
@@ -145,7 +146,7 @@ class LiveInference:
 
     def print_fen(self):
         if self.board != (vision := self.memory()):
-            print("\n\nVisionState:\n", vision)
+            print(f"\n\nVisionState:\n{vision}")
             print("\nBoardState Changed:", self.board.update(vision))
             # print("changed:", [label.from_id[i.item()].unicode_symbol() for i in board if i is not None])
 

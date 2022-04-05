@@ -2,47 +2,54 @@
 
 import argparse
 import pickle
+import chess
 import cv2
 
 from .camera import RealsenseCamera
 
 
-def game(args, camera):
-    picklefile = f'{args.dir}/{args.file_name}.pkl'
-
-    def record(color, depth):
-        cv2.imwrite("data/current.jpg", color.copy())
-        pickle.dump({"color": color.copy(), "depth": depth.copy()}, pkl_file)
-        input("\nwaiting...")
+class Recorder:
+    def __init__(self, config, camera):
+        self.config, self.camera = config, camera
         
-    try:
-        pkl_file = open(picklefile, "wb")
-        input("Press [ENTER] to begin:")
-        camera.loop(record)
-    except KeyboardInterrupt:
-        print("\nsaving pickle file...")
-    finally:
-        camera.close()
-        pkl_file.close()
+    def game(self):
+        picklefile = f'{self.config.dir}/{self.config.file_name}.pkl'
+        self.move = 0
+        
+        def record(color, depth):
+            cv2.imwrite("data/current.jpg", color.copy())
+            pickle.dump({"color": color.copy(), "depth": depth.copy()}, pkl_file)
+            input(f"\n{self.move}: waiting...")
+            self.move += 1
+            
+        try:
+            pkl_file = open(picklefile, "wb")
+            input("Press [ENTER] to begin:")
+            self.camera.loop(record)
+        except KeyboardInterrupt:
+            print("\nsaving pickle file...")
+        finally:
+            self.camera.close()
+            pkl_file.close()
 
 
-def video(args, camera):
-    videofile = f'{args.dir}/{args.file_name}.mp4'
-    writer = cv2.VideoWriter(videofile, cv2.VideoWriter_fourcc(*'DIVX'), 10, camera.resolution)
+    def video(self):
+        videofile = f'{self.config.dir}/{self.config.file_name}.mp4'
+        writer = cv2.VideoWriter(videofile, cv2.VideoWriter_fourcc(*'DIVX'), 10, self.camera.resolution)
 
-    def record(colour, _):
-        writer.write(colour)
-        cv2.imshow('recorder', colour)
-        cv2.waitKey(1)
+        def record(colour, _):
+            writer.write(colour)
+            cv2.imshow('recorder', colour)
+            cv2.waitKey(1)
 
-    try:
-        camera.loop(record)
-    except KeyboardInterrupt:
-        print(f"saving video file to {videofile}")
-    finally:
-        camera.close()
-        writer.release()
-        cv2.destroyAllWindows()
+        try:
+            self.camera.loop(record)
+        except KeyboardInterrupt:
+            print(f"saving video file to {videofile}")
+        finally:
+            self.camera.close()
+            writer.release()
+            cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
@@ -57,6 +64,6 @@ if __name__ == '__main__':
         help='the directory the game file can be found in')
 
     if (args := parser.parse_args()).video:  
-        video(args, RealsenseCamera())
+        Recorder(args, RealsenseCamera()).video()
     else:
-        game(args, RealsenseCamera())
+        Recorder(args, RealsenseCamera()).game()
