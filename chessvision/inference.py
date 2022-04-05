@@ -30,7 +30,7 @@ class VisionState(chess.Board):
         self.set_piece_map({i: label.from_id(piece.item()) for i, piece in enumerate(board) if piece is not None})
 
 class LiveInference:
-    def __init__(self, config, model, occupancy_model, device, camera,
+    def __init__(self, config, model, occupancy_model, occupancy_config, device, camera,
         history=20, 
         motion_thresh=20
         ):
@@ -39,6 +39,7 @@ class LiveInference:
         else:
             self.occupancy_fn = self.occupancy_nn
             self.occupancy_model = occupancy_model
+            self.occupancy_config = occupancy_config
             self.occupancy_model.to(device)
             self.occupancy_model.eval()
         model.to(device)
@@ -65,11 +66,13 @@ class LiveInference:
         cv2.waitKey(1)
     
     def get_corners(self, img, _):
-        if img is None: return
+        if img is None: 
+            return
         self.show_img(img)
         try: 
             self.corners = label.get_corners(img)
-        except label.DetectionError: return
+        except label.DetectionError: 
+            return
         return Camera.cancel_signal
 
     def get_predictions(self, board, occupied):
@@ -118,7 +121,7 @@ class LiveInference:
         Returns: Dict[square_id: square_img]
         """
         squares = torch.stack(
-            [self.config.infer_transform(square) for square in label.get_squares(img)]
+            [self.occupancy_config.infer_transform(square) for square in label.get_squares(img)]
         ).to(self.device)
         return [i for i, occupied in enumerate(self.occupancy_model(squares).argmax(dim=1)) if occupied.item() == 1]
 
@@ -175,11 +178,14 @@ def main(args):
     config = torch.load(os.path.join(args.dir, args.model, "config"), device)
     occupancy_model = (torch.load(os.path.join(args.dir, args.occupancy_model, "model"), device) if
         args.occupancy_model is not None else None)
+    occupancy_config = (torch.load(os.path.join(args.dir, args.occupancy_model, "config"), device) if
+        args.occupancy_model is not None else None)
 
     game = LiveInference(
         config,
         model,
         occupancy_model,
+        occupancy_config,
         device,
         camera,
     )
