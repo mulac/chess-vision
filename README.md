@@ -1,7 +1,7 @@
 # chess-vision
 
-The aim of this project is to calculate the board state of a real chessboard from a video stream.
-Necessary if we are to emancipate computers amazing chess ability into the real world,
+chessvision calculates the state of a real chessboard from a video stream.
+Necessary if we are to unleash computers superhuman chess ability into the real world,
 but also an excuse to train some computer vision models and collect my own dataset!
 
 Limitations:
