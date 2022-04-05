@@ -7,7 +7,7 @@ from datetime import datetime
 
 from . import models
 from .game import Game
-from .label import (Labeller,
+from .label import (Labeller, from_id,
     COLOR_LABELS, PIECE_LABELS, OCCUPIED_LABELS, TYPE_LABELS, 
     label, label_color, label_occupied, label_type)
 from .trainer import Trainer, TrainerConfig
@@ -26,9 +26,8 @@ AUG_HUE = .1
 CHANNELS = 3
 LABELLER = 'pieces'
 
-
 label_info = {
-    'pieces': Labeller(PIECE_LABELS, label, [p.unicode_symbol() for p in PIECE_LABELS]),
+    'pieces': Labeller(PIECE_LABELS, label, [from_id(i).unicode_symbol() for i in range(len(PIECE_LABELS))]),
     'occupied': Labeller(OCCUPIED_LABELS, label_occupied, ["Occupied", "Empty"]),
     'color': Labeller(COLOR_LABELS, label_color, ["White", "Black"]),
     'type': Labeller(TYPE_LABELS, label_type, ["pawn", "knight", "bishop", "rook", "queen", "king"])

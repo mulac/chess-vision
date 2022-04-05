@@ -13,7 +13,7 @@ from .label import PIECE_LABELS
 
 
 class Interpreter:
-    def __init__(self, model, loader, loss_fn, classes=[piece.unicode_symbol() for piece in PIECE_LABELS]):
+    def __init__(self, model, loader, loss_fn, classes):
         self.model, self.loader, self.loss_fn, self.classes = model, loader, loss_fn, classes
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)

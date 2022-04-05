@@ -13,7 +13,7 @@ from torchvision import datasets, transforms
 from .game import Game, save_games
 
 class ChessFolder(datasets.ImageFolder):
-    def _find_classes(self, dir):
+    def find_classes(self, dir):
         classes = [d.name for d in os.scandir(dir) if d.is_dir()]
         return classes, {i: int(i) for i in classes}
 

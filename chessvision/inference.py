@@ -1,12 +1,13 @@
 import os
 import time
-import logging
 import torch
 import cv2
 import chess
 import chess.pgn
+import numpy as np
 
 from collections import deque
+from cairosvg import svg2png
 
 from . import label
 from .camera import Camera as Camera, RealsenseCamera
@@ -102,6 +103,7 @@ class LiveInference:
         return thresh.sum() > 0
 
     def run_inference(self, img, _):
+        if img is None: time.sleep(100)
         board = label.get_board(img, self.corners)
         if self.has_motion(board):
             return
@@ -149,6 +151,8 @@ class LiveInference:
 
     def print_fen(self):
         if self.board != (vision := self.memory()):
+            svg_img = np.frombuffer(svg2png(vision._repr_svg_()), dtype=np.uint8)
+            self.show_img(cv2.imdecode(svg_img, cv2.IMREAD_COLOR), "vision", (400, 400))
             print(f"\n\nVisionState:\n{vision}")
             print("\nBoardState Changed:", self.board.update(vision))
             # print("changed:", [label.from_id[i.item()].unicode_symbol() for i in board if i is not None])
