@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from .game import Game, save_games
+from .game import Game, LabelOptions, save_games
 
 class ChessFolder(datasets.ImageFolder):
     def find_classes(self, dir):
@@ -21,8 +21,8 @@ class ChessFolder(datasets.ImageFolder):
 @dataclass
 class TrainerConfig:
     train_games: Tuple[Game] = (
-        Game("Bird", 0, flipped=True),
-        Game("Adams", 0, flipped=True),
+        Game("Bird", 0, LabelOptions(flipped=True)),
+        Game("Adams", 0, LabelOptions(flipped=True)),
         Game("Adams", 1),
         Game("Adams", 2),
         Game("Adams", 3),

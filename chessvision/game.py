@@ -8,15 +8,13 @@ import chess
 import chess.pgn
 
 from .storage import Storage
-from .label import SIZE, MARGIN
+from .label import LabelOptions
 
 
 class Game:
     """ Game is a wrapper for pulling images and pgn data from a pickle file """
-    def __init__(self, name, number, flipped=False,
-     skip_moves=2, board_size=SIZE, margin=MARGIN
-    ):
-        self.__dict__.update(locals())
+    def __init__(self, name, number, options=LabelOptions()):
+        self.name, self.number, self.options = name, number, options
         self.pgn_file = f"{self.name}.pgn"
         self.pkl_file = f"{self.name}_{self.number}.pkl"
 
@@ -24,11 +22,7 @@ class Game:
         return sum(1 for _ in self.images) - self.skip_moves
 
     def __repr__(self):
-        return (
-            f'Game({self.name}, {self.number}, '
-            f'flipped={self.flipped}, skip_moves={self.skip_moves}, '
-            f'board_size={self.board_size}, margin={self.margin})'
-        )
+        return f'Game({self.name}, {self.number}, {self.options})'
 
     @property
     def pgn(self):

@@ -99,14 +99,21 @@ class ConvNorm(nn.Module):
 
 
 class ConvRes(models.ResNet):
-    def __init__(self, shape, classes, pretrained=False):
+    def __init__(self, shape, classes, pretrained=False, use_features=False):
         if shape[-1] != 3:
             raise ValueError("must have 3 channels")
         super().__init__(models.resnet.BasicBlock, [2, 2, 2, 2])
         if pretrained:
             state_dict = models.resnet.load_state_dict_from_url(models.resnet.model_urls['resnet18'])
             self.load_state_dict(state_dict)
-        self.fc = nn.Linear(self.fc.in_features, classes)
+            if use_features:
+                for param in self.parameters():
+                    param.requires_grad = False
+        self.fc = nn.Sequential(
+            nn.Linear(self.fc.in_features, 64),
+            nn.ReLU(),
+            nn.Linear(64, classes)
+        )
 
     def configure_optimizers(self, config):
         return torch.optim.AdamW(self.parameters(), 

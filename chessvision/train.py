@@ -26,7 +26,7 @@ AUG_HUE = .1
 CHANNELS = 3
 LABELLER = 'pieces'
 
-label_info = {
+labellers = {
     'pieces': Labeller(PIECE_LABELS, label, [from_id(i).unicode_symbol() for i in range(len(PIECE_LABELS))]),
     'occupied': Labeller(OCCUPIED_LABELS, label_occupied, ["Occupied", "Empty"]),
     'color': Labeller(COLOR_LABELS, label_color, ["White", "Black"]),
@@ -34,15 +34,18 @@ label_info = {
 }
 
 config = TrainerConfig(
-    train_folder = '/tmp/chess-vision-2v49ovvp',
-    test_folder = '/tmp/chess-vision-5pqhxnnj',
+    # train_folder = '/tmp/chess-vision-2v49ovvp',
+    # test_folder = '/tmp/chess-vision-5pqhxnnj',
     train_games = (
         Game("Adams", 1),
         Game("Adams", 2),
-        Game("Adams", 3)
+        Game("Adams", 3),
+        *(Game("Evans", i) for i in range(7))
     ),
     test_games = (
+        Game("Evans", 7),
         Game("Bird", 2),
+        Game("Kasparov", 0)
     ),
     epochs = EPOCHS,
     batch_size = BATCH_SIZE,
@@ -51,8 +54,8 @@ config = TrainerConfig(
     momentum = MOMENTUM,
     channels = CHANNELS,
     image_shape = torch.tensor((IMG_SIZE, IMG_SIZE, CHANNELS)),
-    classes = label_info[LABELLER].labels,
-    label_fn = label_info[LABELLER].label_fn,
+    classes = labellers[LABELLER].labels,
+    label_fn = labellers[LABELLER].label_fn,
     transform = transforms.Compose([
         transforms.Resize(IMG_SIZE),
         # transforms.Grayscale(),
@@ -91,7 +94,7 @@ interp = Interpreter(
     model=torch.load("model"), 
     loader=DataLoader(trainer.test_dataset, batch_size=100, num_workers=4),
     loss_fn=config.loss_fn,
-    classes=label_info[LABELLER].names
+    classes=labellers[LABELLER].names
 )
 
 print(f"Accuracy: {interp.accuracy():.2f}")
