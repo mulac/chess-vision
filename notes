@@ -8,9 +8,16 @@ How do we label empty squares?
 
 Are we flipping the board correctly?
 
+Idea: send a whole board image as well as a square to detect colour of that square.
+    It may be hard to tell the colour of a piece without reference to other pieces and 
+    squares on the board due to lighting differences.
+
 TODO:
- - Add data transforms
- - Collect more data<>
+ - LR scheduling (cosine annealing)
  - Visualise CNN layers
  - Calculate top-n accuracy
  - Compare freezing layers in transfer learning
+ - Try combining models
+ 
+
+Kasparov_0 frame 28 and 70 needs removing hand in way (check couple moves before)
