@@ -8,7 +8,7 @@ import chess
 import chess.pgn
 
 from .storage import Storage
-from .label import LabelOptions
+from .label import *
 
 
 class Game:
@@ -48,8 +48,9 @@ def save_games(games, label_fn, labels, root_dir=None):
     root_dir, label_dirs = _create_dirs(labels, root_dir)
     for game in games:
         for img, lbl in label_fn(game):
-            _, path = tempfile.mkstemp(suffix=".jpg", dir=label_dirs[lbl])
+            fd, path = tempfile.mkstemp(suffix=".jpg", dir=label_dirs[lbl])
             cv2.imwrite(path, img)
+            os.close(fd)
     return root_dir
 
 

@@ -2,14 +2,13 @@
 
 import torch
 import seaborn as sn
+import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
 from functools import reduce
 from operator import mul
 from sklearn.metrics import confusion_matrix
-
-from .label import PIECE_LABELS
 
 
 class Interpreter:
@@ -23,8 +22,15 @@ class Interpreter:
 
     @property
     def _data(self):
+        """ Returns: for each same (input, actual, prediction) """
         for x, y in self.loader:
             yield x.cpu(), y.cpu(), self.model(x.to(self.device)).cpu()
+
+    def losses(self):
+        """ Returns: for each sample (loss, pred, actual, input) """
+        for x, y, o in self._data:
+            for i, loss in enumerate(self.loss_fn(o, y)):
+                yield(loss.item(), o[i].argmax(), y[i], x[i].permute(1, 2, 0))
 
     def accuracy(self):
         correct = 0
@@ -34,16 +40,8 @@ class Interpreter:
         return correct / len(self.loader.dataset) * 100
 
     def plot_top_losses(self, shape=(3, 3)):
-        try:
-            losses = self.losses()
-            n = reduce(mul, shape)
-            losses = sorted(losses, reverse=True)[:n]
-        except RuntimeError as e:
-            for x, y, o in self._data:
-                for i, loss in enumerate(self.loss_fn(o, y)):
-                    print(loss, o[i].argmax(), y[i])
-            print(n)
-            raise
+        losses = sorted(self.losses(), reverse=True)[:reduce(mul, shape)]
+        # losses = torch.topk(self.losses, ac)
         f = plt.figure(figsize=(12, 12))
         f.suptitle("Predicted | Actual | Loss", fontsize=20)
         for i, (loss, pred, actual, img) in enumerate(losses):
@@ -51,12 +49,8 @@ class Interpreter:
             plt.title(f"{self.classes[pred]} | {self.classes[actual]} | {loss:.2f}", fontsize=16)
             plt.imshow(img)
             plt.axis("off")
+        plt.tight_layout()
         return f
-
-    def losses(self):
-        for x, y, o in self._data:
-            for i, loss in enumerate(self.loss_fn(o, y)):
-                yield (loss, o[i].argmax(), y[i], x[i].permute(1, 2, 0))
 
     def plot_confusion_matrix(self):
         cf_values = self.confusion_matrix()
@@ -70,6 +64,7 @@ class Interpreter:
         cf.set_yticklabels(cf.get_ymajorticklabels(), fontsize=40)
         cf.set_ylabel('Ground Truth')
         cf.set_xlabel('Predicted')
+        plt.tight_layout()
         return cf.get_figure()
 
     def confusion_matrix(self):

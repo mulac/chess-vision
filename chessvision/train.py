@@ -1,3 +1,4 @@
+import logging
 import torch
 
 from torch.utils.tensorboard import SummaryWriter
@@ -7,35 +8,33 @@ from datetime import datetime
 
 from . import models
 from .game import Game
-from .label import (Labeller, from_id,
-    COLOR_LABELS, PIECE_LABELS, OCCUPIED_LABELS, TYPE_LABELS, 
-    label, label_color, label_occupied, label_type)
+from .label import *
 from .trainer import Trainer, TrainerConfig
 from .interpret import Interpreter
 
 
-EPOCHS = 3
-LR = 0.001
+EPOCHS = 40
+LR = 0.00005
 MOMENTUM = 0.9
 WEIGHT_DECAY = 1e-4
 BATCH_SIZE = 4
-IMG_SIZE = 48
+IMG_SIZE = 96
 AUG_CROP = .9
 AUG_BRIGHTNESS = .75
 AUG_HUE = .1
 CHANNELS = 3
-LABELLER = 'pieces'
+LABELLER = 'type'
 
 labellers = {
-    'pieces': Labeller(PIECE_LABELS, label, [from_id(i).unicode_symbol() for i in range(len(PIECE_LABELS))]),
+    'piece':    Labeller(PIECE_LABELS, label, [from_id(i).unicode_symbol() for i in range(len(PIECE_LABELS))]),
     'occupied': Labeller(OCCUPIED_LABELS, label_occupied, ["Occupied", "Empty"]),
-    'color': Labeller(COLOR_LABELS, label_color, ["White", "Black"]),
-    'type': Labeller(TYPE_LABELS, label_type, ["pawn", "knight", "bishop", "rook", "queen", "king"])
+    'color':    Labeller(COLOR_LABELS, label_color, ["White", "Black"]),
+    'type':     Labeller(TYPE_LABELS, label_type, ["pawn", "knight", "bishop", "rook", "queen", "king"]),
 }
 
 config = TrainerConfig(
-    # train_folder = '/tmp/chess-vision-2v49ovvp',
-    # test_folder = '/tmp/chess-vision-5pqhxnnj',
+    # train_folder = '/tmp/chess-vision-h23992mn',
+    # test_folder = '/tmp/chess-vision-x3pka21l',
     train_games = (
         Game("Adams", 1),
         Game("Adams", 2),
@@ -54,8 +53,8 @@ config = TrainerConfig(
     momentum = MOMENTUM,
     channels = CHANNELS,
     image_shape = torch.tensor((IMG_SIZE, IMG_SIZE, CHANNELS)),
-    classes = labellers[LABELLER].labels,
-    label_fn = labellers[LABELLER].label_fn,
+    labeller = labellers[LABELLER],
+    # loss_fn = lambda pred, actual: torch.nn.CrossEntropyLoss(pred[0], actual[:,0]) + torch.nn.CrossEntropyLoss(pred[1], actual[:,0]),
     transform = transforms.Compose([
         transforms.Resize(IMG_SIZE),
         # transforms.Grayscale(),
@@ -78,26 +77,26 @@ config = TrainerConfig(
     ])
 )
 
-print(config)
+logging.info(config)
 
 trainer = Trainer(
-    models.ConvRes(config.image_shape, len(config.classes), pretrained=True),
+    models.ConvRes(config.image_shape, len(config.labeller.classes), pretrained=True),
     config,
     SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 )
 
-print("\nBegin training...")
+logging.info("Begin training...")
 trainer.train()
 
-print("\nEvaluating...")
+logging.info("Evaluating...")
 interp = Interpreter(
     model=torch.load("model"), 
     loader=DataLoader(trainer.test_dataset, batch_size=100, num_workers=4),
     loss_fn=config.loss_fn,
-    classes=labellers[LABELLER].names
+    classes=config.labeller.names
 )
 
-print(f"Accuracy: {interp.accuracy():.2f}")
+logging.info(f"Accuracy: {interp.accuracy():.2f}")
 trainer.writer.add_figure("Confusion Matrix", interp.plot_confusion_matrix())
-trainer.writer.add_figure("Top Losses", interp.plot_top_losses((6, 6)))
+trainer.writer.add_figure("Top Losses", interp.plot_top_losses((4, 4)))
 trainer.writer.close()

@@ -127,20 +127,6 @@ class LiveInference:
         ).to(self.device)
         return [i for i, occupied in enumerate(self.occupancy_model(squares).argmax(dim=1)) if occupied.item() == 1]
 
-    def occupancy_depth(self, _, depth):
-        board = label.get_board(depth, self.corners)
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(board, alpha=0.03), cv2.COLORMAP_JET)
-        square_offset = label.SIZE // 16
-        for i in range(1, 9):
-            for j in range(1, 9):
-                x = label.SIZE * i // 8 - square_offset
-                y = label.SIZE * j // 8 - square_offset
-                sp = (x - label.CUT, y - label.CUT)
-                ep = (x + label.CUT, y + label.CUT)
-                depth_colormap = cv2.rectangle(depth_colormap, sp, ep, (0, 0, 255), 2)
-        self.show_img(depth_colormap, name="depth", size=(500, 500))
-        return label.get_occupied_squares(depth, self.corners)
-
     count = 0
     def print_frame_rate(self):
         self.count += 1
@@ -173,8 +159,9 @@ class LiveInference:
 
 def main(args):
     if args.video:
-        if os.path.exists(args.video): camera = Camera(args.video)
-        else: exit(f"can't read video stream: {args.video} does not exist")
+        camera = Camera(args.video)
+        # if os.path.exists(args.video): camera = Camera(args.video)
+        # else: exit(f"can't read video stream: {args.video} does not exist")
     else:
         camera = RealsenseCamera()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -192,6 +179,7 @@ def main(args):
         occupancy_config,
         device,
         camera,
+        history=20
     )
 
     game.start()

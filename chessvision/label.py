@@ -20,12 +20,12 @@ class LabelOptions():
     skip_moves: int = 2
     flipped: bool = False
 
-Labeller = namedtuple('Labeller', ['labels', 'label_fn', 'names'])
+Labeller = namedtuple('Labeller', ['classes', 'label_fn', 'names'])
 
-PIECE_LABELS = [chess.Piece(piece_t, col) for piece_t, col in itertools.product(chess.PIECE_TYPES, chess.COLORS)]
+PIECE_LABELS = [chess.Piece(piece_t, color) for piece_t, color in itertools.product(chess.PIECE_TYPES, chess.COLORS)]
 OCCUPIED_LABELS = [True, False]
 COLOR_LABELS = chess.COLORS
-TYPE_LABELS = chess.PIECE_TYPES
+TYPE_LABELS = list(range(6))
 
 _piece_by_id = {hash(lbl): lbl for lbl in PIECE_LABELS}
 _piece_str_by_id = {hash(lbl): str(lbl) for lbl in PIECE_LABELS}
@@ -46,7 +46,8 @@ def label_color(game):
 
 def label_type(game):
     for img, piece in label(game):
-        yield img, piece.piece_type
+        # make pieces types zero-indexed for pytorch
+        yield img, piece.piece_type - 1
 
 def label_occupied(game, stream='color'):
     corners = find_corners(game.images)

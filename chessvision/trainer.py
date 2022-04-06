@@ -4,13 +4,15 @@ import os
 import torch
 import numpy as np
 
-from typing import Tuple, Callable, Any, List
+from typing import Tuple, Callable
 from tqdm import trange
 from dataclasses import dataclass
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from .game import Game, LabelOptions, save_games
+
+from .game import Game, LabelOptions, Labeller, save_games
+
 
 class ChessFolder(datasets.ImageFolder):
     def find_classes(self, dir):
@@ -39,9 +41,8 @@ class TrainerConfig:
     momentum: float = 0.9
     epochs: int = 300
     batch_size: int = 4
-    classes: List[Any] = None
+    labeller: Labeller = None
     image_shape: int = None
-    label_fn: Callable = None
     loss_fn: Callable = torch.nn.CrossEntropyLoss()
     train_folder: str = None
     test_folder: str = None
@@ -56,8 +57,8 @@ class Trainer:
         self.config = config
         self.writer = writer
 
-        train_folder = config.train_folder if config.train_folder else save_games(config.train_games, config.label_fn, config.classes)
-        test_folder = config.test_folder if config.train_folder else save_games(config.test_games, config.label_fn, config.classes)
+        train_folder = config.train_folder if config.train_folder else save_games(config.train_games, config.labeller.label_fn, config.labeller.classes)
+        test_folder = config.test_folder if config.train_folder else save_games(config.test_games, config.labeller.label_fn, config.labeller.classes)
         self.train_dataset = ChessFolder(root=train_folder, transform=config.transform)
         self.test_dataset = ChessFolder(root=test_folder, transform=config.infer_transform)
 
