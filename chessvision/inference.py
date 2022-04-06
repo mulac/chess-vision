@@ -12,6 +12,7 @@ from cairosvg import svg2png
 from . import label
 from .camera import Camera as Camera, RealsenseCamera
 
+
 class BoardState(chess.Board):
     """ BoardState is what we update to keep track of a full valid game """
     def update(self, board):
@@ -24,14 +25,16 @@ class BoardState(chess.Board):
             self.pop()
         return False
 
+
 class VisionState(chess.Board):
     """ VisionState is a potentially invalid board state """
     def __init__(self, board):
         super().__init__()
         self.set_piece_map({i: label.from_id(piece.item()) for i, piece in enumerate(board) if piece is not None})
 
+
 class LiveInference:
-    def __init__(self, config, model, occupancy_model, occupancy_config, device, camera,
+    def __init__(self, config, model, occupancy_model, occupancy_config, color_model, color_config, device, camera,
         history=20, 
         motion_thresh=20
         ):
@@ -45,6 +48,10 @@ class LiveInference:
             self.occupancy_model.eval()
         model.to(device)
         model.eval()
+
+        self.color_model = color_model
+        self.color_config = color_config
+        self.color_model.to(device)
 
         self.begin = time.time()
         self.model = model
@@ -81,11 +88,23 @@ class LiveInference:
         
         Returns: Dict[square_id: prediciton_id]
         """
-        if len(occupied) == 0: return {}
+        if len(occupied) == 0: 
+            return {}
+
+        squares = torch.stack(
+            [self.color_config.infer_transform(label.get_square(i, board)) for i in occupied]
+        ).to(self.device)
+        colors = self.color_model(squares).argmax(dim=1)
+        
         squares = torch.stack(
             [self.config.infer_transform(label.get_square(i, board)) for i in occupied]
         ).to(self.device)
-        return {occupied[i]: pred for i, pred in enumerate(self.model(squares).argmax(dim=1))}
+        pieces = self.model(squares).argmax(dim=1)
+
+        print("pieces: ", pieces)
+        print("colors: ", colors)
+        
+        return {occupied[i]: pred for i, pred in enumerate(pieces + 6 * (1 - colors))}
 
     def has_motion(self, current):
         if self.prev_img is None:
@@ -103,7 +122,8 @@ class LiveInference:
         return thresh.sum() > 0
 
     def run_inference(self, img, _):
-        if img is None: time.sleep(100)
+        if img is None:
+            time.sleep(100)
         board = label.get_board(img, self.corners)
         if self.has_motion(board):
             return
@@ -171,12 +191,18 @@ def main(args):
         args.occupancy_model is not None else None)
     occupancy_config = (torch.load(os.path.join(args.dir, args.occupancy_model, "config"), device) if
         args.occupancy_model is not None else None)
+    color_model = (torch.load(os.path.join(args.dir, args.color_model, "model"), device) if
+        args.color_model is not None else None)
+    color_config = (torch.load(os.path.join(args.dir, args.color_model, "config"), device) if
+        args.color_model is not None else None)
 
     game = LiveInference(
         config,
         model,
         occupancy_model,
         occupancy_config,
+        color_model,
+        color_config,
         device,
         camera,
         history=20
@@ -193,6 +219,8 @@ if __name__ == '__main__':
                         help='the id of a run to use for piece inference')
     parser.add_argument('--occupancy-model', type=str, metavar='occupancy_model',
                         help='the id of a run to use for occupancy inference')
+    parser.add_argument('--color-model', type=str, metavar='color_model',
+                        help='the id of a run to use for color inference')
     parser.add_argument('--video', type=str, metavar='video',
                         help='the path of a video stream to use')
     parser.add_argument('--dir', type=str, metavar='directory', default='runs',
