@@ -48,8 +48,7 @@ How the Game class solves some of these challenges for us.
 
 
 \section{Model Training}
-Due to how we are autolabelling and the process of finding the corners we can stick with simple
-image recognition and find a network that gets us the best result.
+Classification is all that's needed.  
 
 \subsection{Architectures}
 To start, a good baseline is found.  A good baseline is a simple model to understand and easy to get decent results with.
@@ -125,3 +124,6 @@ Some of the challenges involved and how we overcame them.
 \subsubsection{Detecting Motion}
 Difference between 2 frames.
 SIFT / SURF
+
+\subsubsection{Board State and Vision State}
+Leveraging the chess engine to give more reliable results for robot play or pgn recording.
