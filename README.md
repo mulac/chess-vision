@@ -7,8 +7,8 @@ but also an excuse to train some computer vision models and collect my own datas
 Limitations:
 
  - **Output is only concerned with the board state** (not position of pieces in world space)
- - **Only one chess board is used in training** (other boards can be used but model will need to be retrained)
- - **Camera is assumed to be mounted directly above the chess board**(small perspective shift is accounted for, but extreme angles where occlusion will be a problem is not)
+ - **Camera is assumed to be mounted directly above the chess board** (small perspective shift is accounted for, but extreme angles with occlusion will be a problem)
+ - **Only one chess board is used in pre-trained model** (other boards can be used but model will need to be retrained)
 
 
 [guild](https://guild.ai/) was used in this project for experiment tracking.  Highly recommend you go check it out if you haven't already.
@@ -23,6 +23,7 @@ Limitations:
 3. Use [record.py](chessvision/record.py) and [replay.py](chessvision/replay.py) to record your own games
 
 **Training**
+
 4. Visit [train.py](chessvision/train.py) for a view of the training script
 5. Visit [models.py](chessvision/train.py) to see some of the models that were tested
 

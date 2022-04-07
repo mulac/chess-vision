@@ -36,16 +36,17 @@ config = TrainerConfig(
     # train_folder = '/tmp/chess-vision-h23992mn',
     # test_folder = '/tmp/chess-vision-x3pka21l',
     train_games = (
-        Game("Adams", 1),
-        Game("Adams", 2),
-        Game("Adams", 3),
-        *(Game("Evans", i) for i in range(7))
-    ),
-    test_games = (
         Game("Evans", 7),
         Game("Bird", 2),
-        Game("Kasparov", 0)
+        Game("Kasparov", 0),
+        # *(Game("Evans", i) for i in range(7))
     ),
+    test_games = tuple(Game("Evans", i) for i in range(7)),
+        # Game("Adams", 1),
+        # Game("Adams", 2),
+        # Game("Adams", 3),
+    #     *(Game("Evans", i) for i in range(7))
+    # ),
     epochs = EPOCHS,
     batch_size = BATCH_SIZE,
     learning_rate = LR,

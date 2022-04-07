@@ -6,9 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from functools import reduce
-from operator import mul
 from sklearn.metrics import confusion_matrix
+
+from .util import mult
 
 
 class Interpreter:
@@ -30,7 +30,7 @@ class Interpreter:
         """ Returns: for each sample (loss, pred, actual, input) """
         for x, y, o in self._data:
             for i, loss in enumerate(self.loss_fn(o, y)):
-                yield(loss.item(), o[i].argmax(), y[i], x[i].permute(1, 2, 0))
+                yield loss.item(), o[i].argmax(), y[i], x[i].permute(1, 2, 0)
 
     def accuracy(self):
         correct = 0
@@ -40,11 +40,12 @@ class Interpreter:
         return correct / len(self.loader.dataset) * 100
 
     def plot_top_losses(self, shape=(3, 3)):
-        losses = sorted(self.losses(), reverse=True)[:reduce(mul, shape)]
-        # losses = torch.topk(self.losses, ac)
+        losses = list(self.losses())
+        _, topk = torch.topk(torch.tensor([l[0] for l in losses]), mult(shape))
         f = plt.figure(figsize=(12, 12))
         f.suptitle("Predicted | Actual | Loss", fontsize=20)
-        for i, (loss, pred, actual, img) in enumerate(losses):
+        for i, l in enumerate(topk):
+            loss, pred, actual, img = losses[l]
             plt.subplot(shape[0], shape[1], i+1)
             plt.title(f"{self.classes[pred]} | {self.classes[actual]} | {loss:.2f}", fontsize=16)
             plt.imshow(img)
