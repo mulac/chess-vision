@@ -48,7 +48,6 @@ class TrainerConfig:
     test_folder: str = None
     transform: transforms = None
     infer_transform: transforms = None
-    
 
 
 class Trainer:

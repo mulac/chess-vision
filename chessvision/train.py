@@ -33,8 +33,8 @@ labellers = {
 }
 
 config = TrainerConfig(
-    # train_folder = '/tmp/chess-vision-h23992mn',
-    # test_folder = '/tmp/chess-vision-x3pka21l',
+    train_folder = '/tmp/chess-vision-fkouxboy',
+    test_folder = '/tmp/chess-vision-gc4bde10',
     train_games = (
         Game("Evans", 7),
         Game("Bird", 2),
@@ -55,7 +55,6 @@ config = TrainerConfig(
     channels = CHANNELS,
     image_shape = torch.tensor((IMG_SIZE, IMG_SIZE, CHANNELS)),
     labeller = labellers[LABELLER],
-    # loss_fn = lambda pred, actual: torch.nn.CrossEntropyLoss(pred[0], actual[:,0]) + torch.nn.CrossEntropyLoss(pred[1], actual[:,0]),
     transform = transforms.Compose([
         transforms.Resize(IMG_SIZE),
         # transforms.Grayscale(),
@@ -81,7 +80,7 @@ config = TrainerConfig(
 logging.info(config)
 
 trainer = Trainer(
-    models.ConvRes(config.image_shape, len(config.labeller.classes), pretrained=True),
+    models.MixModel(config.image_shape, len(config.labeller.classes), pretrained=True),
     config,
     SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 )

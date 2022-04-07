@@ -158,7 +158,10 @@ class MixModel(models.ResNet):
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
 
-        return self.color_head(x), self.piece_head(x)
+        color, piece = self.color_head(x), self.piece_head(x)
+        white_pieces = torch.mul(color[:,0].unsqueeze(0).T, piece)
+        black_pieces = torch.mul(color[:,1].unsqueeze(0).T, piece)
+        return torch.cat((white_pieces, black_pieces), dim=1)
 
     def configure_optimizers(self, config):
         return torch.optim.AdamW(self.parameters(), 
