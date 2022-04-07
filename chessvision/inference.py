@@ -38,7 +38,9 @@ class VisionState(chess.Board):
 
 
 class LiveInference:
-    def __init__(self, config, model, occupancy_model, occupancy_config, color_model, color_config, device, camera,
+    def __init__(self, config, model, occupancy_model, occupancy_config, device, camera,
+        color_model=None, 
+        color_config=None,
         history=20, 
         motion_thresh=20
         ):
@@ -51,11 +53,12 @@ class LiveInference:
         self.config = config
         self.model.to(device)
         self.model.eval()
-
+        
         self.color_model = color_model
         self.color_config = color_config
-        self.color_model.to(device)
-        self.color_model.eval()
+        if color_model is not None:
+            self.color_model.to(device)
+            self.color_model.eval()
 
         self.begin = time.time()
         
@@ -98,16 +101,18 @@ class LiveInference:
         ).to(self.device)).argmax(dim=1)) if occupied.item() == 1]
         if len(occupied) == 0: 
             return {}
-
-        colors = self.color_model(torch.stack(
-            [self.color_config.infer_transform(squares[i]) for i in occupied]
-        ).to(self.device)).argmax(dim=1)
         
         pieces = self.model(torch.stack(
             [self.config.infer_transform(squares[i]) for i in occupied]
         ).to(self.device)).argmax(dim=1)
+
+        if self.color_model is not None:
+            colors = self.color_model(torch.stack(
+                [self.color_config.infer_transform(squares[i]) for i in occupied]
+            ).to(self.device)).argmax(dim=1)
+            pieces = pieces + 6 * (1 - colors)
         
-        return {occupied[i]: pred.item() for i, pred in enumerate(pieces + 6 * (1 - colors))}
+        return {occupied[i]: pred.item() for i, pred in enumerate(pieces)}
 
     def has_motion(self, current):
         if self.prev_img is None:
@@ -191,10 +196,10 @@ def main(args):
         model,
         occupancy_model,
         occupancy_config,
-        color_model,
-        color_config,
         device,
         camera,
+        color_model=color_model,
+        color_config=color_config,
         history=20
     )
 

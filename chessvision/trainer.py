@@ -8,6 +8,7 @@ from typing import Tuple, Callable
 from tqdm import trange
 from dataclasses import dataclass
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import _LRScheduler
 from torchvision import datasets, transforms
 
 
@@ -43,6 +44,7 @@ class TrainerConfig:
     batch_size: int = 4
     labeller: Labeller = None
     image_shape: int = None
+    scheduler: _LRScheduler = None
     loss_fn: Callable = torch.nn.CrossEntropyLoss()
     train_folder: str = None
     test_folder: str = None
@@ -82,10 +84,13 @@ class Trainer:
         return losses, correct / len(loader.dataset) * 100
 
     def train(self):
-        optimizer = self.model.configure_optimizers(self.config)
         loss_fn = self.config.loss_fn
+        optimizer = self.model.configure_optimizers(self.config)
+        loader = DataLoader(self.train_dataset, shuffle=True, batch_size=self.config.batch_size, num_workers=4, pin_memory=True)
+        if self.config.scheduler:
+            scheduler = self.config.scheduler(optimizer, max_lr=self.config.learning_rate, steps_per_epoch=len(loader), epochs=self.config.epochs)
 
-        def train_one_epoch(loader):
+        def train_one_epoch():
             losses = []
             for i, (x, y) in enumerate(loader):
                 x, y = x.to(self.device), y.to(self.device)
@@ -94,14 +99,13 @@ class Trainer:
                 loss.backward()
                 losses.append(loss.item())
                 optimizer.step()
+                if self.config.scheduler is not None: scheduler.step()
             return losses
 
         best_loss = float('inf')
         for epoch in (t := trange(self.config.epochs)):
             self.model.train(True)
-            train_losses = train_one_epoch(
-                DataLoader(self.train_dataset, shuffle=True, batch_size=self.config.batch_size, num_workers=4, pin_memory=True)
-            )
+            train_losses = train_one_epoch()
             self.model.train(False)
 
             val_losses, val_accuracy = self.evaluate()

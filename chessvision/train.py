@@ -33,23 +33,23 @@ labellers = {
 }
 
 config = TrainerConfig(
-    train_folder = '/tmp/chess-vision-fkouxboy',
-    test_folder = '/tmp/chess-vision-gc4bde10',
+    # train_folder = '/tmp/chess-vision-fkouxboy',
+    # test_folder = '/tmp/chess-vision-gc4bde10',
     train_games = (
+        *(Game("Evans", i) for i in range(7)),
+        Game("Adams", 1),
+        Game("Adams", 2),
+        Game("Adams", 3)
+    ),
+    test_games = (
         Game("Evans", 7),
         Game("Bird", 2),
-        Game("Kasparov", 0),
-        # *(Game("Evans", i) for i in range(7))
+        Game("Kasparov", 0)
     ),
-    test_games = tuple(Game("Evans", i) for i in range(7)),
-        # Game("Adams", 1),
-        # Game("Adams", 2),
-        # Game("Adams", 3),
-    #     *(Game("Evans", i) for i in range(7))
-    # ),
     epochs = EPOCHS,
     batch_size = BATCH_SIZE,
     learning_rate = LR,
+    scheduler = torch.optim.lr_scheduler.OneCycleLR,
     weight_decay = WEIGHT_DECAY,
     momentum = MOMENTUM,
     channels = CHANNELS,
