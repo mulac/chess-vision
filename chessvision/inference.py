@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import torch
 import cv2
@@ -6,6 +7,7 @@ import chess
 import chess.pgn
 import numpy as np
 
+from select import select
 from collections import deque
 from cairosvg import svg2png
 
@@ -18,10 +20,12 @@ class BoardState(chess.Board):
     def update(self, board):
         if not isinstance(board, VisionState):
             board = VisionState(board)
-        if not board.is_valid: return False
+        if not board.is_valid: 
+            return False
         for move in self.legal_moves:
             self.push(move)
-            if self == board: return True
+            if self == board: 
+                return True
             self.pop()
         return False
 
@@ -30,7 +34,7 @@ class VisionState(chess.Board):
     """ VisionState is a potentially invalid board state """
     def __init__(self, board):
         super().__init__()
-        self.set_piece_map({i: label.from_id(piece.item()) for i, piece in enumerate(board) if piece is not None})
+        self.set_piece_map({i: label.from_id(piece) for i, piece in enumerate(board) if piece is not None})
 
 
 class LiveInference:
@@ -38,24 +42,23 @@ class LiveInference:
         history=20, 
         motion_thresh=20
         ):
-        if occupancy_model is None:
-            self.occupancy_fn = self.occupancy_depth
-        else:
-            self.occupancy_fn = self.occupancy_nn
-            self.occupancy_model = occupancy_model
-            self.occupancy_config = occupancy_config
-            self.occupancy_model.to(device)
-            self.occupancy_model.eval()
-        model.to(device)
-        model.eval()
+        self.occupancy_model = occupancy_model
+        self.occupancy_config = occupancy_config
+        self.occupancy_model.to(device)
+        self.occupancy_model.eval()
+
+        self.model = model
+        self.config = config
+        self.model.to(device)
+        self.model.eval()
 
         self.color_model = color_model
         self.color_config = color_config
         self.color_model.to(device)
+        self.color_model.eval()
 
         self.begin = time.time()
-        self.model = model
-        self.config = config
+        
         self.device = device
         self.camera = camera
         self.motion_thresh = motion_thresh
@@ -83,28 +86,28 @@ class LiveInference:
             return
         return Camera.cancel_signal
 
-    def get_predictions(self, board, occupied):
+    def get_predictions(self, board):
         """ Sends in all the occupied squares into the model as a batch 
         
         Returns: Dict[square_id: prediciton_id]
         """
+        squares = list(label.get_squares(board))
+        
+        occupied = [i for i, occupied in enumerate(self.occupancy_model(torch.stack(
+            [self.occupancy_config.infer_transform(square) for square in squares]
+        ).to(self.device)).argmax(dim=1)) if occupied.item() == 1]
         if len(occupied) == 0: 
             return {}
 
-        squares = torch.stack(
-            [self.color_config.infer_transform(label.get_square(i, board)) for i in occupied]
-        ).to(self.device)
-        colors = self.color_model(squares).argmax(dim=1)
+        colors = self.color_model(torch.stack(
+            [self.color_config.infer_transform(squares[i]) for i in occupied]
+        ).to(self.device)).argmax(dim=1)
         
-        squares = torch.stack(
-            [self.config.infer_transform(label.get_square(i, board)) for i in occupied]
-        ).to(self.device)
-        pieces = self.model(squares).argmax(dim=1)
-
-        print("pieces: ", pieces)
-        print("colors: ", colors)
+        pieces = self.model(torch.stack(
+            [self.config.infer_transform(squares[i]) for i in occupied]
+        ).to(self.device)).argmax(dim=1)
         
-        return {occupied[i]: pred for i, pred in enumerate(pieces + 6 * (1 - colors))}
+        return {occupied[i]: pred.item() for i, pred in enumerate(pieces + 6 * (1 - colors))}
 
     def has_motion(self, current):
         if self.prev_img is None:
@@ -123,50 +126,37 @@ class LiveInference:
 
     def run_inference(self, img, _):
         if img is None:
+            # FOR DEBUGGING -> REMOVE
             time.sleep(100)
         board = label.get_board(img, self.corners)
         if self.has_motion(board):
             return
-        occupied = self.occupancy_fn(board)
-        preds = self.get_predictions(board, occupied)
+        preds = self.get_predictions(board)
         for i in range(64):
             self.history[i].append(preds.get(i))
         self.show_img(board, size=(500, 500))
-        self.print_fen()
+        self.display()
         if self.board.is_game_over():
             print(self.board, self.board.is_game_over())
             return Camera.cancel_signal
 
-    def occupancy_nn(self, img):
-        """ Uses a torch model to detect occupied squares 
-        
-        Returns: Dict[square_id: square_img]
-        """
-        squares = torch.stack(
-            [self.occupancy_config.infer_transform(square) for square in label.get_squares(img)]
-        ).to(self.device)
-        return [i for i, occupied in enumerate(self.occupancy_model(squares).argmax(dim=1)) if occupied.item() == 1]
-
-    count = 0
-    def print_frame_rate(self):
-        self.count += 1
-        if t := int(time.time()) != self.begin:
-            print(self.count)
-            self.count = 0
-            self.begin = t
-
-    def print_fen(self):
+    def display(self):
+        if select([sys.stdin], [], [], 0)[0] != []:
+            sys.stdin.readline()
+            print("snapshot saved")
         if self.board != (vision := self.memory()):
             svg_img = np.frombuffer(svg2png(vision._repr_svg_()), dtype=np.uint8)
             self.show_img(cv2.imdecode(svg_img, cv2.IMREAD_COLOR), "vision", (400, 400))
-            print(f"\n\nVisionState:\n{vision}")
-            print("\nBoardState Changed:", self.board.update(vision))
-            # print("changed:", [label.from_id[i.item()].unicode_symbol() for i in board if i is not None])
+            # print(f"\n\nVisionState:\n{vision}")
+            if self.board.update(vision):
+                svg_img = np.frombuffer(svg2png(self.board._repr_svg_()), dtype=np.uint8)
+                self.show_img(cv2.imdecode(svg_img, cv2.IMREAD_COLOR), "board", (400, 400))
 
     def start(self):
         try:
             self.camera.loop(self.get_corners)
             print(f"found corners... \n {self.corners}\n")
+            print("Press [ENTER] to record a snapshot")
             self.camera.loop(self.run_inference)
             
             chess.pgn.Game.from_board(self.board).accept(

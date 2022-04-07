@@ -22,7 +22,7 @@ class Interpreter:
 
     @property
     def _data(self):
-        """ Returns: for each same (input, actual, prediction) """
+        """ Returns: for each sample (input, actual, prediction) """
         for x, y in self.loader:
             yield x.cpu(), y.cpu(), self.model(x.to(self.device)).cpu()
 

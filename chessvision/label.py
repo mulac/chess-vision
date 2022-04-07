@@ -1,12 +1,14 @@
 """ Automatic labelling functions using the Game class """
 
-import itertools
+import os
 import numpy as np
 import chess
 import cv2
 
+from itertools import product, chain
 from collections import namedtuple
 from dataclasses import dataclass
+from abc import abstractmethod
 
 from .util import skip
 from .aruco import detect, DetectionError
@@ -20,9 +22,10 @@ class LabelOptions():
     skip_moves: int = 2
     flipped: bool = False
 
+
 Labeller = namedtuple('Labeller', ['classes', 'label_fn', 'names'])
 
-PIECE_LABELS = [chess.Piece(piece_t, color) for piece_t, color in itertools.product(chess.PIECE_TYPES, chess.COLORS)]
+PIECE_LABELS = [chess.Piece(piece_t, color) for piece_t, color in product(chess.PIECE_TYPES, chess.COLORS)]
 OCCUPIED_LABELS = [True, False]
 COLOR_LABELS = chess.COLORS
 TYPE_LABELS = list(range(6))
@@ -33,10 +36,12 @@ _piece_str_by_id = {hash(lbl): str(lbl) for lbl in PIECE_LABELS}
 def from_id(id): return _piece_by_id[id]
 def str_from_id(id): return _piece_str_by_id[id]
 
-
 def label(game):
     corners = find_corners(game.images)
-    images = skip(game.images, game.options.skip_moves)
+    images = skip(game.images, game.options.skip_moves-1)
+    start_img = next(images)
+    for square in chain(range(16), range(48, 64)):
+        yield label_move(chess.Board(), start_img['color'], square, corners, game.options)
     for move, img in zip(game.pgn.mainline(), images):
         yield label_move(move.board(), img['color'], move.move.to_square, corners, game.options)
 
@@ -52,9 +57,9 @@ def label_type(game):
 def label_occupied(game, stream='color'):
     corners = find_corners(game.images)
     images = skip(game.images, game.options.skip_moves-1)
-    start = next(images)
+    start_img = next(images)
     for square in range(64):
-        yield label_occupied_move(chess.Board(), start[stream], square, corners, game.options)
+        yield label_occupied_move(chess.Board(), start_img[stream], square, corners, game.options)
     for move, img in zip(game.pgn.mainline(), images):
         yield label_occupied_move(move.board(), img[stream], move.move.to_square, corners, game.options)
         yield label_occupied_move(move.board(), img[stream], move.move.from_square, corners, game.options)

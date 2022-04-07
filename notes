@@ -19,5 +19,22 @@ TODO:
  - Compare freezing layers in transfer learning
  - Try combining models
  
+Realworld:
+https://matijapiskorec.github.io/static/pdf/Computer%20vision%20system%20for%20the%20chess%20game%20reconstruction.pdf
+-> http://vision.fe.uni-lj.si/cvww2016/proceedings/papers/21.pdf
+https://web.stanford.edu/class/cs231a/prev_projects_2016/CS_231A_Final_Report.pdf
+http://danielbowers.com/robot-chess-computer-vision/
+https://cvgl.stanford.edu/teaching/cs231a_winter1415/prev/projects/chess.pdf
+https://tech.bakkenbaeck.com/post/chessvision
+https://is.muni.cz/th/meean/Master_Thesis.pdf
+https://arxiv.org/pdf/1708.03898.pdf
+https://www.researchgate.net/publication/331017060_Robust_Computer_Vision_Chess_Analysis_and_Interaction_with_a_Humanoid_Robot/fulltext/5c616ecba6fdccb608b8a2c5/Robust-Computer-Vision-Chess-Analysis-and-Interaction-with-a-Humanoid-Robot.pdf?origin=publication_detail
+https://core.ac.uk/download/pdf/158326124.pdf
+https://towardsdatascience.com/board-game-image-recognition-using-neural-networks-116fc876dafa
+https://raw.githubusercontent.com/SukritGupta17/Chess-Board-Recognition/master/chess_recognition_project_report.pdf
 
-Kasparov_0 frame 28 and 70 needs removing hand in way (check couple moves before)
+Related:
+https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=615573
+
+Online:
+https://github.com/kochsebastian/ChessVisionBot

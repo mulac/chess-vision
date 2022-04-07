@@ -28,7 +28,7 @@ LABELLER = 'type'
 labellers = {
     'piece':    Labeller(PIECE_LABELS, label, [from_id(i).unicode_symbol() for i in range(len(PIECE_LABELS))]),
     'occupied': Labeller(OCCUPIED_LABELS, label_occupied, ["Occupied", "Empty"]),
-    'color':    Labeller(COLOR_LABELS, label_color, ["White", "Black"]),
+    'color':    Labeller(COLOR_LABELS, label_color, ["Black", "White"]),
     'type':     Labeller(TYPE_LABELS, label_type, ["pawn", "knight", "bishop", "rook", "queen", "king"]),
 }
 

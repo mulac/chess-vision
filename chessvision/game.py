@@ -2,6 +2,7 @@
 
 import os
 import pickle
+import logging
 import tempfile
 import cv2
 import chess
@@ -46,6 +47,7 @@ def save_games(games, label_fn, labels, root_dir=None):
     Images are grouped by label with the label being the parent directory name.
     """
     root_dir, label_dirs = _create_dirs(labels, root_dir)
+    logging.info(f'saving games to {root_dir} with labels {labels}')
     for game in games:
         for img, lbl in label_fn(game):
             fd, path = tempfile.mkstemp(suffix=".jpg", dir=label_dirs[lbl])

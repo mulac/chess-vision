@@ -18,13 +18,13 @@ Limitations:
 
 **Auto-Labelling**
 
-3. Visit [game.py](chessvision/game.py) to see how one "unit" of data is stored
-4. Visit [label.py](chessvision/label.py) for the actual auto-labelling functions using [python-chess](https://github.com/niklasf/python-chess)
-5. Use [record.py](chessvision/record.py) and [replay.py](chessvision/replay.py) to record your own games
+1. Visit [game.py](chessvision/game.py) to see how one "unit" of data is stored
+2. Visit [label.py](chessvision/label.py) for the actual auto-labelling functions using [python-chess](https://github.com/niklasf/python-chess)
+3. Use [record.py](chessvision/record.py) and [replay.py](chessvision/replay.py) to record your own games
 
 **Training**
-1. Visit [train.py](chessvision/train.py) for a view of the training script
-2. Visit [models.py](chessvision/train.py) to see some of the models that were tested
+4. Visit [train.py](chessvision/train.py) for a view of the training script
+5. Visit [models.py](chessvision/train.py) to see some of the models that were tested
 
 **Inference**
 
