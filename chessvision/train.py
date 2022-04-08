@@ -33,8 +33,8 @@ labellers = {
 }
 
 config = TrainerConfig(
-    # train_folder = '/tmp/chess-vision-fkouxboy',
-    # test_folder = '/tmp/chess-vision-gc4bde10',
+    train_folder = '/tmp/chess-vision-mm5ouwg6',
+    test_folder = '/tmp/chess-vision-fby576fb',
     train_games = (
         *(Game("Evans", i) for i in range(7)),
         Game("Adams", 1),

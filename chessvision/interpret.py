@@ -60,7 +60,7 @@ class Interpreter:
         sn.set(font_scale=1.5)
         cf = sn.heatmap(
             pd.DataFrame(cf_weight, index=self.classes, columns=self.classes), 
-            annot=cf_values, cbar=False, cmap="Blues")
+            annot=cf_values, cbar=False, cmap="Blues", fmt='g')
         cf.set_xticklabels(cf.get_xmajorticklabels(), fontsize=40)
         cf.set_yticklabels(cf.get_ymajorticklabels(), fontsize=40)
         cf.set_ylabel('Ground Truth')

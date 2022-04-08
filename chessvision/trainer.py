@@ -9,16 +9,10 @@ from tqdm import trange
 from dataclasses import dataclass
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import _LRScheduler
-from torchvision import datasets, transforms
+from torchvision import transforms
 
 
-from .game import Game, LabelOptions, Labeller, save_games
-
-
-class ChessFolder(datasets.ImageFolder):
-    def find_classes(self, dir):
-        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
-        return classes, {i: int(i) for i in classes}
+from .game import Game, ChessFolder, LabelOptions, Labeller, save_games
 
 
 @dataclass
