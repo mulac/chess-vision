@@ -14,21 +14,25 @@ have enabled computers to out smart the smartest humans at the game of Chess.
 But all these algorithms are bound to the digital world, rendered useless when
 competing against humans on a real board. This project aims to explore a major
 component of this: vision.
-We consider the vision problem for chess to be two-fold; what is the current board
+Consider the vision problem for chess to be two-fold: what is the current board
 state and where are all of the pieces?  With this information, in combination with the
-previous algorithms, and a robot arm, the computer is no longer bound to the
+previous algorithms and a robot arm, the computer is no longer bound to the
 digital world.
+In particular this project's will focus on the former, that is, to produce and present a solution for determining the
+state of a chess board from a video stream.  A solution reliable enough to live up to the likes of AlphaZero 
+in a robotic solution.  There will be a focus on deep learning techniques, with
+consideration for best practice in machine learning operations.  There is also the aim to share the 
+tools to more easily manage and create new datasets in this area of chessboard state recognition.  Something 
+called for by \cite{} as a serious challenge and priority for future research.
 
 % Must provide evidence of a literature review. Use sections
 % and subsections as they make sense for your project.
 \section{Literature review}
 \label{research}
-When we ask ourselves: what is the hard part of Chess?  
-One may think it's the strategy, another may say anticipating what the opposition
-is going to do next and the more statistical among us may formulate it as choosing the most likely action for victory.  
-It is highly unlikely, however, that one would say it is locating where the pieces are in 3D space.
+For humans the hard part of chess is planning, this is not the case for computers, instead 
+recognition and localisation of objects in 3D space, along with manipulation, present much greater
+challenges. \cite{}
 
-For computers this is among the hardest of the challenges.  
 Make reference to humans huge allocation of resources to vision. \cite{}
 Why is it so hard for computers then? It's an inverse problem. 
 Compare to solving the decision problem (minimax).  
@@ -53,8 +57,17 @@ Why bounding boxes are not enough.  What is segmentation? Why instance segmentat
 The real world is not percepived in static 2d images.  How do we add an understanding of 3 dimensions and time in our computer vision models? \cite{}
 Important for localisation in the real world.  Important for understanding things like object permenance.
 
+\subsection{Tools}
+\subsubsection{Dataset Collection??}
+\subsubsection{Chess Engine??}
+\subsubsection{Deep Learning Library??}
 
 \subsection{Computer Vision for Chess}
+Despite chess being a very narrow application of computer vision, the amount of research effort gone into the problem is not insignificant, 
+in contrary to some papers claims \cite{}.  A variety of approaches have been tested and explored for which the following section will attempt to fairly summarise.
 Finding the chess board is the first challenge, the most common solution as in \cite{} 
 is to use the `findChessboard` function in openCV for camera calibration.  This **how does 
 this work**.  
+
+\subsection{Prior Work From the Author}
+Mention robotic arm for two counter board games and automatic differentiation library.
