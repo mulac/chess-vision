@@ -13,15 +13,15 @@ Idea: send a whole board image as well as a square to detect colour of that squa
     squares on the board due to lighting differences.
 
 TODO:
- - LR scheduling (cosine annealing)
  - Visualise CNN layers
  - Calculate top-n accuracy
  - Compare freezing layers in transfer learning
- - Try combining models
+ - Research SIFT / ORB
+
  
 Realworld:
 https://matijapiskorec.github.io/static/pdf/Computer%20vision%20system%20for%20the%20chess%20game%20reconstruction.pdf
--> http://vision.fe.uni-lj.si/cvww2016/proceedings/papers/21.pdf
+http://vision.fe.uni-lj.si/cvww2016/proceedings/papers/21.pdf
 https://web.stanford.edu/class/cs231a/prev_projects_2016/CS_231A_Final_Report.pdf
 http://danielbowers.com/robot-chess-computer-vision/
 https://cvgl.stanford.edu/teaching/cs231a_winter1415/prev/projects/chess.pdf
@@ -32,9 +32,233 @@ https://www.researchgate.net/publication/331017060_Robust_Computer_Vision_Chess_
 https://core.ac.uk/download/pdf/158326124.pdf
 https://towardsdatascience.com/board-game-image-recognition-using-neural-networks-116fc876dafa
 https://raw.githubusercontent.com/SukritGupta17/Chess-Board-Recognition/master/chess_recognition_project_report.pdf
+https://www.researchgate.net/profile/Nandan-Banerjee/publication/323812986_A_Simple_Autonomous_Chess_Playing_Robot_for_playing_Chess_against_any_opponent_in_Real_Time/links/5aac378d0f7e9b4897bc94a7/A-Simple-Autonomous-Chess-Playing-Robot-for-playing-Chess-against-any-opponent-in-Real-Time.pdf?origin=publication_detail
+https://bibliotecadigital.ipb.pt/bitstream/10198/1898/1/283-goncalves.pdf
+https://www.raspberryturk.com/
+https://stanford.edu/class/ee368/Project_Spring_1415/Reports/Danner_Kafafy.pdf
 
 Related:
 https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=615573
+https://europepmc.org/article/PMC/PMC3264465
+https://www.researchgate.net/profile/Arturo-De-La-Escalera/publication/221796095_Automatic_Chessboard_Detection_for_Intrinsic_and_Extrinsic_Camera_Parameter_Calibration/links/00b4951710215b0674000000/Automatic-Chessboard-Detection-for-Intrinsic-and-Extrinsic-Camera-Parameter-Calibration.pdf?origin=publication_detail
+http://www.bmva.org/bmvc/1988/avc-88-023.pdf
+https://arxiv.org/pdf/1301.5491.pdf
+
+Board Detection:
+https://arxiv.org/pdf/1301.5491.pdf
 
 Online:
 https://github.com/kochsebastian/ChessVisionBot
+
+
+Joe
+---
+Background research: 
+    section on each component - containing a paragraph on a couple of implementation each
+
+Related Works:
+    paragraph on a few implementations (3)
+    previous work at university
+    datasets
+    previous work by author
+
+
+Methods
+    System architecture
+    Paragraph / diagram on each problem
+    experiment design
+    for each problem:
+        couple paragraphs on each component
+        some pseudo code
+        screenshots
+    
+Evaluation
+    actually compare against other solutions
+    analyse speed (fps)
+    a few manual experiments and record how well they do
+    video demonstartion
+
+
+https://matijapiskorec.github.io/static/pdf/Computer%20vision%20system%20for%20the%20chess%20game%20reconstruction.pdf
+---
+Intro:
+    Hard problem, some previous work
+    Uses multiple camera angles
+    Used custom board (green and red squares make color detection easier)
+    Does not use chess rules
+
+Methods:
+    Tools used
+    Architecture Diagram and high level description
+    why some of these choices were made (occasional data to back this up)
+
+Evaluation:
+    some example test cases on unseen moves
+    accuracy
+    explanation of these results
+
+
+http://vision.fe.uni-lj.si/cvww2016/proceedings/papers/21.pdf
+---
+Intro:
+    Make reference to some chess playing robots and vision systems (summarising overall strategy)
+    Equipment and setup
+
+Methods:
+    Overall architecture
+        used detectCheckboardPoints of MATLAB
+        uses high contrast and average colour
+        do not leverage chess engine
+    
+Evaluation:
+    3 games played at varying light
+
+
+https://web.stanford.edu/class/cs231a/prev_projects_2016/CS_231A_Final_Report.pdf
+---
+Intro:
+    Very clear as to what is being added opposed to other methods in abstract
+    Motivate the need
+    Previous techniques for board recognition and piece recognition
+        (chessboard detection can't deal with pieces on board)
+        (line based techniques prove better)
+
+        (color segmentation based techniques and shape detectors end up needing custom board (see 1))
+
+Methods:
+    Use another method (manual for board detection!!) so as to focus on piece detection
+    336 samples with breakdown of dataset size by label (problem as they couldn't find a public avaibable one)
+    Feature extraction with SIFT and HOG and then training SVMs
+    Manual extracts color from square and compares it against known color of the squares
+
+Evaluation:
+    Occupancy and color detection near perfect accuracy
+    Used 30 static board images for evaluation
+    Metrics (detection accuracy, classification accuracy and cross entropy)
+        formulas defined
+    Demonstration of output
+    Talks about finding optimal hyperparameters
+    Full table of parameters and final confusion matrix
+    MENTIONS THE MAIN FOCUS OF FUTURE RESEARCH SHOULD BE IN COLLECTING MORE DATA
+
+
+http://danielbowers.com/robot-chess-computer-vision/
+---
+Intro:
+    Built arm to play chess
+
+Methods:
+    Used chessboard calibration function
+    Fixed camera position and moved it further away to reduce 'occlusion'
+    Custom coloured pieces to detect with color mask segmentation
+
+Evaluation:
+    Very sensitive to lighting conditions and glossy peices
+
+
+https://cvgl.stanford.edu/teaching/cs231a_winter1415/prev/projects/chess.pdf
+---
+Overfit to a side view. Requires human input for move detection.
+
+Intro:
+    Hough transform-based algorithm for board detection
+    color detection for real time piece inference
+
+    problems with current research:
+        camera mounted directly above
+        plain background
+        multiple cameras
+
+    valued minimal setup
+
+Methods:
+    needs empty board to detect
+    manual inference
+    Harris Corner Detector filtered with SIFT Descriptor Classifier trained on 3000 examples and clustered to prevent doubles with mean-shift clustering
+
+    Uses k-means clustering to determine 4 board colours (white/black piece and white/black square)
+    Hand craft algorithm to calculate the expected difference in colour from each possible move (requires an engine)
+    Use cosine similarity to compare this expected difference with the actual difference to determine the move
+
+Evaluation:
+    Effected by lighting.  21 out of 25 cases in good lighting succeeded in board detection
+
+
+https://www.comp.nus.edu.sg/~cs4243/showcase/chess_vision/Chess-Vision-Presentation.pdf
+---
+Intro:
+
+
+Methods:
+    Hough transform and corner point detection with outlier removal
+    Maths of perspective transform
+    Hardcoded threshold to determine piece color
+
+    3d uses two perpendicular cameras
+
+Evaluation:
+    corner detection very unstable in real-time
+    sensitive to change of lightings
+
+
+https://towardsdatascience.com/board-game-image-recognition-using-neural-networks-116fc876dafa
+---
+Intro:
+    Manually labelled data which took most of his time
+
+Methods:
+    Canny Edge detection and hough transform to generate chess lines
+    CNN VGG to train on 13 classes (all)
+
+Evaluation:
+    confusion matrix
+    demo (really struggled with occupancy)
+
+
+https://raw.githubusercontent.com/SukritGupta17/Chess-Board-Recognition/master/chess_recognition_project_report.pdf
+---
+Intro:
+    Aiming to work with multiple boards
+
+Methods:
+    Line and corner detection using hough transform
+    projective transform
+    Pretrained Alexnet for piece recognition
+        pooling, relu, softmax and SGD with momentum
+    700 images
+    Segmented pieces with k-means clusters to find bounding boxes of pieces to send to the model
+
+Evaluation:
+    Ended up using overhead camera
+    69% accuracy (not defined) on their own board
+    67% accuracy on another board
+
+https://arxiv.org/pdf/1708.03898.pdf
+---
+Intro:
+    Not yet solved - outline use cases as to why it should be solved
+    resistant to lighting conditions and angles 
+    REALLY good overview of chessboard detection and their MAIN FOCUS
+    States lack of datasets is an issue
+
+Methods:
+    Heatmap iterative generation 
+    Each iteration consists of (line detection, lattice point detection, heatmap generation)
+
+    Line
+        preprocesses the images with 4 sets of parameters and then merges the result
+        groups collinear lines into one straight line
+        utilises https://sites.ualberta.ca/~dwiens/home%20page/pubs/asymptoticsofgmestimators.pdf for grouping
+
+    Lattice Points
+        direct sucessor of ChESS
+        employs neural network as to determine if each sub image around each intersection is a lattice point
+
+    Piece detection very similar to https://web.stanford.edu/class/cs231a/prev_projects_2016/CS_231A_Final_Report.pdf
+    UTILISED knowledge from a chess engine to prune predictions
+
+Evaluation:
+    Use a couple of examples to compare aspects against other solutions (or own previous methods)
+    Got 10 test images and compared against other solution (including execution time)
+        explained how they chose those 10 test images (I could use them as well)
+    Talked about the disadvantages (speed)
