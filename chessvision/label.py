@@ -8,7 +8,6 @@ import cv2
 from itertools import product, chain
 from collections import namedtuple
 from dataclasses import dataclass
-from abc import abstractmethod
 
 from .util import skip
 from .aruco import detect, DetectionError
@@ -35,6 +34,7 @@ _piece_str_by_id = {hash(lbl): str(lbl) for lbl in PIECE_LABELS}
 
 def from_id(id): return _piece_by_id[id]
 def str_from_id(id): return _piece_str_by_id[id]
+
 
 def label(game):
     corners = find_corners(game.images)
