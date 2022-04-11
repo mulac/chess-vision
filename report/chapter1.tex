@@ -63,11 +63,55 @@ Important for localisation in the real world.  Important for understanding thing
 \subsubsection{Deep Learning Library??}
 
 \subsection{Computer Vision for Chess}
-Despite chess being a very narrow application of computer vision, the amount of research effort gone into the problem is not insignificant, 
-in contrary to some papers claims \cite{}.  A variety of approaches have been tested and explored for which the following section will attempt to fairly summarise.
-Finding the chess board is the first challenge, the most common solution as in \cite{} 
-is to use the `findChessboard` function in openCV for camera calibration.  This **how does 
-this work**.  
+Despite chess being a very narrow application of computer vision, the amount of research effort gone into the problem of determining 
+board state is not insignificant. 
+A variety of approaches have been tested and explored for which the following section will attempt to fairly summarise.
+
+As in \cite{} we will futher split the vision problem into two further problems for analysis: board detection and piece recognition.
+
+\subsubsection{Board Detection}
+The problem of board detection is not specific to chess but also finds heavy research from areas such as camera calibration \cite{}. 
+The built in camera calibration functions in opencv \cite{} and matlab \cite{} are used in many previous works \cite{} which 
+provide a quick  and precise solution for board detection but becomes unusable when any pieces are present on the board forcing those authors to 
+take the approach of an initial setup stage at inference making the solution unfit to changes in board position during inference. 
+
+Due to a chessboard's simple features many early works of line and corner point detection can be applied.  For example Hough 
+transforms \cite{} are used to detect the lines of a chessboard \cite{}.  Corner point detection methods such as the 
+Harris and Stephens's \cite{} were also common among solutions \cite{}, with some authors combining approaches with further 
+processing such as canny edge detection \cite{} to yield more reliable results.
+
+The ChESS was another corner detection algorithm that out performed the Harris and Stephen's algorithm \cite{} which was 
+interestingly creating for real-time measurement of lung function in humans, further demonstrating the general applicability 
+of chess board detection.
+
+There are many other algorithms that require simplifications such as green-red chessboards \cite{}, multiple camera angles \cite{}, 
+or even user input for entering the corners of the chessboard \cite{}.
+
+The most impressive work came out of Poznan University of Technology which proposes many interesting ideas that performs more 
+reliably in a wider range of difficult situation such as pieces being present on the board \cite{}.  The employ an iterative 
+approach with each iteration containing 3 sub-tasks: line segment detection, lattice point search and chessboard position search.
+In each iteration of line detection a canny lines detector \cite{} is used on many preprocessed variations of the input image 
+to maximize line segment detections which are then merged using a novel linking function. The lattice point search starts with 
+the intersection of each of the merged lines as input, converts these to a 21x21 pixel binary image of the surrounding area and 
+runs them through a classifier to remove outliers.  The addition of a neural network as a classifier is what greatly improves 
+the generality of the proposed solution as it can be resistant to lattice points that are perhaps partially covered by a chess piece.
+The final sub-task then calculates the predicted corner points of the chessboard which minimizes the area will maximizing the 
+likely hood that the chessboard is fully contained.  It is this area that is then used as input to the next iteration until the 
+points converge.  
+
+\subsubsection{Piece Recognition}
+
+Go over the main appraoches with references.
+
+Go to standford dude and the heatmap guys 
+as the best approach out there. They use SIFT and hard coded color alogrithms.  heatmap guys improved on this 
+only by adding more restrictions by assuming the board much be valid and making statistical assumptions on 
+what state is most likely.
+
+Our approach will not have such restrictions and will leverage neural networks.
+
+Some others have attempted this before but failed for these reasons...
+
 
 \subsection{Prior Work From the Author}
 Mention robotic arm for two counter board games and automatic differentiation library.

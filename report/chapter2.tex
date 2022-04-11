@@ -30,25 +30,51 @@ controlled lighting situation.  For the reasons outlined above the RGB camera st
 mainly relied upon but there will be some discussion and comparision of piece detection 
 with the depth sensor.  
 
-\subsection{Auto-Labelling}
-A closely related challenge of acquiring the data is that of labelling it too.
-It is widely known that neural networks scale with the number of examples \cite{}.  
-This will be explicitly explored for Chess Vision in section 3.1.
-This however poses the question about how do we get access to a lot of labelled data 
-for chess.  **Some examples of other auto labelling techniques**
-The overall approach I took...
+Talk about the generic camera
 
+\subsection{Auto-Labelling}
+A closely related challenge of acquiring the data is that of labelling it too. 
+During \autoref{research} multiple past authors have stated the availability of 
+datasets for chess piece recognition is sparse \cite{} with some emphasizing
+dataset collection took the large majority of their time \cite{}.
+It is also widely known that neural networks scale with the number of examples \cite{}, 
+which will be explicitly explored for Chess Vision in section 3.1.
+This however poses the question: how do we get access to a lot of labelled data 
+for chess?
+
+Portable Game Notation (PGN) is a common format for recording chess games as a 
+series of moves and are widely available online.  All the PGN files used in the 
+project were used from \cite{} which has over one million games.  Utilising this
+data not only has the benefit of an abundance of chess games but also that the 
+recorded games are real and contain positions more likely to appear in game play. 
+
+Unlike techniques in \cite{}  **Some examples of other auto labelling techniques**
+the approach taken here was to maximize speed of collection and flexibility.
+
+A program is developed for recording these games with the generic camera interface
+as previously described.  The program takes screenshots upon user input (with the
+[Enter] shortcut) displaying the move number and image as a result for visual feedback
+before saving to disk.
+
+After the development of this pipeline it was possible to collect over 2,500 labelled
+images in under two hours.
 
 \subsection{Dataset Versioning}
 With all this data the next challenge becomes self evident.
 It is concerned with the question: How do we manage all of this?
 Some of the problems... and why you need versioning...
 Transitioning from git lfs to aws s3.  Perhaps a quick mention of other solutions.
-How the Game class solves some of these challenges for us.
+How the Game and Labeller classes solves some of these challenges for us.
 
 
 \section{Model Training}
-Classification is all that's needed.  
+Classification is all that's needed.
+
+\subsection{Board Segmentation}
+Aruco markers are chosen for board corner point detection as a very simple method.
+Although Aruco markers require customizing the environment they are very fast at 
+inference and allow the focus to remain on piece recognition from which
+\autoref{research} showed is less reliable \cite{}.
 
 \subsection{Architectures}
 To start, a good baseline is found.  A good baseline is a simple model to understand and easy to get decent results with.
