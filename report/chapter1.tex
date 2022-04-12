@@ -11,23 +11,24 @@
 
 Algorithms such as Deep Blue \cite{parikh1980adaptive}, AlphaZero \cite{} and more recently Player of Games\cite{}
 have enabled computers to out smart the smartest humans at the game of Chess.
-But all these algorithms are bound to the digital world, rendered useless when
+Unfortunately all these algorithms are bound to the digital world, rendered useless when
 competing against humans on a real board. This project aims to explore a major
 component of this: vision.
+
 Consider the vision problem for chess to be two-fold: what is the current board
 state and where are all of the pieces?  With this information, in combination with the
 previous algorithms and a robot arm, the computer is no longer bound to the
-digital world.
-In particular this project's will focus on the former, that is, to produce and present a solution for determining the
+digital world. In particular this project will focus on the former, that is, to produce and present a solution for determining the
 state of a chess board from a video stream.  A solution reliable enough to live up to the likes of AlphaZero 
-in a robotic solution.  There will be a focus on deep learning techniques, with
-consideration for best practice in machine learning operations.  There is also the aim to share the 
-tools to more easily manage and create new datasets in this area of chessboard state recognition.  Something 
+in a robotic system.  Such a solution could be immediately useful for problems such as chess analysis from a real board.
+
+There will be a focus on deep learning techniques, with consideration for best practice in operations.  There is also the aim to share the 
+tools to more easily manage and create new datasets in this area.  Something 
 called for by \cite{} as a serious challenge and priority for future research.
 
 % Must provide evidence of a literature review. Use sections
 % and subsections as they make sense for your project.
-\section{Literature review}
+\section{Literature Review}
 \label{research}
 For humans the hard part of chess is planning, this is not the case for computers, instead 
 recognition and localisation of objects in 3D space, along with manipulation, present much greater
@@ -65,52 +66,77 @@ Important for localisation in the real world.  Important for understanding thing
 \subsection{Computer Vision for Chess}
 Despite chess being a very narrow application of computer vision, the amount of research effort gone into the problem of determining 
 board state is not insignificant. 
-A variety of approaches have been tested and explored for which the following section will attempt to fairly summarise.
+A variety of approaches have been tried and tested for which the following section will attempt to fairly summarise.
 
 As in \cite{} we will futher split the vision problem into two further problems for analysis: board detection and piece recognition.
 
 \subsubsection{Board Detection}
-The problem of board detection is not specific to chess but also finds heavy research from areas such as camera calibration \cite{}. 
+The problem of board detection is not specific to chess but also receives heavy research from other applications such as camera calibration \cite{}. 
 The built in camera calibration functions in opencv \cite{} and matlab \cite{} are used in many previous works \cite{} which 
-provide a quick  and precise solution for board detection but becomes unusable when any pieces are present on the board forcing those authors to 
-take the approach of an initial setup stage at inference making the solution unfit to changes in board position during inference. 
+provide a quick and precise solution for board detection, but becomes unusable when any pieces are present on the board.  This forced those authors to 
+take the approach of an initial setup stage at inference, making the solution unfit to changes in board position during inference. 
 
 Due to a chessboard's simple features many early works of line and corner point detection can be applied.  For example Hough 
 transforms \cite{} are used to detect the lines of a chessboard \cite{}.  Corner point detection methods such as the 
 Harris and Stephens's \cite{} were also common among solutions \cite{}, with some authors combining approaches with further 
 processing such as canny edge detection \cite{} to yield more reliable results.
 
-The ChESS was another corner detection algorithm that out performed the Harris and Stephen's algorithm \cite{} which was 
-interestingly creating for real-time measurement of lung function in humans, further demonstrating the general applicability 
-of chess board detection.
+ChESS was another corner detection algorithm that out performed the Harris and Stephen's algorithm \cite{}. This was, perhaps 
+interestingly, created for real-time measurement of lung function in humans, further demonstrating the attention chess board
+detection has received due to its general applicability.
 
 There are many other algorithms that require simplifications such as green-red chessboards \cite{}, multiple camera angles \cite{}, 
 or even user input for entering the corners of the chessboard \cite{}.
 
-The most impressive work came out of Poznan University of Technology which proposes many interesting ideas that performs more 
-reliably in a wider range of difficult situation such as pieces being present on the board \cite{}.  The employ an iterative 
+The most impressive work came out of Poznan University of Technology which proposes many interesting ideas that perform more 
+reliably in a wider range of difficult situation such as pieces being present on the board \cite{}.  They employ an iterative 
 approach with each iteration containing 3 sub-tasks: line segment detection, lattice point search and chessboard position search.
 In each iteration of line detection a canny lines detector \cite{} is used on many preprocessed variations of the input image 
-to maximize line segment detections which are then merged using a novel linking function. The lattice point search starts with 
-the intersection of each of the merged lines as input, converts these to a 21x21 pixel binary image of the surrounding area and 
-runs them through a classifier to remove outliers.  The addition of a neural network as a classifier is what greatly improves 
-the generality of the proposed solution as it can be resistant to lattice points that are perhaps partially covered by a chess piece.
-The final sub-task then calculates the predicted corner points of the chessboard which minimizes the area will maximizing the 
-likely hood that the chessboard is fully contained.  It is this area that is then used as input to the next iteration until the 
+to maximize line segment detections which are then merged using a linking function. The lattice point search starts with 
+the intersection of all merged lines as input, converting these intersection points to a 21x21 pixel binary image of the surrounding area and 
+runs them through a classifier to remove outliers.  The addition of a neural network as a classifier greatly improves 
+the generality of the proposed solution as it can be resistant to lattice points that are partially covered by a chess piece.
+The final sub-task then creates a heatmap over the original image that represents the likelihood of a chessboard being present.  
+Under the hood this is done by calculating a polyscore for the set of most likely quadrilaterals formed by the lines of the first stage.
+The polyscore is a function of the area of the quadrilateral and the lattice points contained within it.
+It is the quadrilateral that produces the highest polyscore that is used to crop the image for input to the next iteration until the quadrilateral
 points converge.  
 
 \subsubsection{Piece Recognition}
 
-Go over the main appraoches with references.
+Piece recognition has proved more difficult \cite{}.  Most chess vision systems avoid classifying pieces by 
+type all together \cite{}.  These approaches typically get around this by requiring the board to start in a known position.
+From this known state the normal rules of chess can be used to infer what pieces are where after each move.  Simpler methods
+require human input to prompt when a move has been taken \cite{}, more sophisticated attempt to do this move detection automatically.
+
+These automatic move detection methods tend to all follow the same overarching processes of thresholding, whether on color \cite{} or
+even the edges detected with each square \cite{}.  Most authors recognise the dependance this approach has lighting variations, with a few 
+deciding to use Otsu thresholding \cite{} to minimise the negative impact when lighting changed.  While this improved results for what may
+be considered normal lighting condition they still suffered.
+
+the reference color of all 4 variations (white square, black square, white piece, black piece).  
+All of these then only work in situation where a series of moves are to be recorded, not the chessboard state at any given moment.
+In other words,
+given the standard chess starting FEN and a piece  with moves being detected instead using normal 
+chess rules.  
+
+There were a couple of methods that stood out from the rest in different ways.  One used fourier descriptors to model the pieces and the 
+other modelled the pieces in a 3d modelling software and used template matching to determine piece type.  Fourier method was very sensitive 
+to change in angles, prefferring a side view angle that unfortunately cause too many occlusions to be practical.  The template matching approach
+took over 150 seconds on average to predict board state from one image which does not lend itself to interactive play.
 
 Go to standford dude and the heatmap guys 
 as the best approach out there. They use SIFT and hard coded color alogrithms.  heatmap guys improved on this 
 only by adding more restrictions by assuming the board much be valid and making statistical assumptions on 
-what state is most likely.
+what state is most likely.  Oh and a HOG method.  The one that said SIFT didn't work well because the lack of texture.
 
-Our approach will not have such restrictions and will leverage neural networks.
-
-Some others have attempted this before but failed for these reasons...
+More recently another group of methods have surfaced using neural networks, specifically convolutional neural netowrks (CNNs) \cite{}.
+One of these used a pretrained Inception-ResNet-v2 model \cite{} and only had 6 classes, resorting to the more tradition approaches for color detection,
+in particular binary thresholding with added morphological transformations to reduce noise as seen in previous works \cite{}.  
+Interestingly the six chosen classes were 'empty', 'pawn', 'knight', 'bishop', 'rook' and 'king\_or\_queen' as they claim kings and queens can be 
+difficult even for human eyes to distinguish.  Because of the choice of classes this method falls back to relying on a chess engine to determine piece type,
+which while usually correct for normal games of play makes the method unusable for games played with a variation on the normal rules of play.
+The other two methods used a simpler CNN structure similar to that of VGG \cite{} with 13 classes, one for every piece and the empty square.
 
 
 \subsection{Prior Work From the Author}

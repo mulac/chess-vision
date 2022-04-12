@@ -1,5 +1,5 @@
 \chapter{Methods}
-\label{chapter2}
+\label{methods}
 
 <Everything that comes under the `Methods' criterion in the mark scheme should be described in one, or possibly more than one, chapter(s).>
 
@@ -24,6 +24,8 @@ Requirements at the time of training my differ significantly to the requirements
 inference.  Processing power, energy supply and realtime operation are some
 of the constraints that will have to be met when considering different sensors.
 
+Talk about single camera. 
+
 The sensor used throughout this project is the RealSense SR305 which is a RGB-D camera
 using structured and coded light to determine depth, it functions best indoors or in a 
 controlled lighting situation.  For the reasons outlined above the RGB camera stream is 
@@ -34,13 +36,16 @@ Talk about the generic camera
 
 \subsection{Auto-Labelling}
 A closely related challenge of acquiring the data is that of labelling it too. 
-During \autoref{research} multiple past authors have stated the availability of 
+During \nameref{research} multiple past authors have stated the availability of 
 datasets for chess piece recognition is sparse \cite{} with some emphasizing
 dataset collection took the large majority of their time \cite{}.
 It is also widely known that neural networks scale with the number of examples \cite{}, 
-which will be explicitly explored for Chess Vision in section 3.1.
+which will be explicitly explored for Chess Vision in \nameref{results}.
 This however poses the question: how do we get access to a lot of labelled data 
 for chess?
+
+Unlike techniques in \cite{}  **Some examples of other auto labelling techniques**
+the approach taken here was to maximize speed of collection and flexibility.
 
 Portable Game Notation (PGN) is a common format for recording chess games as a 
 series of moves and are widely available online.  All the PGN files used in the 
@@ -48,13 +53,11 @@ project were used from \cite{} which has over one million games.  Utilising this
 data not only has the benefit of an abundance of chess games but also that the 
 recorded games are real and contain positions more likely to appear in game play. 
 
-Unlike techniques in \cite{}  **Some examples of other auto labelling techniques**
-the approach taken here was to maximize speed of collection and flexibility.
-
 A program is developed for recording these games with the generic camera interface
 as previously described.  The program takes screenshots upon user input (with the
 [Enter] shortcut) displaying the move number and image as a result for visual feedback
-before saving to disk.
+before saving to disk.  These games can then be automatically labelled using the matching
+PGN file.
 
 After the development of this pipeline it was possible to collect over 2,500 labelled
 images in under two hours.
