@@ -18,6 +18,10 @@ TODO:
  - Compare freezing layers in transfer learning
  - Research SIFT / ORB
 
+Idea:  Use heatmap solution as an autolabeller to train a segmentation neural net
+
+Report:
+ - add abbreviations like FEN
  
 Realworld:
 https://matijapiskorec.github.io/static/pdf/Computer%20vision%20system%20for%20the%20chess%20game%20reconstruction.pdf
@@ -40,7 +44,7 @@ https://stanford.edu/class/ee368/Project_Spring_1415/Reports/Danner_Kafafy.pdf
 Related:
 https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=615573
 https://europepmc.org/article/PMC/PMC3264465
-https://www.researchgate.net/profile/Arturo-De-La-Escalera/publication/221796095_Automatic_Chessboard_Detection_for_Intrinsic_and_Extrinsic_Camera_Parameter_Calibration/links/00b4951710215b0674000000/Automatic-Chessboard-Detection-for-Intrinsic-and-Extrinsic-Camera-Parameter-Calibration.pdf?origin=publication_detail
+camera calibration (uses line and corner detection https://www.researchgate.net/profile/Arturo-De-La-Escalera/publication/221796095_Automatic_Chessboard_Detection_for_Intrinsic_and_Extrinsic_Camera_Parameter_Calibration/links/00b4951710215b0674000000/Automatic-Chessboard-Detection-for-Intrinsic-and-Extrinsic-Camera-Parameter-Calibration.pdf?origin=publication_detail
 http://www.bmva.org/bmvc/1988/avc-88-023.pdf
 https://arxiv.org/pdf/1301.5491.pdf
 
@@ -109,6 +113,8 @@ Methods:
         used detectCheckboardPoints of MATLAB
         uses high contrast and average colour
         do not leverage chess engine
+    No piece detection
+    Only color difference of square detection and assumed board starting position to calculate board state.
     
 Evaluation:
     3 games played at varying light
@@ -262,3 +268,119 @@ Evaluation:
     Got 10 test images and compared against other solution (including execution time)
         explained how they chose those 10 test images (I could use them as well)
     Talked about the disadvantages (speed)
+
+
+https://tech.bakkenbaeck.com/post/chessvision
+---
+Intro:
+    auto labelling BUT records the indivdual squares (lossing information)
+
+Methods:
+    Determine piece colour with thresholding
+    Resnet for piece detection with 6 classes including empty
+    merge king and queen class (expect human input)
+    Used rules of chess to limit possibilities
+
+Evaluation:
+    Leveraged a FEN editor to fix mistakes
+
+
+https://stanford.edu/class/ee368/Project_Spring_1415/Reports/Danner_Kafafy.pdf
+---
+Intro:
+    Believes direct overhead view would make piece recognition impossible
+    line detection for board as chess pieces yield many irrelevant corners
+    recognising chess pieces are tricky because they don't have texture making SIFT ineffective
+
+    Used a custom board with red and green squares to aid segmenting pieces with color
+        tried with a normal board but found it ineffective
+
+Methods:
+    detect lines with Hough transform (pre processing with edge detection)
+    Piece detection uses fourier descriptors
+
+Evaluation:
+    Ended up using 3 different methods to extract the contours for fourier descriptors
+
+
+https://core.ac.uk/download/pdf/158326124.pdf
+---
+Intro:
+    Robotics Arm
+
+Method:
+    Requires know board stating position and detects moves
+    Piece detection uses reference colors (known board state)
+    Modified the environment to use constant light
+
+Evaluation:
+    very dependant on light
+
+
+https://bibliotecadigital.ipb.pt/bitstream/10198/1898/1/283-goncalves.pdf
+---
+Intro:
+    Robot
+
+Methods:
+    chessboard detection - manual user selects corners
+    color based (requires initial setup for reference colors)
+
+
+https://www.researchgate.net/profile/Nandan-Banerjee/publication/323812986_A_Simple_Autonomous_Chess_Playing_Robot_for_playing_Chess_against_any_opponent_in_Real_Time/links/5aac378d0f7e9b4897bc94a7/A-Simple-Autonomous-Chess-Playing-Robot-for-playing-Chess-against-any-opponent-in-Real-Time.pdf?origin=publication_detail
+---
+Intro:
+    Robot Arm
+
+Methods:
+    Used a green and red chessboard 
+    Ensured lighting of the scene
+    board detection
+        manual "region of interest" selected to simplify board detection
+        variation on Harris corner detection to find all squares
+    Piece detection
+        canny edge detection with a threshold value to determine piece occupancy
+        color thresholding to determine piece color (aided by green and red board)
+        board state is known and colour difference to calculate moves
+
+Evaluation:
+    lighting badly effected
+    thresholding was not outso so failed during lighting changes
+
+
+https://www.researchgate.net/publication/331017060_Robust_Computer_Vision_Chess_Analysis_and_Interaction_with_a_Humanoid_Robot/fulltext/5c616ecba6fdccb608b8a2c5/Robust-Computer-Vision-Chess-Analysis-and-Interaction-with-a-Humanoid-Robot.pdf?origin=publication_detail
+---
+Intro:
+    Robot (Baxter)
+    more reliable in varying light conditions
+
+Methods:
+    Dynamic approach to Hough line transform
+    Hybrid edge and morphology-based approach for occupancy detection
+    camera is positioned at a 0.4 radian angle from the perpendicular to the table
+    Otsu thresholding for dynamic lighting
+    Canny edge detection to find the board
+    ysteresis to produce more consistent edges than the Sobel or Prewitt operators
+
+Evaluation:
+    Still has some problems with lighting and doesn't detect piece type
+
+
+https://is.muni.cz/th/meean/Master_Thesis.pdf
+---
+Intro:
+
+
+Methods:
+    Hough transformation for line detection
+    Compared pieces to 3D models created in software
+    Template matching
+    Uses the rules of chess
+    Uses knowledge of chessboard size to determine intrinsic and externsic camera parameters
+
+Evaluation:
+    158 seconds to determine one board state!
+
+
+REMOVE MOVE 35 IN KASPAROV VS MURRAY
+AND 77
