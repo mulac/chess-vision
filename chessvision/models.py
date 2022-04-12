@@ -66,6 +66,7 @@ class ConvBlock(nn.Module):
     def forward(self, x):
         return self.norm(self.conv(x))
 
+
 class ConvNorm(nn.Module):
     def __init__(self, shape, classes):
         super().__init__()

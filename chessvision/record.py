@@ -32,7 +32,6 @@ class Recorder:
             self.camera.close()
             pkl_file.close()
 
-
     def video(self):
         videofile = f'{self.config.dir}/{self.config.file_name}.mp4'
         writer = cv2.VideoWriter(videofile, cv2.VideoWriter_fourcc(*'DIVX'), 10, self.camera.resolution)

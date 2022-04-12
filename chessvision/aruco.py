@@ -77,11 +77,10 @@ def detect_pkl(args):
     game = f'{args.dir}/{args.game_name}.pkl'
 
     with open(game, "rb") as pkl_wb_obj:
-        moves = pickle.load(pkl_wb_obj)
+        for _ in range(args.move):
+            move = pickle.load(pkl_wb_obj)
 
-    img = moves[args.move]["color"]
-
-    cv2.imwrite("test.jpg", img)
+    cv2.imwrite("test.jpg", move["color"])
     _detect("test.jpg", "test_out.jpg")
 
 

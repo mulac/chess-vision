@@ -54,7 +54,7 @@ class Game:
 
 
 def save_games(games, label_fn, labels, root_dir=None, distribution=None):
-    """ Save a dataset from a set of game onto disk as a ChessFolder.
+    """ Save a dataset from a set of games onto disk as a ChessFolder.
     Images are grouped by label with the label being the parent directory name.
 
     Args:
@@ -74,7 +74,7 @@ def save_games(games, label_fn, labels, root_dir=None, distribution=None):
             fd, path = tempfile.mkstemp(suffix=".jpg", dir=label_dirs[lbl])
             cv2.imwrite(path, img)
             os.close(fd)
-    if distribution: rebalance(root_dir, labels, distribution)
+    if distribution is not None: rebalance(root_dir, labels, distribution)
     return root_dir
 
 
