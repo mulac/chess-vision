@@ -12,6 +12,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torchvision import transforms
 
 
+from .models import SingleLoss
 from .game import Game, ChessFolder, LabelOptions, Labeller, save_games
 
 
@@ -39,7 +40,7 @@ class TrainerConfig:
     labeller: Labeller = None
     image_shape: int = None
     scheduler: _LRScheduler = None
-    loss_fn: Callable = torch.nn.CrossEntropyLoss()
+    loss_fn: Callable = SingleLoss(torch.nn.CrossEntropyLoss())
     train_folder: str = None
     test_folder: str = None
     transform: transforms = None
@@ -47,17 +48,17 @@ class TrainerConfig:
 
 
 class Trainer:
-    def __init__(self, model, config, writer):
+    def __init__(self, model, config, writer, device=None):
         self.model = model
         self.config = config
         self.writer = writer
 
-        train_folder = config.train_folder if config.train_folder else save_games(config.train_games, config.labeller.label_fn, config.labeller.classes)
-        test_folder = config.test_folder if config.train_folder else save_games(config.test_games, config.labeller.label_fn, config.labeller.classes)
+        train_folder = config.train_folder if config.train_folder else save_games(config.train_games, config.labeller)
+        test_folder = config.test_folder if config.train_folder else save_games(config.test_games, config.labeller)
         self.train_dataset = ChessFolder(root=train_folder, transform=config.transform)
         self.test_dataset = ChessFolder(root=test_folder, transform=config.infer_transform)
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
     def save_checkpoint(self):
@@ -69,11 +70,15 @@ class Trainer:
 
         losses = []
         correct = 0
-        for i, (x, y) in enumerate(loader):
+        for x, y in loader:
             x, y = x.to(self.device), y.to(self.device)
             pred = self.model(x)
-            losses.append(self.config.loss_fn(pred, y).item())
-            correct += (pred.argmax(dim=1) == y).sum().item()
+            losses.append(self.config.loss_fn(pred, y)['total'].item())
+            if isinstance(pred, dict):
+                targets = {'color': torch.where(y < 6, 1, 0), 'piece': torch.where(y < 6, y, y - 6)}
+                correct += torch.sum(torch.stack([i*j for i, j in zip(*(pred[task].argmax(dim=1) == targets[task] for task in pred))]))
+            else:
+                correct += (pred.argmax(dim=1) == y).sum().item()
 
         return losses, correct / len(loader.dataset) * 100
 
@@ -89,7 +94,7 @@ class Trainer:
             for i, (x, y) in enumerate(loader):
                 x, y = x.to(self.device), y.to(self.device)
                 optimizer.zero_grad()
-                loss = loss_fn(self.model(x), y)
+                loss = loss_fn(self.model(x), y)['total']
                 loss.backward()
                 losses.append(loss.item())
                 optimizer.step()

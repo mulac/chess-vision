@@ -53,40 +53,37 @@ class Game:
                     break
 
 
-def save_games(games, label_fn, labels, root_dir=None, distribution=None):
+def save_games(games, labeller, root_dir=None, distribution=None):
     """ Save a dataset from a set of games onto disk as a ChessFolder.
     Images are grouped by label with the label being the parent directory name.
 
     Args:
         games: Iterable[Game]
-        label_fn: Callable(Game) -> Iterable[data, label]
-        labels: Iterable[label] where label implements __hash__
+        labeller: Labeller
         root_dir: path to save games (default a temp directory)
         distribution: Dict[label: percent] percent=0.5 will half images for that label
 
     Returns:
         root_dir: path to saved games
     """
-    root_dir, label_dirs = _create_dirs(labels, root_dir)
+    root_dir, label_dirs = _create_dirs(labeller, root_dir)
     logging.info(f'saving games to {root_dir}...')
     for game in games:
-        for img, lbl in label_fn(game):
+        for img, lbl in labeller(game):
             fd, path = tempfile.mkstemp(suffix=".jpg", dir=label_dirs[lbl])
             cv2.imwrite(path, img)
             os.close(fd)
-    if distribution is not None: rebalance(root_dir, labels, distribution)
+    if distribution is not None: rebalance(label_dirs, distribution)
     return root_dir
 
 
-def rebalance(root_dir, labels, distribution):
+def rebalance(label_dirs, distribution):
     """ Rebalance an existing saved ChessFolder by a distribution.
     
     Args:
-        root_dir: path to chess folder
-        labels: Iterable[label] where label implements __hash__
+        label_dirs: Dict[label: sub_folder_path]
         distribution: Dict[label: percent] 0.8 will remove 20% of that labels images
     """
-    label_dirs = {lbl: os.path.join(root_dir, str(hash(lbl))) for lbl in labels}
     for lbl, path in label_dirs:
         if lbl not in distribution or not (0 <= distribution[lbl] <= 1): 
             logging.warn(f'rebalance: could not valid value of {lbl} in {distribution}\
@@ -98,20 +95,20 @@ def rebalance(root_dir, labels, distribution):
 
 
 
-def _create_dirs(labels, root_dir=None):
+def _create_dirs(labeller: Labeller, root_dir=None):
     """ Creates the directory structure for a ChessFolder 
 
     Args:
-        labels: Iterable[label] where label implements __hash__
+        labeller: Labeller
         root_dir: path to save games (default a temp directory)
 
     Returns:
         root_dir: path to root directory
-        label: Dict[label: sub_folder_path]
+        label_dirs: Dict[label: sub_folder_path]
     """
     if root_dir is None:
         root_dir = tempfile.mkdtemp(prefix="chess-vision-")
-    label_dirs = {lbl: os.path.join(root_dir, str(hash(lbl))) for lbl in labels}
+    label_dirs = {lbl: os.path.join(root_dir, str(idx)) for idx, lbl in labeller}
     for label in label_dirs:
         os.mkdir(label_dirs[label])
     return root_dir, label_dirs

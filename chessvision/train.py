@@ -1,5 +1,6 @@
 import logging
 import torch
+import torch.nn as nn
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.dataloader import DataLoader
@@ -25,16 +26,20 @@ AUG_HUE = .1
 CHANNELS = 3
 LABELLER = 'type'
 
+tasks = ['color', 'piece']
+
 labellers = {
-    'piece':    Labeller(PIECE_LABELS, label, [from_id(i).unicode_symbol() for i in range(len(PIECE_LABELS))]),
-    'occupied': Labeller(OCCUPIED_LABELS, label_occupied, ["Occupied", "Empty"]),
-    'color':    Labeller(COLOR_LABELS, label_color, ["Black", "White"]),
-    'type':     Labeller(TYPE_LABELS, label_type, ["pawn", "knight", "bishop", "rook", "queen", "king"]),
+    'all':      Labeller(label, ALL_LABELS, [piece.unicode_symbol() for piece in PIECE_LABELS] + ['None']),
+    'piece':    Labeller(label_pieces, PIECE_LABELS, [piece.unicode_symbol() for piece in PIECE_LABELS]),
+    'occupied': Labeller(label_occupied, OCCUPIED_LABELS, ["Occupied", "Empty"]),
+    'color':    Labeller(label_color, COLOR_LABELS, ["White", "Black"]),
+    'type':     Labeller(label_type, TYPE_LABELS, ["pawn", "knight", "bishop", "rook", "queen", "king"]),
+    'board':    Labeller(label_with_board, COLOR_LABELS, ["Occupied", "Empty"])
 }
 
 config = TrainerConfig(
-    train_folder = '/tmp/chess-vision-mm5ouwg6',
-    test_folder = '/tmp/chess-vision-fby576fb',
+    # train_folder = '/tmp/chess-vision-g2d9hbjb',
+    # test_folder = '/tmp/chess-vision-cakn0ivj',
     train_games = (
         *(Game("Evans", i) for i in range(7)),
         Game("Adams", 1),
@@ -49,6 +54,7 @@ config = TrainerConfig(
     epochs = EPOCHS,
     batch_size = BATCH_SIZE,
     learning_rate = LR,
+    loss_fn=models.MultiLoss(tasks, nn.ModuleDict({t: nn.CrossEntropyLoss() for t in tasks}), {t: 0.5 for t in tasks}),
     scheduler = torch.optim.lr_scheduler.OneCycleLR,
     weight_decay = WEIGHT_DECAY,
     momentum = MOMENTUM,
@@ -80,7 +86,7 @@ config = TrainerConfig(
 logging.info(config)
 
 trainer = Trainer(
-    models.MixModel(config.image_shape, len(config.labeller.classes), pretrained=True),
+    models.MultiModel(config.image_shape, len(config.labeller.classes), pretrained=True),
     config,
     SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 )
@@ -93,7 +99,7 @@ interp = Interpreter(
     model=torch.load("model"), 
     loader=DataLoader(trainer.test_dataset, batch_size=100, num_workers=4),
     loss_fn=config.loss_fn,
-    classes=config.labeller.names
+    labeller=config.labeller
 )
 
 logging.info(f"Accuracy: {interp.accuracy():.2f}")
