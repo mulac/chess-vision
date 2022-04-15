@@ -3,4 +3,6 @@ train:
   flags-import: all
   sourcecode:
     - '*.py'
+    - exclude:
+        dir: notebooks
 
