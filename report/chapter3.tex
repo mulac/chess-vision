@@ -1,18 +1,24 @@
 \chapter{Results}
 \label{results}
 
-<Results, evaluation (including user evaluation) {\em etc.} should be described in one or more chapters. See the `Results and Discussion' criterion in the mark scheme for the sorts of material that may be included here.>
-
 \section{Model Evaluation}
+Throughout development, every change was monitored and evaluated.  As expressed in \nameref{methods} some particular design decisions
+and tools greatly helped at making that possible.
 
-\subsection{Board Identification}
-Aruco vs Chessboard vs heatmap. 
+\subsection{Board Segmentation}
+The decision to use aruco markers, while impractical for release, aided development in a couple of ways.  Firstly, they're reliable \cite{}.
+To correctly classify pieces, the segmentation of board squares was critical as a small error of even 10mm could completely throw the
+model off as due to added perspective shift a square could now contain two pieces.  Compared to the iterative heatmap method \cite{} aruco 
+marker are not the best, but in a controlled environment this did not become a problem and more importantly they worked even with pieces on the
+board which enabled recalibration during inference and while collecting data.  This is unlike a lot of other proposed solutions \cite{}.
+Secondly they're fast \cite{}.  The iterative heatmap method can take around 5 seconds to segment the board which while not terrible can add up when 
+relabelling lots of data for many model experiments.
 
-Compare results of 5 examples.  Why chessboard \cite{} will struggle with peices on the board.
-Breif intro to Aruco.  For capturing data Aruco is very reliable, but won't always be possible to add onto the board.
-Why heatmap solution looks like the best appraoch in the realword with unknown environments.  \cite{}
+As this project focused on piece recognition and the development of an inference system, aruco markers proved to be a sensible choice.  However, 
+they come with deal breaking consequences if this method is to be used in production with many boards.  It's just too impractical to print and fix
+markers every time a new board is to be used with the system and again goes directly against the main purpose of this project: autonomy.
 
-Time comparision for the 3.  And compare accuracy of heatmap against aruco.
+Time comparison for the 3.  And compare accuracy of heatmap against aruco.
 
 \subsection{Multitask Learning}
 How does it compare?
@@ -22,7 +28,6 @@ Use top-1 and top-5 to measure performance of different models.
 Will include basic evaluation.  What happens what you increase layers, use more data, data augmentation.
 Include Recall / Specificity / Sensitivity
 
-\subsection{Piece Detection}
 A benefit of having the depth sensor is an easier way to detech piece presence.  
 Fixed threshold vs clustering.  Adding a margin.  How we actually did it.
 Using paried T-test to evaulate.
@@ -30,7 +35,9 @@ Using paried T-test to evaulate.
 Using a neural network instead as an additional class with our piece recognition network.
 Compare that two having a two stage network, the first for piece detection and the second for recognition.
 
-\subsection{Augmentation}
+
+\subsection{Hyperparameter Tuning}
+Augmentation as well?
 Talk about grayscale (a lot of previous works used gray scale do performant CNNs aid from gray or hinder?)
 
 \subsection{Deep Dive into CNNs}

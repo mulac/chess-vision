@@ -35,6 +35,8 @@ with the depth sensor.
 Talk about the generic camera
 
 \subsection{Auto-Labelling}
+Talk about using a simulator.
+
 A closely related challenge of acquiring the data is that of labelling it too. 
 During \nameref{research} multiple past authors have stated the availability of 
 datasets for chess piece recognition is sparse \cite{} with some emphasizing
@@ -59,7 +61,7 @@ as previously described.  The program takes screenshots upon user input (with th
 before saving to disk.  These games can then be automatically labelled using the matching
 PGN file.
 
-After the development of this pipeline it was possible to collect over 2,500 labelled
+After the development of this pipeline it was possible to collect over 2,500 \textit{unique} labelled
 images in under two hours.
 
 \subsection{Dataset Versioning}
@@ -70,31 +72,40 @@ Transitioning from git lfs to aws s3.  Perhaps a quick mention of other solution
 How the Game and Labeller classes solves some of these challenges for us.
 
 
-\section{Model Training}
-Classification is all that's needed.
+\section{Model Architecture}
+Given this data what is are model meant to do.
+
+\subsection{Experiment Tracking}
+Express importance of experiment tracking.  Some of the solutions \cite{} and their tradeoffs.
+Why guild was chosen and how it was used.
 
 \subsection{Board Segmentation}
 Aruco markers are chosen for board corner point detection as a very simple method.
+With the corner points of the board the perspective transformation is calculated using
+Gaussian elimination \cite{gauss}, as demonstrated in \autoref{corner}.
 Although Aruco markers require customizing the environment they are very fast at 
-inference and allow the focus to remain on piece recognition from which
-\autoref{research} showed is less reliable \cite{}.
+inference and allow the focus to remain on piece recognition, from which
+\nameref{research} showed is less studied and reliable.  In a more holistic solution the 
+iterative heatmap approach proposed in \cite{heatmap} would be recommended.
 
-\subsection{Architectures}
-To start, a good baseline is found.  A good baseline is a simple model to understand and easy to get decent results with.
+\subsection{Piece Recognition}
+Now that the board has been segmented including all of it's squares, it is time to layout the approach for how
+to determine what piece, if any, occupy each square.  To start, a good baseline is found.  
+A good baseline is a simple model to understand and easy to get decent results with.
 For classification, the pathological baseline could be a random model, which could easily be extended to be weighted by 
-count of examples for each class in the training set.  [Add mathematical formulation for demonstration (multinomial)]
+count of examples for each class in the training set.  [Add mathematical formulation for demonstration (categorical / multinomial distribution)]
 
-This is common practice in exploritory \cite{} machine learning as it keeps the research from getting lost, so that the transitions
+This is common practice in exploratory machine learning \cite{} so that the transitions
 made are always from a known and working state.  It becomes very easy to see if an experiment is not working and easy to go back.
 
-Keeping to this strategy, the multilayer perceptron (MLP) or fully connected network \cite{} was the first neural network to be explored.
+Keeping to this strategy, the multilayer perception (MLP) or fully connected network \cite{} was the first neural network to be explored.
 By starting with the MLP, all complexity from the network is stripped away so the more extraneous elements such as the training loop and 
 evaluation metrics can be built and tested.  [perhaps mention purposeley overfitting]
-
 Once the full training and evaluation structure is functional, new features can be incrementally added and architectures explored.
 
 As mentioned in \nameref{research} convolution operations, and in particular differentiable convolutional operations have had monumental 
-impact on the field of computer vision and so this was the first experiment.
+impact on the field of computer vision and so this was the next experiment.  Different architectures such as ResNets \cite{}, ConvNext \cite{}
+and ViT were explored as well.
 
 Quite quickly, especially with a limited dataset, overfitting becomes a major problem to overcome and so many experiments were positioned To
 solve this problem.  Pooling, dropout layers and skip connections are amoung some of these.
@@ -116,7 +127,7 @@ https://arxiv.org/abs/1207.0580 shouldn't be used after convolution layers \cite
 
 Pooling and DropPaths
 
-\subsection{Transfer Learning}
+\subsubsection{Transfer Learning}
 There appears to be a trend occuring in the deep learning space.  Some organisation spends millions training an impossibly large nerual network
 and others more and more are using these models, often fine-tuning for their own use cases.  \cite{} uses these large models as fixed feature extractors.
 
@@ -127,32 +138,49 @@ In the case of CNNs we can see the features that kernals in the early layers lea
 computer vision tasks.  This will explored this further in the results section as we visualise kernals from both random initalised models and 
 pretrained models.
 
+\subsubsection{Multitask Learning}
+
 \subsection{Augmentation}
 Data augmentation is strategy every machine learning practioner wants to have in their aresonal.  It addresses the data problem, allows us to truly 
 leverage the data we have and generalise our models further.  The MINST \cite{} dataset itself was created using data augmentation.
 In the case of chess piece classification, the correct augmentations or transformations should be chosen.
 Go onto list the transformations used and why.
 
-\subsection{Experiment Tracking}
-Express importance of experiment tracking.  Some of the solutions \cite{} and their tradeoffs.
-Why guild was chosen and how it was used.
+
+\section{Recording a Chess Game to PGN}
+The goal of this section is to discuss methods for using the proposed piece classifier to record an entire game of chess, played on a real board, 
+to a PGN formatted file.
+
+The general approach is to generate a board state at each fetched frame.  That is to segment the board and each of it's squares, send each square 
+through a forward pass of the piece classifier described above and finally collate the predictions together into a board state.  A board state is 
+a generic term that in actuality could be many things, but in this case it is sufficient enough to think of it as Forsyth-Edwards Notation (FEN).
+This board state can then be compared with the previous board state and if any difference is detected then that move is added as a child node.
+This tree structure gives flexibility for many variations of the same game to be recorded to later be parsed and encoded to PGN.
+
+\subsection{User Input}
 
 
-\section{Inference}
+\subsection{Chess Engines}
+As leveraged by others before \cite{} a chess engine and other statistical methods \cite{} can be used to increase the reliability of board state 
+prediction when the normal rules of chess can be assumed to be abided by.  The piece classifier described above makes no such assumptions, but as 
+the output of this module is a PGN file (which in itself assumes the normal rules of chess??) it is safe to assume them here without loss of 
+generality.  In this case leveraging the rules of chess means that we assume the starting state of the board and only allow legal moved to be recorded.
 
-\subsection{The Realiable Approach}
-As in \cite{} the most reliable way to implement infrence during play is for a user to input when a move
-has been complete.
-This is not ideal because...
+To do this, two concepts are introduced: \textit{VisionState} and \textit{BoardState}.  With some simplification, VisionState is a lightweight 
+representation of board as the model sees it in the last fetched frame.  The BoardState starts at a known state and is then only updated if the VisionState at 
+any time step represents a legal move from the BoardState. When the BoardState reaches a terminal state or otherwise receives a cancel signal in cases of a 
+draw or resignation the game tree is parsed and the PGN saved to disk.
 
-\subsection{The Not-So-Reliable Approach}
-What if the system constantly updates with each new frame?
-Why this is what we want, but is not as important for finding board state.
-Some of the challenges involved and how we overcame them.
+TALK about why
 
-\subsubsection{Detecting Motion}
-Difference between 2 frames.
-SIFT / SURF
+To add even more redundancy the VisionState has a memory of length $N$, where memory is in an average of states over the last $N$ frames.
 
-\subsubsection{Board State and Vision State}
-Leveraging the chess engine to give more reliable results for robot play or pgn recording.
+\subsection{Motion}
+One factor that was found to still sometimes break this system was motion.  Moving pieces across squares and hands flailing over the board confused the
+model.  Even with the separation of the BoardState and memory to remove anomalous predictions - especially when motion persisted for longer periods.  
+
+In a lot of these situations the actual board state in undefined.  That is because a piece has been lifted and so most now be moved but not yet let go 
+and so it's definition may be undetermined.  Because of this is it not unreasonable to halt inference all together.  User input to indicate when a move
+has been completed is a common strategy \cite{}, but goes against the purpose of building such a system all together - autonomy.  Instead a motion detector is 
+employed.  Even the naive motion detector of using a threshold over the absolute difference between each consecutive frame was found to be sufficient for removing these
+disturbances.  Some other methods such as SIFT and SURF were also explored but found to be more computationally expensive that necessary.
