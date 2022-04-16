@@ -65,12 +65,54 @@ After the development of this pipeline it was possible to collect over 2,500 \te
 images in under two hours.
 
 \subsection{Dataset Versioning}
-With all this data the next challenge becomes self evident.
-It is concerned with the question: How do we manage all of this?
-Some of the problems... and why you need versioning...
-Transitioning from git lfs to aws s3.  Perhaps a quick mention of other solutions.
-How the Game and Labeller classes solves some of these challenges for us.
+With all this data the next challenge becomes self evident. It is concerned with the question: How do we manage all of this?
+As experiments are carried out and iterations on the dataset are performed there will be many changes and variations of the data
+that are used to train models.  This is a challenge with data for many reasons, the first being reproducibility.  Say you train a model
+that performs really well, then you make some changes in say the balancing of the dataset or even the size and you train again.  If you go 
+through a series of changes like this and discover that it performed a lot better the way you had it previously then you might want to roll back.
 
+In typical software engineering a version control system like git \cite{} would be used.  While this is what was used to version our codebase, there
+are different challenges with data, namely the size.  Code usually takes up megabytes of storage, the Linux Kernel source code for example contains
+27.8 million lines and is only around 1GB in size \cite{}.  The data used throughout this project came to >20GB.
+
+There are many proposed solutions for this problem, from managed service like Neptune \cite{} and wandb \cite{}, to self hosted opensource options.  In fact Git has its own
+solution called Git Large File Storage (Git LFS) \cite{} which uses the exact same methodology as with code except it will store large files in an external 
+remote and only reference those locations in your git repo using a hash of your data's content.  This means if you change any of your data a new copy 
+of that data will be stored and it's reference updated.  And so to maintain git's methodology of versioning any change of your data will mean a new copy 
+will be stored, rapidly increasing storage costs with changes.  Neptune instead is a more holistic machine learning platform that provides a whole bunch of 
+features other than just dataset versioning.  As with other managed services these managed solutions are prone to lock-in and require you modifying your code 
+with a bunch of API calls to get them running.
+In the end it was found that a custom solution utilising some cloud based object storage proved most useful, with the least amount of effort and cost.  
+Perhaps the wide variety of solutions all with different approaches is evidence of this not yet being
+a solved problem.  To demonstrate the cost difference, Git LFS per GB cost is \$0.1 a month which is 4 times more expensive
+than amazons most expensive rate of \$0.023 per GB.  With optimisations you can get the amazon S3 bucket price down to \$0.0125 making Git LFS 8 times
+more expensive.  These numbers may look small but they add up with time and scale, especially when versioning many changes where copies and diffs need
+to also be stored.
+
+The solution used in this projects centers around 3 elements: The \textit{Game}, a \textit{Labeller} and the \textit{Storage} facade.  
+
+The storage 
+facade's purpose is to abstract file storage so that it could work with any backend and provide a simple to use interface for fetching files using a file system.
+\verb|file = open(Storage("img.png"))| 
+for example will give you the file descriptor for img.png cached from the filesystem if it exists, pulling it from an external store if not.  
+This was very useful for training across different VMs in the cloud and could work with any storage implementation.
+The only backend implemented was Amazon S3 bucket store, and used less than 50 lines of code.
+
+The Game class \ref{} is how chess data specifically is managed.  Each instance of Game represents one 'unit' of data where each unit is a recorded chess game.
+You can record a game by using the recorder application described in the autolabelling section and is simply a sequence of images with
+an associating PGN description. \textit{LabelOptions} can be set on a game which will be used by a Labeller to describe exactly how the autolabeller 
+should function.  For example, \verb|Game("Kasparov", LabelOptions(margin=50))| will create a game that should be labelled
+with a margin of 50px surrounding each square.  As will be discussed later it is this game object that will version the data used to train a model while dramatically
+decreasing the storage cost.  This is opposed to storing a new entire labelled dataset everytime a slight change is made, i.e chaning the margin of each square.
+
+As different model architectures were explored, different labelled data was need entirely.  For example, one model may only be 
+predicting whether a piece is a black or white pieces whereas another may be prediting the type of piece.  To cater for this variance while keeping the rest of the 
+training pipeline unchanged the Labeller abstraction is used.  Each labeller has a function that can take in a Game and output a series of X, Y input, target pairs.
+These can then be saved to disk for the \textit{ChessFolder} pytorch dataset to handle. 
+This could even be extended to more complicated labels like bounding boxes or multiple input images.
+
+One important note in implementation is the use of python generators which dramatically reduce memory usage and speed up the auto-labelling pipeline by over 10 fold in 
+places.
 
 \section{Model Architecture}
 Given this data what is are model meant to do.
@@ -82,21 +124,54 @@ Why guild was chosen and how it was used.
 \subsection{Board Segmentation}
 Aruco markers are chosen for board corner point detection as a very simple method.
 With the corner points of the board the perspective transformation is calculated using
-Gaussian elimination \cite{gauss}, as demonstrated in \autoref{corner}.
+Gaussian elimination \cite{gauss}, as demonstrated in \autoref{fig:corner}.
 Although Aruco markers require customizing the environment they are very fast at 
 inference and allow the focus to remain on piece recognition, from which
 \nameref{research} showed is less studied and reliable.  In a more holistic solution the 
 iterative heatmap approach proposed in \cite{heatmap} would be recommended.
 
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{board.jpg}
+        \caption{Original Image}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{segmented_board.jpg}
+        \caption{Reorthogonalisation}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{separated.png}
+        \caption{Square Segmentation}
+    \end{subfigure}
+\caption{Board Squares Segmentation Process}
+\label{fig:corner}
+\end{figure}
+    
+
 \subsection{Piece Recognition}
-Now that the board has been segmented including all of it's squares, it is time to layout the approach for how
+Now that the board has been segmented including all of it's squares, it is time for the fun stuff.  That is
 to determine what piece, if any, occupy each square.  To start, a good baseline is found.  
 A good baseline is a simple model to understand and easy to get decent results with.
-For classification, the pathological baseline could be a random model, which could easily be extended to be weighted by 
-count of examples for each class in the training set.  [Add mathematical formulation for demonstration (categorical / multinomial distribution)]
+For classification, the pathological baseline would be a uniformly random model, which could easily be extended to use a categorical distribution.
+The probability mass function for a categorical distribution of $k$ categories numerically labelled $0, ..., k$ is
+
+$$ f(x | \bm{p}) = \prod\limits_{i=0}^{k}{p_i^{[x=i]}} $$
+
+where $\bm{p} = (p_0, ..., p_k)$ and $p_i$ represents the probability of an image of category $k$ being sampled from the training set.
+Since $\sum_{k}{p_k} = 1$ you can generate the probabilities by normalising the count of each category in the training set.  Algorithmically 
+sampling from the distribution can be done using inversion sampling which requires calculating the cumulative distribution function.
+
+Of course you could just use pytorch \cite{}: \verb|Categorical(torch.tensor([0.25, 0.5, 0.25])).sample()|
 
 This is common practice in exploratory machine learning \cite{} so that the transitions
-made are always from a known and working state.  It becomes very easy to see if an experiment is not working and easy to go back.
+made are always from a known and working state.  It becomes very easy to see if an experiment is not working by comparing it to your baseline and 
+makes it easy to go back.
 
 Keeping to this strategy, the multilayer perception (MLP) or fully connected network \cite{} was the first neural network to be explored.
 By starting with the MLP, all complexity from the network is stripped away so the more extraneous elements such as the training loop and 
@@ -157,8 +232,23 @@ a generic term that in actuality could be many things, but in this case it is su
 This board state can then be compared with the previous board state and if any difference is detected then that move is added as a child node.
 This tree structure gives flexibility for many variations of the same game to be recorded to later be parsed and encoded to PGN.
 
-\subsection{User Input}
 
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{sample_board.png}
+        \caption{Frame after Segmentation}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{fen.png}
+        \caption{Prediction Vision State}
+    \end{subfigure}
+% \caption{Board Squares Segmentation Process}
+\label{fig:visionstate}
+\end{figure}
 
 \subsection{Chess Engines}
 As leveraged by others before \cite{} a chess engine and other statistical methods \cite{} can be used to increase the reliability of board state 
