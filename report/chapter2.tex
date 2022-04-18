@@ -1,7 +1,11 @@
 \chapter{Methods}
 \label{methods}
 
-<Everything that comes under the `Methods' criterion in the mark scheme should be described in one, or possibly more than one, chapter(s).>
+To summarise, the overall approach for determining board state is to first segment each square of the board from the image,
+and use those subimages as input to a piece classifier from which the output can be concatenated into a view of the whole board.
+Splitting the input to a classifier up by square is a unanimous decision taken by previous authors discussed in \nameref{research} 
+as it reduces the problem to a simple classification problem of only piece type and can take advantage of the thoroughly researched area 
+of chessboard detection.
 
 \section{Data Collection}
 At the heart of any machine learning project is the data.  
@@ -10,10 +14,9 @@ challenges.  **Why is this?**
 Discussed in the following sections are some of the challenges and decisions that were considered.
 
 \subsection{Sensors}
-The eminent challenge is acquiring data in the first place.  This is highly context 
-dependant, but as vision is primarily focused on spatial awareness the discussion 
-will be limited to the sensors that can measure it.
+The eminent challenge is acquiring data in the first place and is highly context dependant,
 
+For vision there are a range of sensors we can use to gather data from the real world.
 Sensor choice is an important choice for any robotics application as there are 
 important tradeoffs, as with any engineering challenge, which must be considered.
 
@@ -71,8 +74,8 @@ that are used to train models.  This is a challenge with data for many reasons, 
 that performs really well, then you make some changes in say the balancing of the dataset or even the size and you train again.  If you go 
 through a series of changes like this and discover that it performed a lot better the way you had it previously then you might want to roll back.
 
-In typical software engineering a version control system like git \cite{} would be used.  While this is what was used to version our codebase, there
-are different challenges with data, namely the size.  Code usually takes up megabytes of storage, the Linux Kernel source code for example contains
+In typical software engineering a version control system like git \cite{} would be used.  While this is what was used to version the codebase of this project,
+there are different challenges with data, namely it's storage.  Code usually takes up megabytes of storage, the Linux Kernel source code for example contains
 27.8 million lines and is only around 1GB in size \cite{}.  The data used throughout this project came to >20GB.
 
 There are many proposed solutions for this problem, from managed service like Neptune \cite{} and wandb \cite{}, to self hosted opensource options.  In fact Git has its own
@@ -114,12 +117,29 @@ This could even be extended to more complicated labels like bounding boxes or mu
 One important note in implementation is the use of python generators which dramatically reduce memory usage and speed up the auto-labelling pipeline by over 10 fold in 
 places.
 
-\section{Model Architecture}
+\section{The Model}
 Given this data what is are model meant to do.
 
 \subsection{Experiment Tracking}
-Express importance of experiment tracking.  Some of the solutions \cite{} and their tradeoffs.
-Why guild was chosen and how it was used.
+Over 500 hours was spent on training models with many different architectures each trained hundreds of times
+on slightly varied hyperparameters.  This makes the processes which is commonly refered to as Experiment Tracking a very important one.
+It would be good to visualise all these experiemnts and be able to roll back to old models.  As with dataset versioning there are a plethora of 
+new managed services that promise they can do this for you.
+The appoach opted for during this project utilised an opensource solution called Guild \cite{}.  The main reason for this choice was beacause of 
+it's unopinionated manor, requiring zero code changes.  GuildAI leverages the filesystem to save \textit{runs} including the environment configuration
+at the time of training.  A run is made from the command line and
+represents one iteration of a model \verb|guild run train --remote ec2 EPOCHS=10 LR=0.001| and can even be executed remotely via ssh to give easy access to 
+GPU machines.  It can also perform hyperparameter optimization using built in techniques like grid search, random search, gradient boosted regression trees 
+or even your own custom optimizer.  To enable the zero code change promise, guild fetches hyperparameters from a variety of places including globals set within 
+your training script, configuration files and commandline arguements.
+This method was greatly prefered to using a paid managed service or some other solution which require a database to setup allowing for quick integration and
+customization.  The previously mentioned dataset versioning method also greatly benefits from guilds use of the filesystem as within each run we can also store 
+the Games and Labeller that was used to train the model. 
+TesnorBoard integration also played a huge roll as it provided a easy to use, visual place to interpret and compare runs.  See \autoref{}
+for examples.
+
+All in all allowing for easy reproducability and insight into 
+
 
 \subsection{Board Segmentation}
 Aruco markers are chosen for board corner point detection as a very simple method.
@@ -161,31 +181,72 @@ A good baseline is a simple model to understand and easy to get decent results w
 For classification, the pathological baseline would be a uniformly random model, which could easily be extended to use a categorical distribution.
 The probability mass function for a categorical distribution of $k$ categories numerically labelled $0, ..., k$ is
 
-$$ f(x | \bm{p}) = \prod\limits_{i=0}^{k}{p_i^{[x=i]}} $$
+$$ f(x \;|\; \bm{p}) = \prod\limits_{i=0}^{k}{p_i^{[x=i]}} $$
 
 where $\bm{p} = (p_0, ..., p_k)$ and $p_i$ represents the probability of an image of category $k$ being sampled from the training set.
 Since $\sum_{k}{p_k} = 1$ you can generate the probabilities by normalising the count of each category in the training set.  Algorithmically 
 sampling from the distribution can be done using inversion sampling which requires calculating the cumulative distribution function.
 
-Of course you could just use pytorch \cite{}: \verb|Categorical(torch.tensor([0.25, 0.5, 0.25])).sample()|
+Of course you could just use pytorch \cite{} \verb|Categorical(tensor([0.25, 0.5, 0.25])).sample()|
 
 This is common practice in exploratory machine learning \cite{} so that the transitions
 made are always from a known and working state.  It becomes very easy to see if an experiment is not working by comparing it to your baseline and 
 makes it easy to go back.
 
-Keeping to this strategy, the multilayer perception (MLP) or fully connected network \cite{} was the first neural network to be explored.
+Keeping to this strategy, the Multilayer Perception (MLP) or fully connected network \cite{} was the first neural network to be explored.
+We explore nerual network approaches as they have proved most effective for image classification \cite{}, they are also relatively simple to deal
+with as no hand-crafted feature extraction is needed and end-to-end solutions are much more viable.
 By starting with the MLP, all complexity from the network is stripped away so the more extraneous elements such as the training loop and 
-evaluation metrics can be built and tested.  [perhaps mention purposeley overfitting]
+evaluation metrics can be built and tested.
+
+Evaluation metrics were very imporatnt in developing as loss is not that human interpretable.  Firstly accuracy, which is much more interpreatable, 
+is calculated to be the ratio of correct classifications to total number of sample images.  This could then be extended to top-n accuracy which 
+takes accuracy to be:  
+
+INSERT MATH.
+
+As the number of evaluation metrics grew it became prudent to encapsulate them into an \textit{Interpreter} class so as to not clog up our 
+training loop which itself is within a \textit{Trainer} class to encapsulate it's implementation away from the training script which will 
+see frequent changes during experimentation.  Some of the first additional methods added to the Interpreter is \verb|plot_top_losses| and
+\verb|plot_confusion_matrix| to make it significantly easier to find which classes the model was confusing and which specific images it 
+found difficult to classify giving hugely helpful insight into the dataset itself and even finding bugs in the autolabelling pipeline.
+
+Before training, a fixed random seed was important so that it was possible to tell whether or not any particular change was positive since all models started
+from the same initalisation.  The initalisation of the final layer was hard coded to be an equal distribution, sensible initalisations of final layer can have 
+a noticable effect on training convergence \cite{}.
+
+SHOW PLOTS
+
 Once the full training and evaluation structure is functional, new features can be incrementally added and architectures explored.
+ - human labelled dataset?
+
+Another strategy was to purposely overfit models during training.  It was easy to tell when a model was overfitting by splitting the data into
+training and validation sets \cite{} and viewing the relative losses in TensorBoard as can be seen in \autoref{}.  The reason for doing this
+was that if the model was able to overfit (i.e. achieve $\sim100\%$ accuracy on the training set) then it was able and big enough to learn distinguishing features or
+as is sometimes put: the model has sufficient entropic capacity.  It is then a lot easier to make it generalise well, for example by reducing the number of parameters, 
+than to go from an underfitting model to a generalised one as you don't necessary know where the problem lies for not fitting to the data.
+
+SHOW overfitting
+
+There are many ways to fight overfitting as typically referered to as regularization techniques, perhaps the easiest of which is early stopping \cite{}.
+The way this was implemented in our Trainer was to save the model after the first epoch and consquently after every other epoch for which the validation 
+loss was less than the previously saved model.  It is possible to then stop training entirely if after a set number of iterations no improvement is seen 
+in the validation loss.
 
 As mentioned in \nameref{research} convolution operations, and in particular differentiable convolutional operations have had monumental 
-impact on the field of computer vision and so this was the next experiment.  Different architectures such as ResNets \cite{}, ConvNext \cite{}
-and ViT were explored as well.
+impact on the field of computer vision and so this was the next experiment. Quite quickly, especially with a limited dataset, overfitting 
+became a major problem to overcome and so many experiments were positioned to solve this problem.  Below are an overview of some of those 
+experiments including some final optimisations to squeeze as much performance out of our model as possible.
 
-Quite quickly, especially with a limited dataset, overfitting becomes a major problem to overcome and so many experiments were positioned To
-solve this problem.  Pooling, dropout layers and skip connections are amoung some of these.
 
+\subsubsection{Architecture}
 ConvNext https://arxiv.org/pdf/2201.03545.pdf
+
+Different architectures such as ResNets \cite{}, ConvNext \cite{} and ViT were explored as well.
+
+\subsubsection{Loss Function}
+https://towardsdatascience.com/choosing-and-customizing-loss-functions-for-image-processing-a0e4bf665b0a
+https://arxiv.org/pdf/2009.13935.pdf proposes SML may be better than cross-entropy
 
 \subsubsection{Optimizer}
 An important part of any neural network training loop is the optimiser and so we will explore the effect of swapping these out.
@@ -194,10 +255,11 @@ An important part of any neural network training loop is the optimiser and so we
 AdamW was found produce more attractive results from comparing SGD with/without momentum and Adam and AdamW \cite{}
 Learning Rate, Weight Regularization.
 
+Learning rate scheduler, leave this till the end.
+
 \subsubsection{Batch Normalization}
 https://arxiv.org/abs/1502.03167 and renorm for small batch sizes https://arxiv.org/abs/1702.03275
 
-\subsubsection{Dropouts}
 https://arxiv.org/abs/1207.0580 shouldn't be used after convolution layers \cite{} there has been some work https://arxiv.org/abs/1904.03392
 
 Pooling and DropPaths
@@ -215,7 +277,9 @@ pretrained models.
 
 \subsubsection{Multitask Learning}
 
-\subsection{Augmentation}
+Consider change to loss function.  Could do a weighted some of losses and then some kind of searcg (grid search) for the best weights.
+
+\subsubsection{Augmentation}
 Data augmentation is strategy every machine learning practioner wants to have in their aresonal.  It addresses the data problem, allows us to truly 
 leverage the data we have and generalise our models further.  The MINST \cite{} dataset itself was created using data augmentation.
 In the case of chess piece classification, the correct augmentations or transformations should be chosen.
