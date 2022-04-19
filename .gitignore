@@ -179,9 +179,9 @@ cython_debug/
 *.fls
 *.fdb_latexmk
 
+# My folders
 runs/
 games/
 data/
 *env
-
 .vscode/

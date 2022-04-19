@@ -12,6 +12,9 @@ Idea: send a whole board image as well as a square to detect colour of that squa
     It may be hard to tell the colour of a piece without reference to other pieces and 
     squares on the board due to lighting differences.
 
+REMOVE MOVE 35 IN KASPAROV VS MURRAY
+AND 77
+
 TODO:
  - Visualise CNN layers
  - Calculate top-n accuracy
@@ -102,7 +105,7 @@ Evaluation:
     explanation of these results
 
 
-http://vision.fe.uni-lj.si/cvww2016/proceedings/papers/21.pdf
+http://vision.fe.uni-lj.si/cvww2016/proceedings/papers/21.pdf [Koray2016ACV]
 ---
 Intro:
     Make reference to some chess playing robots and vision systems (summarising overall strategy)
@@ -276,6 +279,7 @@ Intro:
     auto labelling BUT records the indivdual squares (lossing information)
 
 Methods:
+    Used heatmap guys method
     Determine piece colour with thresholding
     Resnet for piece detection with 6 classes including empty
     merge king and queen class (expect human input)
@@ -380,7 +384,3 @@ Methods:
 
 Evaluation:
     158 seconds to determine one board state!
-
-
-REMOVE MOVE 35 IN KASPAROV VS MURRAY
-AND 77

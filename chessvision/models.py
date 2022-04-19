@@ -169,3 +169,32 @@ class MixModel(models.ResNet):
             lr=config.learning_rate,
             weight_decay=config.weight_decay
         )
+
+
+class ConvNext(models.ConvNeXt):
+    def __init__(self, shape, classes, pretrained=False, freeze_features=False):
+        if shape[-1] != 3:
+            raise ValueError("must have 3 channels")
+        super().__init__([
+            models.convnext.CNBlockConfig(96, 192, 3),
+            models.convnext.CNBlockConfig(192, 384, 3),
+            models.convnext.CNBlockConfig(384, 768, 9),
+            models.convnext.CNBlockConfig(768, None, 3),
+        ], 0.1)
+        if pretrained:
+            state_dict = models.convnext.load_state_dict_from_url(models.convnext._MODELS_URLS['convnext_tiny'])
+            self.load_state_dict(state_dict)
+        if freeze_features:
+            for param in self.parameters():
+                param.requires_grad = False
+        self.classifier = nn.Sequential(
+            models.convnext.LayerNorm2d(768, eps=1e-6), 
+            nn.Flatten(1), 
+            nn.Linear(768, classes)
+        )
+
+    def configure_optimizers(self, config):
+        return torch.optim.AdamW(self.parameters(), 
+            lr=config.learning_rate,
+            weight_decay=config.weight_decay
+        )

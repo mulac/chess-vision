@@ -126,20 +126,17 @@ on slightly varied hyperparameters.  This makes the processes which is commonly 
 It would be good to visualise all these experiemnts and be able to roll back to old models.  As with dataset versioning there are a plethora of 
 new managed services that promise they can do this for you.
 The appoach opted for during this project utilised an opensource solution called Guild \cite{}.  The main reason for this choice was beacause of 
-it's unopinionated manor, requiring zero code changes.  GuildAI leverages the filesystem to save \textit{runs} including the environment configuration
-at the time of training.  A run is made from the command line and
-represents one iteration of a model \verb|guild run train --remote ec2 EPOCHS=10 LR=0.001| and can even be executed remotely via ssh to give easy access to 
+it's unopinionated nature, requiring zero code changes.  GuildAI leverages the filesystem to save \textit{runs} including the environment configuration
+at the time of training.  A run is made from the command line (i.e. \verb|guild run train --remote ec2 EPOCHS=10 LR=0.001|) and
+represents one iteration of a model and can even be executed remotely via ssh to give easy access to 
 GPU machines.  It can also perform hyperparameter optimization using built in techniques like grid search, random search, gradient boosted regression trees 
 or even your own custom optimizer.  To enable the zero code change promise, guild fetches hyperparameters from a variety of places including globals set within 
 your training script, configuration files and commandline arguements.
-This method was greatly prefered to using a paid managed service or some other solution which require a database to setup allowing for quick integration and
-customization.  The previously mentioned dataset versioning method also greatly benefits from guilds use of the filesystem as within each run we can also store 
+This method was greatly prefered to using a paid managed service or some other solution which requires a database to setup.  
+The previously mentioned dataset versioning method also greatly benefits from guilds use of the filesystem as within each run we can also store 
 the Games and Labeller that was used to train the model. 
-TesnorBoard integration also played a huge roll as it provided a easy to use, visual place to interpret and compare runs.  See \autoref{}
+TesnorBoard integration also played a huge roll as it provided an easy to use, visual place to interpret and compare runs.  See \autoref{}
 for examples.
-
-All in all allowing for easy reproducability and insight into 
-
 
 \subsection{Board Segmentation}
 Aruco markers are chosen for board corner point detection as a very simple method.
@@ -187,7 +184,7 @@ where $\bm{p} = (p_0, ..., p_k)$ and $p_i$ represents the probability of an imag
 Since $\sum_{k}{p_k} = 1$ you can generate the probabilities by normalising the count of each category in the training set.  Algorithmically 
 sampling from the distribution can be done using inversion sampling which requires calculating the cumulative distribution function.
 
-Of course you could just use pytorch \cite{} \verb|Categorical(tensor([0.25, 0.5, 0.25])).sample()|
+Of course you could just use pytorch \verb|Categorical(tensor([0.25, 0.5, 0.25])).sample()| \cite{}
 
 This is common practice in exploratory machine learning \cite{} so that the transitions
 made are always from a known and working state.  It becomes very easy to see if an experiment is not working by comparing it to your baseline and 
@@ -242,14 +239,14 @@ experiments including some final optimisations to squeeze as much performance ou
 \subsubsection{Architecture}
 ConvNext https://arxiv.org/pdf/2201.03545.pdf
 
-Different architectures such as ResNets \cite{}, ConvNext \cite{} and ViT were explored as well.
+Due to the recent surge of deep learning research for computer vision there are a huge range of openly available models.
+During this project ResNet, ConvNext, and ViTs were experimented with.  How much detail should I go into here?
 
 \subsubsection{Loss Function}
 https://towardsdatascience.com/choosing-and-customizing-loss-functions-for-image-processing-a0e4bf665b0a
 https://arxiv.org/pdf/2009.13935.pdf proposes SML may be better than cross-entropy
 
 \subsubsection{Optimizer}
-An important part of any neural network training loop is the optimiser and so we will explore the effect of swapping these out.
 
 [put into results]
 AdamW was found produce more attractive results from comparing SGD with/without momentum and Adam and AdamW \cite{}

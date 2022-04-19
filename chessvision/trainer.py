@@ -65,7 +65,7 @@ class Trainer:
         torch.save(self.config, "config")
 
     def evaluate(self):
-        loader = DataLoader(self.test_dataset, shuffle=True, batch_size=100, num_workers=4, pin_memory=True)
+        loader = DataLoader(self.test_dataset, shuffle=True, batch_size=25, num_workers=2, pin_memory=True)
 
         losses = []
         correct = 0
@@ -98,9 +98,9 @@ class Trainer:
 
         best_loss = float('inf')
         for epoch in (t := trange(self.config.epochs)):
-            self.model.train(True)
+            self.model.train()
             train_losses = train_one_epoch()
-            self.model.train(False)
+            self.model.eval()
 
             val_losses, val_accuracy = self.evaluate()
 

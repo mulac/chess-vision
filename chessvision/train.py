@@ -12,6 +12,7 @@ from .label import *
 from .trainer import Trainer, TrainerConfig
 from .interpret import Interpreter
 
+torch.manual_seed(0)
 
 EPOCHS = 40
 LR = 0.00005
@@ -33,8 +34,8 @@ labellers = {
 }
 
 config = TrainerConfig(
-    train_folder = '/tmp/chess-vision-mm5ouwg6',
-    test_folder = '/tmp/chess-vision-fby576fb',
+    # train_folder = '/tmp/chess-vision-umcy3y4h',
+    # test_folder = '/tmp/chess-vision-5r8rpe_4',
     train_games = (
         *(Game("Evans", i) for i in range(7)),
         Game("Adams", 1),
@@ -80,7 +81,7 @@ config = TrainerConfig(
 logging.info(config)
 
 trainer = Trainer(
-    models.MixModel(config.image_shape, len(config.labeller.classes), pretrained=True),
+    models.ConvNext(config.image_shape, len(config.labeller.classes), pretrained=True),
     config,
     SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 )
@@ -91,7 +92,7 @@ trainer.train()
 logging.info("Evaluating...")
 interp = Interpreter(
     model=torch.load("model"), 
-    loader=DataLoader(trainer.test_dataset, batch_size=100, num_workers=4),
+    loader=DataLoader(trainer.test_dataset, batch_size=25, num_workers=2),
     loss_fn=config.loss_fn,
     classes=config.labeller.names
 )
