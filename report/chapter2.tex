@@ -272,12 +272,49 @@ In the case of CNNs we can see the features that kernals in the early layers lea
 computer vision tasks.  This will explored this further in the results section as we visualise kernals from both random initalised models and 
 pretrained models.
 
-\subsubsection{Multitask Learning}
+\subsubsection{Ensemble and Multitask Learning}
+Another regularization technique is known as ensemble learning and is common practice in deep learning to reduce variance inherent to stochastic training 
+with random initalisation \cite{deeplearningbook}.  The technique involves training several models (with different random seeds or configurations) and 
+combining their outputs. Using an ensemble almost always beats training a single model as two models are unlikely to make exactly the same errors on an unseen dataset.
+This projects extends on this idea to also combine models with different class predictions.
 
-Consider change to loss function.  Could do a weighted some of losses and then some kind of searcg (grid search) for the best weights.
+In the two previous deep learning solutions for chess piece recognition, neither researched into the effect of using differnt class groups, 
+despite chosing differently.
+In this work, 5 sets of classes were considered as shown in \autoref{table:labellers}.  Models trained on each set of classes were compared
+with accross each metric and some were selected to be used together.  For example, combining the predicitions of 3 model separately trained with
+the 'piece', 'color' and 'occupied' labellers would yeild the same class of predicitions as in 'all'.
+\begin{center}
+\begin{figure}
+\begin{tabular}{|r|c|l|}
+    \hline
+    Labeller & Count & Classes \\
+    \hline
+    all & 13 & Empty, White Pawn, White Rook, ..., Black Queen, Black King \\
+    piece & 12 & White Pawn, White Rook, ..., Black Queen, Black King \\
+    occupied & 2 & Empty, Occupied \\
+    color & 2 & White, Black \\
+    piece & 6 & Pawn, Rook, Knight, Bishop, Queen, King \\
+    \hline
+\end{tabular}
+\caption{Class Sets}
+\label{table:labellers}
+\end{figure}
+\end{center}
+
+Every model you add to an ensemble has a large impact on the computational cost at inference (as well as training) which must be considered.  A separate
+approach called mutlitask learning which separates heads for different classes in a network might be worth considering instead.  
+Part of the benefit of separating models for different classes (which can be 
+refered to as tasks in this context) is that they each get their own parameters they can optimise.  By using 'all', each task has to fight for optimisation.
+Some tasks may train well together and benefit from sharing parameters, some may not.  Multitask learning is the study of finding this balance of which 
+parameters should be shared amoung each task.
+
+It is also worth mentioning loss functions here as they will need some attention if multitask learning is to be used.  Typically a separate loss function will be 
+used for each task and then these are simply summed together before performing backpropogation.  One useful technique is to be able to weight these losses towards 
+the more difficult tasks.  This weight vector then becomes another hyperparameter to optimise.  It's good to know that this technique can used with many 
+individual loss functions across specific classes too.
 
 \subsubsection{Augmentation}
-Data augmentation is strategy every machine learning practioner wants to have in their aresonal.  It addresses the data problem, allows us to truly 
+Data augmentation is strategy every machine learning practioner has in their aresonal.  It addresses the data problem, allows us to truly 
 leverage the data we have and generalise our models further.  The MINST \cite{} dataset itself was created using data augmentation.
 In the case of chess piece classification, the correct augmentations or transformations should be chosen.
 Go onto list the transformations used and why.
@@ -322,7 +359,7 @@ representation of board as the model sees it in the last fetched frame.  The Boa
 any time step represents a legal move from the BoardState. When the BoardState reaches a terminal state or otherwise receives a cancel signal in cases of a 
 draw or resignation the game tree is parsed and the PGN saved to disk.
 
-TALK about why
+TALK about why (flickering)
 
 To add even more redundancy the VisionState has a memory of length $N$, where memory is in an average of states over the last $N$ frames.
 

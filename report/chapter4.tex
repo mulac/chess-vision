@@ -5,6 +5,9 @@
 Throughout development, every change was monitored and evaluated.  As expressed in \nameref{methods}, the use of the Game and Labeller
 abstractions along with guild for experiment tracking greatly increased speed and ability of evaluate changes. 
 
+\section{Inference}
+Added the ability to take snapshots of misclassification during inference which could be used to fine-tune the model and leads us down the 
+path of continual learning.  Outside the scope of this project.
 \section{Conclusions}
 
 \subsection{Piece Recognition}
@@ -16,6 +19,8 @@ Firstly it would be nice to explore these methods with more extreme camera angle
 margin in one direction to account for the perspective. If assumptions about the environment are to be kept minimal
 then localising pieces in 3 dimensional space should be a requirement for robotic manipulation to be possible.
 
-It is the author's belief that "3d reconstruction" would kill two birds with one stone and the direction that future research should focus.
+Perhaps worth taking a step back and reconsidering the unanimously made decision by which chessboard state recognition is done.  Instead of splitting 
+the board up into squares and using simple image classification it would be more useful for robotic systems to have a 3D representation of the space.
+It is the author's belief that "3d reconstruction" would kill two birds with one stone and the direction that future research should focus. 
 
 Explain.  Similar work in other areas.
