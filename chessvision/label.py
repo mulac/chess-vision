@@ -118,7 +118,7 @@ def get_corners(image):
 
 def label_occupied_move(pgn_board, img, square, corners=None, opts=LabelOptions()):
     piece_img, piece = label_move(pgn_board, img, square, corners, opts)
-    return piece_img, piece is not None
+    return piece_img, piece is not EMPTY
 
 
 def label_move(pgn_board, img, square, corners=None, opts=LabelOptions()):

@@ -32,9 +32,6 @@ class Interpreter:
             o = self.model(x.to(self.device))
             y = y.cuda()
             losses = self.loss_fn(o, y)['total']
-            print(o)
-            print(y)
-            print(losses)
             for i, loss in enumerate(losses):
                 yield loss.item(), to_pieces(o)[i].argmax().cpu(), y[i].cpu(), x[i].permute(1, 2, 0).cpu()
 
@@ -103,7 +100,6 @@ class Interpreter:
 
             t.set_description(f'LOSS: {loss}')
 
-        print(self._features.shape)
         random_image.requires_grad = False
         hook.remove()
         return random_image.cpu()[0].permute(1, 2, 0)

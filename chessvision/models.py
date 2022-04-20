@@ -37,7 +37,7 @@ class MultiLoss(nn.modules.loss._Loss):
             loss_fn.reduction = 'none'
 
     def forward(self, pred, target):
-        targets = {'color': torch.where(target < 6, 1, 0), 'piece': torch.where(target < 6, target, target - 6)}
+        targets = {'occupied': torch.where(target == 12, 0, 1), 'piece': torch.where(target < 6, target, target - 6)}
         losses = {task: self.loss_funcs[task](pred[task], targets[task]) for task in self.tasks}
         losses['total'] = torch.sum(torch.stack([self.loss_weights[t] * losses[t] for t in self.tasks]))
         return losses
@@ -375,8 +375,8 @@ class AllModel(models.ResNet):
 
 class ConvNext(models.ConvNeXt):
     def __init__(self, shape, classes, pretrained=False, freeze_features=False):
-        if shape[-1] != 3:
-            raise ValueError("must have 3 channels")
+        # if shape[-1] != 3:
+        #     raise ValueError("must have 3 channels")
         super().__init__([
             models.convnext.CNBlockConfig(96, 192, 3),
             models.convnext.CNBlockConfig(192, 384, 3),
@@ -394,6 +394,45 @@ class ConvNext(models.ConvNeXt):
             nn.Flatten(1), 
             nn.Linear(768, classes)
         )
+
+    def configure_optimizers(self, config):
+        return torch.optim.AdamW(self.parameters(), 
+            lr=config.learning_rate,
+            weight_decay=config.weight_decay
+        )
+
+class ConvNextGumbel(models.ConvNeXt):
+    def __init__(self, shape, classes, pretrained=False, freeze_features=False):
+        if shape[-1] != 3:
+            raise ValueError("must have 3 channels")
+        super().__init__([
+            models.convnext.CNBlockConfig(96, 192, 3),
+            models.convnext.CNBlockConfig(192, 384, 3),
+            models.convnext.CNBlockConfig(384, 768, 9),
+            models.convnext.CNBlockConfig(768, None, 3),
+        ], 0.1)
+        if pretrained:
+            state_dict = models.convnext.load_state_dict_from_url(models.convnext._MODELS_URLS['convnext_tiny'])
+            self.load_state_dict(state_dict)
+        if freeze_features:
+            for param in self.parameters():
+                param.requires_grad = False
+        
+        def head():
+            return nn.Sequential(
+                models.convnext.LayerNorm2d(768, eps=1e-6), 
+                nn.Flatten(1), 
+                nn.Linear(768, 64)
+            )
+        self.piece_head = head()
+        self.occupied_head = head()
+        self.classifier = nn.Linear(64, 13)
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.avgpool(x)
+        
+        return {'piece': self.piece_head(x), 'occupied': self.occupied_head(x)}
 
     def configure_optimizers(self, config):
         return torch.optim.AdamW(self.parameters(), 

@@ -2,7 +2,10 @@ train:
   main: chessvision.train
   flags-import: all
   sourcecode:
-    - '*.py'
     - exclude:
-        dir: notebooks
+        dir: 
+          - notebooks
+          - games
+          - report
+
 

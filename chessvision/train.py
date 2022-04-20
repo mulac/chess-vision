@@ -13,7 +13,8 @@ from .label import *
 from .trainer import Trainer, TrainerConfig
 from .interpret import Interpreter
 
-torch.manual_seed(0)
+torch.manual_seed(235235)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 EPOCHS = 40
 LR = 0.00005
@@ -25,9 +26,10 @@ AUG_CROP = .9
 AUG_BRIGHTNESS = .75
 AUG_HUE = .1
 CHANNELS = 3
-LABELLER = 'type'
+LABELLER = 'occupied'
+TASK_WEIGHT = 0.5
 
-tasks = ['color', 'piece']
+tasks = {'piece': TASK_WEIGHT, 'occupied': 1-TASK_WEIGHT}
 
 labellers = {
     'all':      Labeller(label, ALL_LABELS, [piece.unicode_symbol() for piece in PIECE_LABELS] + ['None']),
@@ -39,27 +41,30 @@ labellers = {
 }
 
 config = TrainerConfig(
-    # train_folder = '/tmp/chess-vision-umcy3y4h',
-    # test_folder = '/tmp/chess-vision-5r8rpe_4',
-    train_games = (
+    # train_folder = '/tmp/chess-vision-0rbbu160',
+    # test_folder = '/tmp/chess-vision-b0acgfe7',
+    train_games = [
         *(Game("Evans", i) for i in range(7)),
         Game("Adams", 1),
         Game("Adams", 2),
-        Game("Adams", 3)
-    ),
-    test_games = (
+        Game("Adams", 3),
         Game("Evans", 7),
         Game("Bird", 2),
+        Game("Kasparov", 0),
         Game("Kasparov", 0)
-    ),
+    ],
+    test_games = [
+        Game("Kasparov", 0)
+    ],
     epochs = EPOCHS,
     batch_size = BATCH_SIZE,
     learning_rate = LR,
-    loss_fn=models.MultiLoss(tasks, nn.ModuleDict({t: nn.CrossEntropyLoss() for t in tasks}), {t: 0.5 for t in tasks}),
     scheduler = torch.optim.lr_scheduler.OneCycleLR,
     weight_decay = WEIGHT_DECAY,
     momentum = MOMENTUM,
     channels = CHANNELS,
+    # loss_fn=models.SingleLoss(nn.CrossEntropyLoss(torch.tensor([.6,.72,.72,.72,.72,.72,.6,.72,.72,.72,.72,.72,.16], device=device))),
+    # loss_fn=models.MultiLoss(tasks, nn.ModuleDict({t: nn.CrossEntropyLoss() for t in tasks}), tasks),
     image_shape = torch.tensor((IMG_SIZE, IMG_SIZE, CHANNELS)),
     labeller = labellers[LABELLER],
     transform = transforms.Compose([
@@ -84,12 +89,19 @@ config = TrainerConfig(
     ])
 )
 
+config.train_games[-1].pkl_file = config.train_games[-1].pkl_file + '_'
+config.test_games[-1].pkl_file = config.test_games[-1].pkl_file + '__'
+
+if CHANNELS == 1:
+    config.transform.transforms.append(transforms.Grayscale(3))
+
 logging.info(config)
 
 trainer = Trainer(
     models.ConvNext(config.image_shape, len(config.labeller.classes), pretrained=True),
     config,
-    SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+    SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}"),
+    device
 )
 
 logging.info("Begin training...")

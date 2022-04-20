@@ -20,8 +20,6 @@ class BoardState(chess.Board):
     def update(self, board):
         if not isinstance(board, VisionState):
             board = VisionState(board)
-        if not board.is_valid: 
-            return False
         for move in self.legal_moves:
             self.push(move)
             if self == board: 
@@ -30,11 +28,11 @@ class BoardState(chess.Board):
         return False
 
 
-class VisionState(chess.Board):
+class VisionState(chess.BaseBoard):
     """ VisionState is a potentially invalid board state """
     def __init__(self, board):
         super().__init__()
-        self.set_piece_map({i: label.from_id(piece) for i, piece in enumerate(board) if piece is not None})
+        self._set_piece_map({i: label.PIECE_LABELS[piece] for i, piece in enumerate(board) if piece is not None})
 
 
 class LiveInference:
@@ -67,6 +65,7 @@ class LiveInference:
         self.motion_thresh = motion_thresh
 
         self.board = BoardState()
+        self.board_svg = np.frombuffer(svg2png(self.board._repr_svg_()), dtype=np.uint8)
 
         self.corners = None
         self.prev_img = None
@@ -98,7 +97,7 @@ class LiveInference:
         
         occupied = [i for i, occupied in enumerate(self.occupancy_model(torch.stack(
             [self.occupancy_config.infer_transform(square) for square in squares]
-        ).to(self.device)).argmax(dim=1)) if occupied.item() == 1]
+        ).to(self.device)).argmax(dim=1)) if occupied.item() == 0]
         if len(occupied) == 0: 
             return {}
         
@@ -134,8 +133,8 @@ class LiveInference:
             # FOR DEBUGGING -> REMOVE
             time.sleep(100)
         board = label.get_board(img, self.corners)
-        if self.has_motion(board):
-            return
+        # if self.has_motion(board):
+        #     return
         preds = self.get_predictions(board)
         for i in range(64):
             self.history[i].append(preds.get(i))
@@ -154,8 +153,8 @@ class LiveInference:
             self.show_img(cv2.imdecode(svg_img, cv2.IMREAD_COLOR), "vision", (400, 400))
             # print(f"\n\nVisionState:\n{vision}")
             if self.board.update(vision):
-                svg_img = np.frombuffer(svg2png(self.board._repr_svg_()), dtype=np.uint8)
-                self.show_img(cv2.imdecode(svg_img, cv2.IMREAD_COLOR), "board", (400, 400))
+                self.board_svg = np.frombuffer(svg2png(self.board._repr_svg_()), dtype=np.uint8)
+            self.show_img(cv2.imdecode(self.board_svg, cv2.IMREAD_COLOR), "board", (400, 400))
 
     def start(self):
         try:
@@ -200,7 +199,7 @@ def main(args):
         camera,
         color_model=color_model,
         color_config=color_config,
-        history=20
+        history=1
     )
 
     game.start()
