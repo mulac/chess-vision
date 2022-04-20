@@ -1,20 +1,34 @@
 """ Automatic labelling functions using the Game class """
 
-import os
 import numpy as np
 import chess
 import cv2
 
 from itertools import product, chain
-from collections import namedtuple
 from dataclasses import dataclass
 
 from .util import skip
 from .aruco import detect, DetectionError
 
 
+class Labeller:
+    def __init__(self, label_fn, classes, names):
+        assert len(classes) == len(names)
+        self.label_fn, self.classes, self.names = label_fn, classes, names
+        
+    def __call__(self, x):
+        return self.label_fn(x)
+
+    def __repr__(self):
+        return f'Labeller({zip(self.classes, self.names)})'
+
+    def __iter__(self):
+        return iter(enumerate(self.classes))
+
+
 @dataclass
 class LabelOptions():
+    """ LabelOptions change the behavior of the auto-labelling functions """
     board_size: int = 800
     margin: int = 0
     cut: int = 5
@@ -22,21 +36,40 @@ class LabelOptions():
     flipped: bool = False
 
 
-Labeller = namedtuple('Labeller', ['classes', 'label_fn', 'names'])
 
-PIECE_LABELS = [chess.Piece(piece_t, color) for piece_t, color in product(chess.PIECE_TYPES, chess.COLORS)]
-OCCUPIED_LABELS = [True, False]
-COLOR_LABELS = chess.COLORS
-TYPE_LABELS = list(range(6))
-
-_piece_by_id = {hash(lbl): lbl for lbl in PIECE_LABELS}
-_piece_str_by_id = {hash(lbl): str(lbl) for lbl in PIECE_LABELS}
-
-def from_id(id): return _piece_by_id[id]
-def str_from_id(id): return _piece_str_by_id[id]
+# Different sets of label classes
+# ================================
+PIECE_LABELS    = [chess.Piece(piece_t, color) for piece_t, color in product(chess.PIECE_TYPES, chess.COLORS)]
+OCCUPIED_LABELS = [OCCUPIED, EMPTY] = [True, False]
+COLOR_LABELS    = [WHITE, BLACK] = [True, False]
+TYPE_LABELS     = [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING] = range(1, 7)
+ALL_LABELS      = PIECE_LABELS + [EMPTY]
 
 
+# Different label functions for each label class above
+# ====================================================
 def label(game):
+    corners = find_corners(game.images)
+    images = skip(game.images, game.options.skip_moves-1)
+    start_img = next(images)
+    for square in range(64):
+        yield label_move(chess.Board(), start_img['color'], square, corners, game.options)
+    for move, img in zip(game.pgn.mainline(), images):
+        yield label_move(move.board(), img['color'], move.move.to_square, corners, game.options)
+        yield label_move(move.board(), img['color'], move.move.from_square, corners, game.options)
+
+def label_with_board(game):
+    corners = find_corners(game.images)
+    images = skip(game.images, game.options.skip_moves-1)
+    img = next(images)
+    for square in chain(range(16), range(48, 64)):
+        square, lbl = label_move(chess.Board(), img['color'], square, corners, game.options)
+        yield (img['color'], square), lbl.color
+    for move, img in zip(game.pgn.mainline(), images):
+        square, lbl = label_move(move.board(), img['color'], move.move.to_square, corners, game.options)
+        yield (img['color'], square), lbl.color
+
+def label_pieces(game):
     corners = find_corners(game.images)
     images = skip(game.images, game.options.skip_moves-1)
     start_img = next(images)
@@ -46,20 +79,20 @@ def label(game):
         yield label_move(move.board(), img['color'], move.move.to_square, corners, game.options)
 
 def label_color(game):
-    for img, piece in label(game):
+    for img, piece in label_pieces(game):
         yield img, piece.color
 
 def label_type(game):
-    for img, piece in label(game):
-        # make pieces types zero-indexed for pytorch
-        yield img, piece.piece_type - 1
+    for img, piece in label_pieces(game):
+        yield img, piece.piece_type
 
-def label_occupied(game, stream='color'):
+def label_occupied(game, stream='color', initial=True):
     corners = find_corners(game.images)
     images = skip(game.images, game.options.skip_moves-1)
     start_img = next(images)
-    for square in range(64):
-        yield label_occupied_move(chess.Board(), start_img[stream], square, corners, game.options)
+    if initial:
+        for square in range(64):
+            yield label_occupied_move(chess.Board(), start_img[stream], square, corners, game.options)
     for move, img in zip(game.pgn.mainline(), images):
         yield label_occupied_move(move.board(), img[stream], move.move.to_square, corners, game.options)
         yield label_occupied_move(move.board(), img[stream], move.move.from_square, corners, game.options)
@@ -92,7 +125,7 @@ def label_move(pgn_board, img, square, corners=None, opts=LabelOptions()):
     board_img = get_board(img, corners, opts) if corners is not None else img
     piece_img = get_square(square, board_img, opts)
     label = pgn_board.piece_at(square)
-    return piece_img, label
+    return piece_img, label if label is not None else EMPTY
 
 
 def get_occupied_squares(depth_img, corners, opts=LabelOptions()):

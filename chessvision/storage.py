@@ -24,7 +24,7 @@ class S3Storage():
     def __call__(self, object):
         """ Fetches an object s3 if not already on disk """
         path = os.path.join(self.dir, object)
-        logging.info(f'{self}: fetching {object}...')
+        logging.info(f'{self}: fetching {object}')
         if not os.path.exists(path): self.download(object, path)
         return path
 
