@@ -19,12 +19,15 @@ TODO:
  - Visualise CNN layers
  - Calculate top-n accuracy
  - Compare freezing layers in transfer learning
- - Research SIFT / ORB
 
 Idea:  Use heatmap solution as an autolabeller to train a segmentation neural net
 
 Report:
  - add abbreviations like FEN
+ - describe tables and figures
+ - test hue and brightness together
+ - find extreme examples
+ - are kings and queens hard to compare?? like previous work said
  
 Realworld:
 https://matijapiskorec.github.io/static/pdf/Computer%20vision%20system%20for%20the%20chess%20game%20reconstruction.pdf
