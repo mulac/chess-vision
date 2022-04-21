@@ -27,8 +27,14 @@ class Game:
     """
     def __init__(self, name, number, options=LabelOptions()):
         self.name, self.number, self.options = name, number, options
-        self.pgn_file = f"{self.name}.pgn"
-        self.pkl_file = f"{self.name}_{self.number}.pkl"
+        self.pgn_file = f'{name}.pgn'
+        self.pkl_file = f'{name}_{number}.pkl'
+
+    @classmethod
+    def from_file(cls, fname, options=LabelOptions()):
+        game = cls(*fname.split('_')[:2], options=options)
+        game.pkl_file = fname
+        return game
 
     def __len__(self):
         return sum(1 for _ in self.images) - self.options.skip_moves

@@ -44,18 +44,20 @@ config = TrainerConfig(
     # train_folder = '/tmp/chess-vision-0rbbu160',
     # test_folder = '/tmp/chess-vision-b0acgfe7',
     train_games = [
-        *(Game("Evans", i) for i in range(7)),
+        # *(Game("Evans", i) for i in range(7)),
         Game("Adams", 1),
         Game("Adams", 2),
         Game("Adams", 3),
-        Game("Evans", 7),
-        Game("Bird", 2),
         Game("Kasparov", 0),
-        Game("Kasparov", 0)
+        # Game("Kasparov", 0)
     ],
     test_games = [
+        Game("Evans", 7),
+        Game("Bird", 2),
         Game("Kasparov", 0)
     ],
+    # train_games = [Game("Nakamura", i) for i in range(3)],
+    # test_games = [Game("Nakamura", 3)],
     epochs = EPOCHS,
     batch_size = BATCH_SIZE,
     learning_rate = LR,
@@ -89,16 +91,14 @@ config = TrainerConfig(
     ])
 )
 
-config.train_games[-1].pkl_file = config.train_games[-1].pkl_file + '_'
-config.test_games[-1].pkl_file = config.test_games[-1].pkl_file + '__'
-
 if CHANNELS == 1:
     config.transform.transforms.append(transforms.Grayscale(3))
 
 logging.info(config)
 
 trainer = Trainer(
-    models.ConvNext(config.image_shape, len(config.labeller.classes), pretrained=True),
+    models.MLP(config.image_shape, len(config.labeller.classes)),
+    # models.ConvNext(config.image_shape, len(config.labeller.classes), pretrained=True),
     config,
     SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}"),
     device

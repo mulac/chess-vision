@@ -56,8 +56,8 @@ class Interpreter:
         plt.tight_layout()
         return f
 
-    def plot_confusion_matrix(self):
-        cf_values = self.confusion_matrix()
+    def plot_confusion_matrix(self, cf_values=None):
+        cf_values = self.confusion_matrix() if cf_values is None else cf_values
         cf_weight = cf_values / cf_values.sum(axis=1)
         plt.figure(figsize=(12, 12))
         sn.set(font_scale=1.5)
