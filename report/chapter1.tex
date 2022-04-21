@@ -27,31 +27,44 @@ state of a chess board from a video stream.  A solution reliable enough to live 
 in a robotic system,
 but also a solution that could be immediately useful in other applications such as realtime chess analysis from a real board.
 
-
 There will be a focus on deep learning techniques, with consideration for best practice and the aim to share the 
 tools to more easily manage and create new datasets in this area.  Something 
 called for by \cite{Ding2016ChessVisionC} as a serious challenge and priority for future research.
 
-% Must provide evidence of a literature review. Use sections
-% and subsections as they make sense for your project.
+
 \section{Literature Review}
 \label{research}
 
 
-\subsection{A Short History of Computer Vision}
-The following headings provide some brief context for notable techniques that are used and mentioned throughout this report.
+\subsection{A \textit{Brief} History of Computer Vision}
+\label{a breif history}
+Computer vision is the study of making sense from visual data.  Applications include character recognition for digitising documents, segmenting and classifying 
+object instances for cancer screening, object tracking for sports analysis from video and countless more. 
+To reach these goals, we name \textit{features} to be useful pieces of information within an image (or any other visual data) and \textit{feature detection} to be
+the class of algorithms that can extract features from images.
 
-\subsubsection{Harris Corner Detection}
-\subsubsection{Canny Edge Detection}
-\subsubsection{Adaptive Thresholding}
-\subsubsection{Hough Transforms}
-\subsubsection{SIFT and SURF Algorithms}
-\subsubsection{Hog Detectors}
-\subsubsection{Fourier Descriptors}
-\subsubsection{Template Matching}
+Some of the earliest work in computer vision started with Larry Robert in his 1965 paper \cite{} describing a simple 2x2 convolutional
+kernel for edge detection which soon became the predecessor to the Sobel operator in 1968 \cite{} and the still widely used
+Canny edge detector developed in 1986 \cite{}. The ability to find edges provided a helpful backbone for detection of higher order features such as lines and corners. 
+
+Another one of these tools that is still commonly used to help more sophisticated feature extractors is \textit{thresholding} which refers to the process of 
+partitioning images into two sub regions based on a pixel color/intensity threshold value.  
+More complex partitioning schemes are often referred to as image segmentation techniques.
+Otsu's method is a famous example of an automatic global thresholding algorithm that finds a suitable threshold value for the entire image without supervision
+by minimising the resulting variance both between and within the two separated sub regions \cite{}.
+
+For higher order features more sophisticated methods are needed, a bucket term used to describe some of these methods is \textit{template matching}, which can generally be 
+considered as comparing an image to known feature templates to determine if that feature is present\footnote{Neural networks perform template matching 
+on an input against their learned internal features}.  The Hough transform is the one of these higher level feature extractors commonly used to extract lines, circles 
+and even arbitrary shapes, which heavily relies of edge detection \cite{houghtransform}.
+
+Feature Descriptors (keypoint, intest detectors) ... Laplacian, Harris, SIFT, SURF, ORB, HOG
+% https://web.stanford.edu/class/ee368/Handouts/Lectures/2014_Spring/Combined_Slides/12-Keypoint-Detection-Combined.pdf
+
+
 \subsubsection{Neural Networks}
-\subsubsection{Convolutional Neural Networks}
-\subsubsection{Other Neural Networks}
+Enter...  Neural Networks now do all of the above, better.
+
 % \textbf{Image Recognition}
 % the way back in 1980 \cite{} convolutions showed promise in simple computer vision tasks, 
 % convolutions since have showed extreme promise \cite{}
@@ -71,7 +84,7 @@ The following headings provide some brief context for notable techniques that ar
 \subsection{Computer Vision for Chess}
 Despite chess being a very narrow application of computer vision, the amount of research effort gone into the problem of determining 
 board state is not insignificant. 
-A variety of approaches have been tried and tested for which the following section will attempt to fairly summarise.
+A variety of approaches have been tried and tested for which the following section will now summarise.
 
 As in \cite{Ding2016ChessVisionC} the vision problem can be split into two further problems for analysis: board detection and piece recognition.
 

@@ -117,7 +117,7 @@ This could even be extended to more complicated labels like bounding boxes or mu
 One important note in implementation is the use of python generators which dramatically reduce memory usage and speed up the auto-labelling pipeline by over 10 fold in 
 places.
 
-\section{The Model}
+\section{Model Training}
 Given this data what is are model meant to do.
 
 \subsection{Experiment Tracking}
@@ -139,7 +139,7 @@ TesnorBoard integration also played a huge roll as it provided an easy to use, v
 for examples.
 
 \subsection{Board Segmentation}
-Aruco markers are chosen for board corner point detection as a very simple method.
+Aruco markers are chosen for board corner point detection as a very simple method that works reliably even with a board full of pieces.
 With the corner points of the board the perspective transformation is calculated using
 Gaussian elimination \cite{gauss}, as demonstrated in \autoref{fig:corner}.
 Although Aruco markers require customizing the environment they are very fast at 
@@ -223,7 +223,14 @@ was that if the model was able to overfit (i.e. achieve $\sim100\%$ accuracy on 
 as is sometimes put: the model has sufficient entropic capacity.  It is then a lot easier to make it generalise well, for example by reducing the number of parameters, 
 than to go from an underfitting model to a generalised one as you don't necessary know where the problem lies for not fitting to the data.
 
-SHOW overfitting
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{overfit.png}
+    \caption{Demonstration of overfitting.  Loss against epoch. The validation loss in orange is seen diverging above and the training loss in green is seen tending
+    to zero below2.
+    A model should be saved at roughly epoch 125.}
+    \label{fig:overfit}
+\end{figure}
 
 There are many ways to fight overfitting as typically referered to as regularization techniques, perhaps the easiest of which is early stopping \cite{}.
 The way this was implemented in our Trainer was to save the model after the first epoch and consquently after every other epoch for which the validation 
@@ -241,6 +248,8 @@ ConvNext https://arxiv.org/pdf/2201.03545.pdf
 
 Due to the recent surge of deep learning research for computer vision there are a huge range of openly available models.
 During this project ResNet, ConvNext, and ViTs were experimented with.  How much detail should I go into here?
+
+ResNet
 
 \subsubsection{Loss Function}
 https://towardsdatascience.com/choosing-and-customizing-loss-functions-for-image-processing-a0e4bf665b0a
@@ -319,10 +328,13 @@ leverage the data we have and generalise our models further.  The MINST \cite{} 
 In the case of chess piece classification, the correct augmentations or transformations should be chosen.
 Go onto list the transformations used and why.
 
+\subsection{The Final Model}
+Augmentation as well?
+Talk about grayscale (a lot of previous works used gray scale do performant CNNs aid from gray or hinder?)
 
 \section{Recording a Chess Game to PGN}
 The goal of this section is to discuss methods for using the proposed piece classifier to record an entire game of chess, played on a real board, 
-to a PGN formatted file.
+to a PGN formatted file.  This application is later referered to as the \textit{Inference Application}.
 
 The general approach is to generate a board state at each fetched frame.  That is to segment the board and each of it's squares, send each square 
 through a forward pass of the piece classifier described above and finally collate the predictions together into a board state.  A board state is 
@@ -344,11 +356,11 @@ This tree structure gives flexibility for many variations of the same game to be
         \includegraphics[width=\textwidth]{fen.png}
         \caption{Prediction Vision State}
     \end{subfigure}
-% \caption{Board Squares Segmentation Process}
+\caption{Board Squares Segmentation Process}
 \label{fig:visionstate}
 \end{figure}
 
-\subsection{Chess Engines}
+\subsection{Leveraging a Chess Engine}
 As leveraged by others before \cite{} a chess engine and other statistical methods \cite{} can be used to increase the reliability of board state 
 prediction when the normal rules of chess can be assumed to be abided by.  The piece classifier described above makes no such assumptions, but as 
 the output of this module is a PGN file (which in itself assumes the normal rules of chess??) it is safe to assume them here without loss of 
@@ -363,7 +375,7 @@ TALK about why (flickering)
 
 To add even more redundancy the VisionState has a memory of length $N$, where memory is in an average of states over the last $N$ frames.
 
-\subsection{Motion}
+\subsection{Motion Detection}
 One factor that was found to still sometimes break this system was motion.  Moving pieces across squares and hands flailing over the board confused the
 model.  Even with the separation of the BoardState and memory to remove anomalous predictions - especially when motion persisted for longer periods.  
 
@@ -372,3 +384,9 @@ and so it's definition may be undetermined.  Because of this is it not unreasona
 has been completed is a common strategy \cite{}, but goes against the purpose of building such a system all together - autonomy.  Instead a motion detector is 
 employed.  Even the naive motion detector of using a threshold over the absolute difference between each consecutive frame was found to be sufficient for removing these
 disturbances.  Some other methods such as SIFT and SURF were also explored but found to be more computationally expensive that necessary.
+
+\subsection{Towards Continual Learning}
+Another feature added to the Inference Application was the ability to save snapshots.  During inference it was not uncommon to see the vision state make mistakes,
+and while the above features usually enabled us to generate an accurate PGN file, this is still useful data.
+By giving the user the ability to save snapshots when they see an error it is now possible to feed this data back into fine-tuning the model.  This is the process of 
+continual learning and is an active area of research \cite{}.

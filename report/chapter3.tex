@@ -1,67 +1,97 @@
 \chapter{Results}
 \label{results}
 
-\section{Workflow}
+This chapter will cover the results of the best and final model that was trained.  The first section, \nameref{evaluation}, measures the performance
+of piece recognition against existing solutions.  The second section, \nameref{evaluate pgn}, tests the model within the inference application
+to give a better view of its utility.
 
+\section{Piece Recognition}
+\label{evaluation}
 
-\section{Model Evaluation}
+The best openly available solutions for chess piece recognition were found and trained on the chessboard used throughout this project.
+As can be seen, the presented solution outperformed the others by a huge margin, despite using data from the evaluation set that had never
+been used to train the presented model.  In order to make a fairer comparison another board entirely was also chosen for these final tests.  The 
+reason being that it is more than possible through each iteration and optimisation of hyperparameters the presented solution was being overfit to the 
+images in the evaluation set despite never being directly trained on it.  By now including a never seen before dataset more meaningful conclusions
+regarding the generality of the model can be drawn.
 
-
-\subsection{Board Segmentation}
-The decision to use aruco markers, while impractical for release, aided development in a couple of ways.  Firstly, they're reliable \cite{}.
-To correctly classify pieces, the segmentation of board squares was critical as a small error of even 10mm could completely throw the
-model off as due to added perspective shift a square could now contain two pieces.  Compared to the iterative heatmap method \cite{} aruco 
-marker are not the best, but in a controlled environment this did not become a problem and more importantly they worked even with pieces on the
-board which enabled recalibration during inference and while collecting data.  This is unlike a lot of other proposed solutions \cite{}.
-Secondly they're fast \cite{}.  The iterative heatmap method can take around 5 seconds to segment the board which while not terrible can add up when 
-relabelling lots of data for many model experiments.
-
-As this project focused on piece recognition and the development of an inference system, aruco markers proved to be a sensible choice.  However, 
-they come with deal breaking consequences if this method is to be used in production with many boards.  It's just too impractical to print and fix
-markers every time a new board is to be used with the system and again goes directly against the main purpose of this project: autonomy.
-
-Time comparison for the 3.  And compare accuracy of heatmap against aruco.
-
-\subsection{Multitask Learning}
-
-
-\subsection{Piece Recognition}
 Use top-1 and top-5 to measure performance of different models.
 Will include basic evaluation.  What happens what you increase layers, use more data, data augmentation.
 Include Recall / Specificity / Sensitivity
 
-A benefit of having the depth sensor is an easier way to detech piece presence.  
-Fixed threshold vs clustering.  Adding a margin.  How we actually did it.
-Using paried T-test to evaulate.
+
 
 Using a neural network instead as an additional class with our piece recognition network.
 Compare that two having a two stage network, the first for piece detection and the second for recognition.
 
-\subsection{Hyperparameter Tuning}
-Augmentation as well?
-Talk about grayscale (a lot of previous works used gray scale do performant CNNs aid from gray or hinder?)
-
-\subsection{Deep Dive into CNNs}
-Visualising convolutional layers to analyse effectiveness.
-
-\section{Realtime Analysis}
-Frames per second.  Problems.
+\begin{center}
+    \begin{tabular}{|c|c|c|c|c|c|c|}
+        \cline{2-7}
+        \multicolumn{1}{c|}{} & \multicolumn{3}{|c|}{Chessboard 1} & \multicolumn{3}{|c|}{Chessboard 2} \\
+        \hline
+        Method & Accuracy & Precision & Recall & Accuracy & Precision & Recall \\
+        \hline
+        proposed & \textbf{94\%} & 1 & 2 & 3 & 4 & 4 \\
+        \cite{} & 78\% & 1 & 2 & 3 & 4 & 4 \\
+        \cite{} & 65\% & 1 & 2 & 3 & 4 & 4  \\
+        \hline
+\end{tabular}
+\end{center}
 
 \subsection{Trials}
+For a clearer comparison in the task of full chessboard state recognition a methodology is used similar
+to that of Ding, Czyzeqskil et al. \cite{Ding2016ChessVisionC, heatmap}.  It involves collecting a small yet diverse benchmark of chessboard images
+and evaluating the full chessboard prediction of each model.  This is in contrast to using the dataset used above which consists only of individual 
+pieces and their corresponding labels.
+
+
+Screen shots with the results.
+
 table of end-to-end experiments
 
-\section{Comparison to Existing Solutions}
 \begin{center}
-\begin{tabular}{|c|c|}
-    \multicolumn{2}{c}{Chessboard 1} \\
+{\tabulinesep=2mm
+\begin{tabu}{|c|c|c|c|c|}
     \hline
-    Method & Accuracy \\
+    \textbf{Input} & \textbf{Ground Truth} & \textbf{Proposed} & \textbf{\cite{}} & \textbf{\cite{}} \\
     \hline
-    proposed & 94\% \\
-    \cite{} & 78\% \\
-    \cite{} & 65\%  \\
+    \hline
+    \includegraphics[width=0.18\textwidth]{segmented_board.jpg} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} \\
+    \hline
+    \includegraphics[width=0.18\textwidth]{segmented_board.jpg} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} \\
+    \hline
+    \includegraphics[width=0.18\textwidth]{segmented_board.jpg} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} 
+\end{tabu}}
+\end{center}
+
+
+Talk about speed of inference and any other limitations of both presented and other work.
+
+\section{Recording PGN}
+\label{evaluate pgn}
+In addition to evalutaing the raw model's performance, six games of varying length are played from beginning to end 
+with the inference application.  
+How well does it perform.  What did it take to get there?
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+    \hline
+    Game & No. Moves & Mean Delay (100 ms) & PGN 100\% Correct \\
+    \hline
+    Kasparov 1 & 84 & 30 &  \checkmark \\
+    Kasparov 2 & 43 & 32 & \checkmark \\
+    Kasparov 3 & 47 & - & - \\
+    Nakamura 4 & 122 & 25 & \checkmark \\
     \hline
 \end{tabular}
 \end{center}
 
-Talk about speed of inference and any other limitations of both presented and other work.
+How about performance?
+Frames per second.  Analyse profiler.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{call_stack.png}
+    \caption{cProfile Visualisation of recording a 4 minute game at inference with moves made in quick succession}
+    \label{fig:profile}
+\end{figure}

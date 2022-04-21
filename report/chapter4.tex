@@ -3,16 +3,51 @@
 
 \section{Workflow}
 Throughout development, every change was monitored and evaluated.  As expressed in \nameref{methods}, the use of the Game and Labeller
-abstractions along with guild for experiment tracking greatly increased speed and ability of evaluate changes. 
+abstractions along with guild for experiment tracking greatly increased speed and ability of evaluate changes.  
+
+What was the result of the data labelling pipeline
+How well did it work
+What could be improved
+
+\subsection{Dataset Management}
+
+
+\section{Board Segmentation}
+The decision to use aruco markers, while impractical for release, aided development in a couple of ways.  Firstly, they're reliable \cite{}.
+To correctly classify pieces, the segmentation of board squares was critical as a small error of even 10mm could completely throw the
+model off as due to added perspective shift a square could now contain two pieces.  Compared to the iterative heatmap method \cite{} aruco 
+marker are not the best, but in a controlled environment this did not become a problem and more importantly they worked even with pieces on the
+board which enabled recalibration during inference and while collecting data.  This is unlike a lot of other proposed solutions \cite{}.
+Secondly they're fast \cite{}.  The iterative heatmap method can take around 5 seconds to segment the board which while not terrible can add up when 
+relabelling lots of data for many model experiments.
+
+As this project focused on piece recognition and the development of an inference system, aruco markers proved to be a sensible choice.  However, 
+they come with deal breaking consequences if this method is to be used in production with many boards.  It's just too impractical to print and fix
+markers every time a new board is to be used with the system and again goes directly against the main purpose of this project: autonomy.
+
 
 \section{Inference}
 Added the ability to take snapshots of misclassification during inference which could be used to fine-tune the model and leads us down the 
 path of continual learning.  Outside the scope of this project.
-\section{Conclusions}
 
-\subsection{Piece Recognition}
+\subsection{Multitask}
+Initially a benefit of having the depth sensor is an easier way to detech piece presence.  
+Fixed threshold vs clustering.  Adding a margin.  How we actually did it.
+Using paried T-test to evaulate.
 
-\subsection{Dataset Management}
+\section{Dataset}
+I found not only managing datasets but choosing and building them to be a big yet fun task.  No doubt by the legends who've built tools for me to use,
+my experience has been that most of the work is in the data. Creative ways to collect it, label it and fit it to pre-existing network architectures.  
+
+It was not until I recorded and labeled lots of data (1000s images) was it until I suddenly started to see new patterns I had not seen before.  Small 
+things like dark shadows, motion blur, pieces half across squares, poor resolution or exposured frames.
+
+More control over the sensor hardware sensors may have been useful.  Changes in the way we generate image (as in the autolabeller) or
+adding augmentation such as cropping and blurring helped which these changes that I would not have seen in my metrics before hand.
+
+\section{Conclusion}
+
+
 
 \section{Ideas for future work}
 Firstly it would be nice to explore these methods with more extreme camera angles.  This would probably include extending the labeller too add more 
