@@ -12,31 +12,45 @@ The best openly available solutions for chess piece recognition were found and t
 As can be seen, the presented solution outperformed the others by a huge margin, despite using data from the evaluation set that had never
 been used to train the presented model.  In order to make a fairer comparison another board entirely was also chosen for these final tests.  The 
 reason being that it is more than possible through each iteration and optimisation of hyperparameters the presented solution was being overfit to the 
-images in the evaluation set despite never being directly trained on it.  By now including a never seen before dataset more meaningful conclusions
+images in the evaluation set despite never being directly trained on it.  By including a never seen before dataset more meaningful conclusions
 regarding the generality of the model can be drawn.
 
-Use top-1 and top-5 to measure performance of different models.
-Will include basic evaluation.  What happens what you increase layers, use more data, data augmentation.
-Include Recall / Specificity / Sensitivity
+\cite{} Uses a pretrained VGG16, freezing all layers of the convolutional feature extractor and adds a head of 3 fully connected layers with a total of 2.5M parameters.
+The final layer outputs a softmax distribution over all 13 class ('all' from \autoref{table:labellers}).  After getting familiar with the code base and running a few 
+experiments with different datasets, a few minor improvements were spotted that could be made without changing the architecture, such as implementing early stopping. 
+In order to ensure a fair representation of the authors work those changes were implemented and the best results were used in \autoref{table:results}.
 
+\cite{} Learns HOG features using a support vector machine for each piece type including empty ('type+' from \autoref{table:labellers}).  To determine piece color they 
+use reference colors which were calculated separately for each board.  Unfortunately this method is not easily generalizable when using multiple boards with the same
+classifier the decision was made to exclude due to using reference colors from the board so instead here we only compare with.
 
-
-Using a neural network instead as an additional class with our piece recognition network.
-Compare that two having a two stage network, the first for piece detection and the second for recognition.
-
-\begin{center}
+\begin{figure}[h]
+\makebox[\textwidth][c]{
     \begin{tabular}{|c|c|c|c|c|c|c|}
         \cline{2-7}
-        \multicolumn{1}{c|}{} & \multicolumn{3}{|c|}{Chessboard 1} & \multicolumn{3}{|c|}{Chessboard 2} \\
+        \multicolumn{1}{c|}{} & \multicolumn{2}{c|}{Chessboard 1} & \multicolumn{2}{c|}{Chessboard 2} & \multicolumn{2}{c|}{Both 1 \& 2} \\
         \hline
-        Method & Accuracy & Precision & Recall & Accuracy & Precision & Recall \\
+        Method & Accuracy & Balanced & Weighted & Balanced & Weighted & Balanced \\
         \hline
-        proposed & \textbf{94\%} & 1 & 2 & 3 & 4 & 4 \\
-        \cite{} & 78\% & 1 & 2 & 3 & 4 & 4 \\
-        \cite{} & 65\% & 1 & 2 & 3 & 4 & 4  \\
+        proposed & \textbf{97\%} & 94\% & \textbf{94\%} & 91\% & \textbf{94\%} & 90\%  \\
+        \cite{} & 0.87 & 0.71 & 81\% & 75\% & 74\% & 70\%  \\
+        \cite{} & 0.77 & 0.57 & 63\% & 50\% & - & -  \\
         \hline
-\end{tabular}
-\end{center}
+    \end{tabular}
+}
+\caption{\textbf{Evaluation Accuracies} for models trained on both single chessboards and then a dataset containing images from both boards}
+\label{table:results}
+\end{figure}
+
+Weighted accuracy is the typicall accuracy calculation:
+
+% \begin{equation}
+% \ddot{\underline{\mathbf{r}}} = \frac{\dd{}{^2}\underline{\mathbf{r}}}{\dd{t}^2} = 0
+% \end{equation}
+% \begin{equation}
+% \ddot{\underline{\mathbf{r}}} = \frac{\dd{}{^2}\underline{\mathbf{r}}}{\dd{t}^2} = 0
+% \end{equation}
+Notice other metrics such as recall and precision are not included here.  This is because there is not
 
 \subsection{Trials}
 For a clearer comparison in the task of full chessboard state recognition a methodology is used similar
@@ -49,20 +63,26 @@ Screen shots with the results.
 
 table of end-to-end experiments
 
-\begin{center}
-{\tabulinesep=2mm
-\begin{tabu}{|c|c|c|c|c|}
-    \hline
-    \textbf{Input} & \textbf{Ground Truth} & \textbf{Proposed} & \textbf{\cite{}} & \textbf{\cite{}} \\
-    \hline
-    \hline
-    \includegraphics[width=0.18\textwidth]{segmented_board.jpg} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} \\
-    \hline
-    \includegraphics[width=0.18\textwidth]{segmented_board.jpg} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} \\
-    \hline
-    \includegraphics[width=0.18\textwidth]{segmented_board.jpg} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} & \includegraphics[width=0.18\textwidth]{fen.png} 
-\end{tabu}}
-\end{center}
+\begin{figure}[h]
+\makebox[\textwidth][c]{
+    {\tabulinesep=2mm
+    \begin{tabu}{|c|c|c|c|c|}
+        \hline
+        \textbf{Input} & \textbf{Ground Truth} & \textbf{Proposed} & \textbf{\cite{}} & \textbf{\cite{}} \\
+        \hline
+        \hline
+        \includegraphics[width=0.19\textwidth]{segmented_board.jpg} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} \\
+        & Mistakes: & 0 & 12 & 3 \\
+        \hline
+        \includegraphics[width=0.19\textwidth]{segmented_board.jpg} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} \\
+        & Mistakes: & 0 & 12 & 3 \\
+        \hline
+        \includegraphics[width=0.19\textwidth]{segmented_board.jpg} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} \\
+        & Mistakes: & 0 & 12 & 3 \\
+        \hline
+    \end{tabu}}
+}
+\end{figure}
 
 
 Talk about speed of inference and any other limitations of both presented and other work.

@@ -302,7 +302,8 @@ the 'piece', 'color' and 'occupied' labellers would yeild the same class of pred
     piece & 12 & White Pawn, White Rook, ..., Black Queen, Black King \\
     occupied & 2 & Empty, Occupied \\
     color & 2 & White, Black \\
-    piece & 6 & Pawn, Rook, Knight, Bishop, Queen, King \\
+    type & 6 & Pawn, Rook, Knight, Bishop, Queen, King \\
+    type+ & 7 & Empty, Pawn, Rook, Knight, Bishop, Queen, King \\
     \hline
 \end{tabular}
 \caption{Class Sets}
@@ -329,6 +330,7 @@ In the case of chess piece classification, the correct augmentations or transfor
 Go onto list the transformations used and why.
 
 \subsection{The Final Model}
+\label{the model}
 Augmentation as well?
 Talk about grayscale (a lot of previous works used gray scale do performant CNNs aid from gray or hinder?)
 
@@ -362,18 +364,25 @@ This tree structure gives flexibility for many variations of the same game to be
 
 \subsection{Leveraging a Chess Engine}
 As leveraged by others before \cite{} a chess engine and other statistical methods \cite{} can be used to increase the reliability of board state 
-prediction when the normal rules of chess can be assumed to be abided by.  The piece classifier described above makes no such assumptions, but as 
-the output of this module is a PGN file (which in itself assumes the normal rules of chess??) it is safe to assume them here without loss of 
-generality.  In this case leveraging the rules of chess means that we assume the starting state of the board and only allow legal moved to be recorded.
+prediction when the normal rules of chess can be assumed to be abided by.  The proposed piece classifier in \ref{the model} makes no such assumptions, which
+lends it self to a wider array of circumstances even when the normal rules of chess are not being used.
+When a game is to be recorded to a PGN file however there are some rules you must follow so that a game can be encoded.  Typically chess engines can handle a few
+variants and so it is assumed to be safe to incorporate one here without loss of too much generality.  And so a chess engine is used, not to help the 
+classifier's predicitions, but to automatically determine when a move has been made.
+Specifically leveraging a chess engine means that we assume (or set) the starting state of the board and only allow legal moves within a chosen chess variant to be 
+accepted, much like a human would when playing against a competitor.  
 
-To do this, two concepts are introduced: \textit{VisionState} and \textit{BoardState}.  With some simplification, VisionState is a lightweight 
-representation of board as the model sees it in the last fetched frame.  The BoardState starts at a known state and is then only updated if the VisionState at 
-any time step represents a legal move from the BoardState. When the BoardState reaches a terminal state or otherwise receives a cancel signal in cases of a 
-draw or resignation the game tree is parsed and the PGN saved to disk.
+To do this, two concepts are introduced: \textit{VisionState} and \textit{BoardState}.  With some simplification, the VisionState is a lightweight 
+representation of board as the model sees it in the last fetched frame.  The BoardState starts at the known starting state and is only updated if the VisionState at 
+any time step represents a legal move from the current BoardState.  When the BoardState reaches a terminal state, or otherwise receives a cancel signal in cases of a 
+draw or resignation, the game tree is parsed and the PGN saved to disk.
 
-TALK about why (flickering)
-
-To add even more redundancy the VisionState has a memory of length $N$, where memory is in an average of states over the last $N$ frames.
+Since our classifier is almost guarenteed to never achieve 100\% accuracy on new unseen data, especially as more chess sets of different shapes and sizes are used, it 
+is likely to have varying uncertaintly.  Often, the more uncertain predictions of a particular square may result in flickering, that is for example it deduces the piece to 
+be white in one frame yet black in the next.  This occurs when the resulting probability distribution for a given input looks something like 
+$p = [0.38, 0.39, 0.09, 0.04, 0.1]$ as it is not unlikely with the next frame we see it change to $p = [0.39, 0.38, 0.09, 0.04, 0.1]$ resulting in a different classification.
+To cater for this uncertainty like this, the VisionState also has a concept of memory with length $N$, where memory is in an average of states 
+over the last $N$ frames.
 
 \subsection{Motion Detection}
 One factor that was found to still sometimes break this system was motion.  Moving pieces across squares and hands flailing over the board confused the
