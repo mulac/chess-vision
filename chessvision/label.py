@@ -43,40 +43,41 @@ PIECE_LABELS    = [chess.Piece(piece_t, color) for piece_t, color in product(che
 OCCUPIED_LABELS = [OCCUPIED, EMPTY] = [True, False]
 COLOR_LABELS    = [WHITE, BLACK] = [True, False]
 TYPE_LABELS     = [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING] = range(1, 7)
+TYPE_LABELS_P   = [EMPTY, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING]
 ALL_LABELS      = PIECE_LABELS + [EMPTY]
 
 
 # Different label functions for each label class above
 # ====================================================
-def label(game):
+def label(game, stream='color'):
     corners = find_corners(game.images)
     images = skip(game.images, game.options.skip_moves-1)
     start_img = next(images)
     for square in range(64):
-        yield label_move(chess.Board(), start_img['color'], square, corners, game.options)
+        yield label_move(chess.Board(), start_img[stream], square, corners, game.options)
     for move, img in zip(game.pgn.mainline(), images):
-        yield label_move(move.board(), img['color'], move.move.to_square, corners, game.options)
-        yield label_move(move.board(), img['color'], move.move.from_square, corners, game.options)
+        yield label_move(move.board(), img[stream], move.move.to_square, corners, game.options)
+        yield label_move(move.board(), img[stream], move.move.from_square, corners, game.options)
 
-def label_with_board(game):
-    corners = find_corners(game.images)
-    images = skip(game.images, game.options.skip_moves-1)
-    img = next(images)
-    for square in chain(range(16), range(48, 64)):
-        square, lbl = label_move(chess.Board(), img['color'], square, corners, game.options)
-        yield (img['color'], square), lbl.color
-    for move, img in zip(game.pgn.mainline(), images):
-        square, lbl = label_move(move.board(), img['color'], move.move.to_square, corners, game.options)
-        yield (img['color'], square), lbl.color
-
-def label_pieces(game):
+def label_pieces(game, stream='color'):
     corners = find_corners(game.images)
     images = skip(game.images, game.options.skip_moves-1)
     start_img = next(images)
     for square in chain(range(16), range(48, 64)):
-        yield label_move(chess.Board(), start_img['color'], square, corners, game.options)
+        yield label_move(chess.Board(), start_img[stream], square, corners, game.options)
     for move, img in zip(game.pgn.mainline(), images):
-        yield label_move(move.board(), img['color'], move.move.to_square, corners, game.options)
+        yield label_move(move.board(), img[stream], move.move.to_square, corners, game.options)
+
+def label_with_board(game, stream='color'):
+    corners = find_corners(game.images)
+    images = skip(game.images, game.options.skip_moves-1)
+    img = next(images)
+    for square in chain(range(16), range(48, 64)):
+        square, lbl = label_move(chess.Board(), img[stream], square, corners, game.options)
+        yield (img[stream], square), lbl.color
+    for move, img in zip(game.pgn.mainline(), images):
+        square, lbl = label_move(move.board(), img[stream], move.move.to_square, corners, game.options)
+        yield (img[stream], square), lbl.color
 
 def label_color(game):
     for img, piece in label_pieces(game):
@@ -86,16 +87,13 @@ def label_type(game):
     for img, piece in label_pieces(game):
         yield img, piece.piece_type
 
-def label_occupied(game, stream='color', initial=True):
-    corners = find_corners(game.images)
-    images = skip(game.images, game.options.skip_moves-1)
-    start_img = next(images)
-    if initial:
-        for square in range(64):
-            yield label_occupied_move(chess.Board(), start_img[stream], square, corners, game.options)
-    for move, img in zip(game.pgn.mainline(), images):
-        yield label_occupied_move(move.board(), img[stream], move.move.to_square, corners, game.options)
-        yield label_occupied_move(move.board(), img[stream], move.move.from_square, corners, game.options)
+def label_type_p(game):
+    for img, piece in label(game):
+        yield img, EMPTY if piece is EMPTY else piece.piece_type
+
+def label_occupied(game, stream='color'):
+    for img, piece in label(game, stream):
+        yield img, EMPTY if piece is EMPTY else OCCUPIED
  
 
 # ===========================================================

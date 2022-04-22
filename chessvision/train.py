@@ -8,7 +8,7 @@ from torchvision import transforms
 from datetime import datetime
 
 from . import models
-from .game import Game
+from .game import Game, labellers
 from .label import *
 from .trainer import Trainer, TrainerConfig
 from .interpret import Interpreter
@@ -31,30 +31,21 @@ TASK_WEIGHT = 0.5
 
 tasks = {'piece': TASK_WEIGHT, 'occupied': 1-TASK_WEIGHT}
 
-labellers = {
-    'all':      Labeller(label, ALL_LABELS, [piece.unicode_symbol() for piece in PIECE_LABELS] + ['None']),
-    'piece':    Labeller(label_pieces, PIECE_LABELS, [piece.unicode_symbol() for piece in PIECE_LABELS]),
-    'occupied': Labeller(label_occupied, OCCUPIED_LABELS, ["Occupied", "Empty"]),
-    'color':    Labeller(label_color, COLOR_LABELS, ["White", "Black"]),
-    'type':     Labeller(label_type, TYPE_LABELS, ["pawn", "knight", "bishop", "rook", "queen", "king"]),
-    'board':    Labeller(label_with_board, COLOR_LABELS, ["Occupied", "Empty"])
-}
-
 config = TrainerConfig(
     # train_folder = '/tmp/chess-vision-0rbbu160',
     # test_folder = '/tmp/chess-vision-b0acgfe7',
     train_games = [
-        # *(Game("Evans", i) for i in range(7)),
+        *(Game("Evans", i) for i in range(7)),
         Game("Adams", 1),
         Game("Adams", 2),
         Game("Adams", 3),
         Game("Kasparov", 0),
-        # Game("Kasparov", 0)
+        Game.from_file("Kasparov_0.pkl__"),
     ],
     test_games = [
         Game("Evans", 7),
         Game("Bird", 2),
-        Game("Kasparov", 0)
+        Game.from_file("Kasparov_0.pkl_")
     ],
     # train_games = [Game("Nakamura", i) for i in range(3)],
     # test_games = [Game("Nakamura", 3)],

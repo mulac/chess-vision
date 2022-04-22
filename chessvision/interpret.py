@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from operator import truediv
 from sklearn.metrics import confusion_matrix
 
 from .util import mult
@@ -70,6 +71,13 @@ class Interpreter:
         cf.set_xlabel('Predicted')
         plt.tight_layout()
         return cf.get_figure()
+
+    def precision_recal(self):
+        cf_values = self.confusion_matrix()
+        tp = np.diag(cf_values)
+        prec = list(map(truediv, tp, np.sum(cf_values, axis=0)))
+        rec = list(map(truediv, tp, np.sum(cf_values, axis=1)))
+        return prec, rec, sum(prec)/len(prec), sum(rec)/len(rec)
 
     def confusion_matrix(self):
         preds = []

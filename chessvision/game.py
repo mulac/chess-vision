@@ -15,18 +15,22 @@ from .storage import Storage
 from .label import *
 
 
-class ChessFolder(datasets.ImageFolder):
-    def find_classes(self, dir):
-        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
-        return classes, {i: int(i) for i in classes}
-
+labellers = {
+    'all':      Labeller(label, ALL_LABELS, [piece.unicode_symbol() for piece in PIECE_LABELS] + ['None']),
+    'piece':    Labeller(label_pieces, PIECE_LABELS, [piece.unicode_symbol() for piece in PIECE_LABELS]),
+    'occupied': Labeller(label_occupied, OCCUPIED_LABELS, ["Occupied", "Empty"]),
+    'color':    Labeller(label_color, COLOR_LABELS, ["White", "Black"]),
+    'board':    Labeller(label_with_board, COLOR_LABELS, ["White", "Black"]),
+    'type':     Labeller(label_type, TYPE_LABELS, ["pawn", "knight", "bishop", "rook", "queen", "king"]),
+    'type+':    Labeller(label_type_p, TYPE_LABELS_P, ["empty", "pawn", "knight", "bishop", "rook", "queen", "king"])
+}
 
 class Game:
     """ Game is a wrapper for pulling images and pgn data from a pickle file.
     PGN games can be downloaded from https://www.pgnmentor.com/files.html 
     """
     def __init__(self, name, number, options=LabelOptions()):
-        self.name, self.number, self.options = name, number, options
+        self.name, self.number, self.options = name, int(number), options
         self.pgn_file = f'{name}.pgn'
         self.pkl_file = f'{name}_{number}.pkl'
 
@@ -57,6 +61,12 @@ class Game:
                     yield pickle.load(pkl)
                 except EOFError:
                     break
+
+
+class ChessFolder(datasets.ImageFolder):
+    def find_classes(self, dir):
+        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
+        return classes, {i: int(i) for i in classes}
 
 
 def save_games(games, labeller, root_dir=None, distribution=None):
@@ -90,7 +100,7 @@ def rebalance(label_dirs, distribution):
         label_dirs: Dict[label: sub_folder_path]
         distribution: Dict[label: percent] 0.8 will remove 20% of that labels images
     """
-    for lbl, path in label_dirs:
+    for lbl, path in label_dirs.items():
         if lbl not in distribution or not (0 <= distribution[lbl] <= 1): 
             logging.warn(f'rebalance: could not valid value of {lbl} in {distribution}\
                             leaving {path} as is.')
@@ -112,8 +122,7 @@ def _create_dirs(labeller: Labeller, root_dir=None):
         root_dir: path to root directory
         label_dirs: Dict[label: sub_folder_path]
     """
-    if root_dir is None:
-        root_dir = tempfile.mkdtemp(prefix="chess-vision-")
+    if root_dir is None: root_dir = tempfile.mkdtemp(prefix="chess-vision-")
     label_dirs = {lbl: os.path.join(root_dir, str(idx)) for idx, lbl in labeller}
     for label in label_dirs:
         os.mkdir(label_dirs[label])

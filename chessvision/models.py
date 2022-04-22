@@ -170,6 +170,24 @@ class ColorNet(nn.Module):
         )
 
 
+class CombiModel(nn.Module):
+    """ Combine piece and occupancy model together for inference only """
+    def __init__(self, pieces_module, occupancy_module):
+        super().__init__()
+        self.pieces_module = pieces_module
+        self.occupancy_module = occupancy_module
+
+    def forward(self, x):
+        o = self.occupancy_module(x).argmax(dim=1)
+        occupied = torch.nonzero(o == 0).squeeze()
+        p = self.pieces_module(x[occupied]).argmax(dim=1)
+        
+        out = torch.zeros(x.shape[0])
+        out[occupied] = p
+        out[torch.nonzero(o).squeeze()] = 12
+        return out
+
+
 class ConvRes(models.ResNet):
     def __init__(self, shape, classes, pretrained=False, freeze_features=False):
         if shape[-1] != 3:
