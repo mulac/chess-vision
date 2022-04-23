@@ -32,20 +32,20 @@ TASK_WEIGHT = 0.5
 tasks = {'piece': TASK_WEIGHT, 'occupied': 1-TASK_WEIGHT}
 
 config = TrainerConfig(
-    # train_folder = '/tmp/chess-vision-0rbbu160',
-    # test_folder = '/tmp/chess-vision-b0acgfe7',
+    # train_folder = '/tmp/chess-vision-67d9jmlq',
+    # test_folder = '/tmp/chess-vision-1qki2rng',
     train_games = [
         *(Game("Evans", i) for i in range(7)),
         Game("Adams", 1),
         Game("Adams", 2),
         Game("Adams", 3),
         Game("Kasparov", 0),
-        Game.from_file("Kasparov_0.pkl__"),
+        Game.from_file("Kasparov_0__.pkl"),
     ],
     test_games = [
         Game("Evans", 7),
         Game("Bird", 2),
-        Game.from_file("Kasparov_0.pkl_")
+        Game.from_file("Kasparov_0_.pkl")
     ],
     # train_games = [Game("Nakamura", i) for i in range(3)],
     # test_games = [Game("Nakamura", 3)],
@@ -88,8 +88,7 @@ if CHANNELS == 1:
 logging.info(config)
 
 trainer = Trainer(
-    models.MLP(config.image_shape, len(config.labeller.classes)),
-    # models.ConvNext(config.image_shape, len(config.labeller.classes), pretrained=True),
+    models.ConvNext(config.image_shape, len(config.labeller.classes), pretrained=True),
     config,
     SummaryWriter(f"runs/chess-vision_{datetime.now().strftime('%Y%m%d_%H%M%S')}"),
     device
@@ -107,6 +106,7 @@ interp = Interpreter(
 )
 
 logging.info(f"Accuracy: {interp.accuracy():.2f}")
+logging.info(f"Mean Recall: {interp.mean_recall():.4f}")
 trainer.writer.add_figure("Confusion Matrix", interp.plot_confusion_matrix())
 trainer.writer.add_figure("Top Losses", interp.plot_top_losses((4, 4)))
 trainer.writer.close()

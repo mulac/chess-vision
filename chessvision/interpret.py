@@ -72,12 +72,9 @@ class Interpreter:
         plt.tight_layout()
         return cf.get_figure()
 
-    def precision_recal(self):
+    def mean_recall(self):
         cf_values = self.confusion_matrix()
-        tp = np.diag(cf_values)
-        prec = list(map(truediv, tp, np.sum(cf_values, axis=0)))
-        rec = list(map(truediv, tp, np.sum(cf_values, axis=1)))
-        return prec, rec, sum(prec)/len(prec), sum(rec)/len(rec)
+        return sum(cf_values[i][i]/sum(v) for i, v in enumerate(cf_values)) / len(cf_values)
 
     def confusion_matrix(self):
         preds = []

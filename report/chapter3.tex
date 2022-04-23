@@ -20,9 +20,9 @@ The final layer outputs a softmax distribution over all 13 class ('all' from \au
 experiments with different datasets, a few minor improvements were spotted that could be made without changing the architecture, such as implementing early stopping. 
 In order to ensure a fair representation of the authors work those changes were implemented and the best results were used in \autoref{table:results}.
 
-\cite{} Learns HOG features using a support vector machine for each piece type including empty ('type+' from \autoref{table:labellers}).  To determine piece color they 
-use reference colors which were calculated separately for each board.  Unfortunately this method is not easily generalizable when using multiple boards with the same
-classifier the decision was made to exclude due to using reference colors from the board so instead here we only compare with.
+\cite{} Trains a Support Vector Machine classifier for each piece type including empty ('type+' from \autoref{table:labellers}) using the HOG features extracted 
+from each training image.  To determine piece color they use reference colors which were calculated separately for each board, which unfortunately made this method 
+not easily generalizable when using multiple boards and so the decision was made to exclude it from the final test.
 
 \begin{figure}[h]
 \makebox[\textwidth][c]{
@@ -30,11 +30,11 @@ classifier the decision was made to exclude due to using reference colors from t
         \cline{2-7}
         \multicolumn{1}{c|}{} & \multicolumn{2}{c|}{Chessboard 1} & \multicolumn{2}{c|}{Chessboard 2} & \multicolumn{2}{c|}{Both 1 \& 2} \\
         \hline
-        Method & Accuracy & Balanced & Weighted & Balanced & Weighted & Balanced \\
+        Method & Accuracy & Balanced & Accuracy & Balanced & Weighted & Balanced \\
         \hline
-        proposed & \textbf{97\%} & 94\% & \textbf{94\%} & 91\% & \textbf{94\%} & 90\%  \\
-        \cite{} & 0.87 & 0.71 & 81\% & 75\% & 74\% & 70\%  \\
-        \cite{} & 0.77 & 0.57 & 63\% & 50\% & - & -  \\
+        proposed & 0.97 & 0.95 & \textbf{94\%} & 91\% & \textbf{94\%} & 90\%  \\
+        \cite{} & 0.87 & 0.71 & 0.86 & 0.75 & 74\% & 70\%  \\
+        \cite{} & 0.77 & 0.57 & 0.74 & 0.48 & - & -  \\
         \hline
     \end{tabular}
 }
@@ -71,13 +71,22 @@ table of end-to-end experiments
         \textbf{Input} & \textbf{Ground Truth} & \textbf{Proposed} & \textbf{\cite{}} & \textbf{\cite{}} \\
         \hline
         \hline
-        \includegraphics[width=0.19\textwidth]{segmented_board.jpg} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} \\
+        \includegraphics[width=0.19\textwidth]{trail_small_1.jpg} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{mym_small_1.png} & \includegraphics[width=0.19\textwidth]{cv_small_1.png} \\
         & Mistakes: & 0 & 12 & 3 \\
         \hline
-        \includegraphics[width=0.19\textwidth]{segmented_board.jpg} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} \\
+        \includegraphics[width=0.19\textwidth]{trail_small_2.jpg} & \includegraphics[width=0.19\textwidth]{small_board_2.png} & \includegraphics[width=0.19\textwidth]{small_board_2.png} & \includegraphics[width=0.19\textwidth]{mym_small_2.png} & \includegraphics[width=0.19\textwidth]{cv_small_2.png} \\
         & Mistakes: & 0 & 12 & 3 \\
         \hline
-        \includegraphics[width=0.19\textwidth]{segmented_board.jpg} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} & \includegraphics[width=0.19\textwidth]{fen.png} \\
+        \includegraphics[width=0.19\textwidth]{trail_small_3.jpg} & \includegraphics[width=0.19\textwidth]{small_board_3.png} & \includegraphics[width=0.19\textwidth]{small_board_3.png} & \includegraphics[width=0.19\textwidth]{mym_small_3.png} & \includegraphics[width=0.19\textwidth]{cv_small_3.png} \\
+        & Mistakes: & 0 & 12 & 3 \\
+        \hline
+        \includegraphics[width=0.19\textwidth]{trail_small_1.jpg} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{mym_small_1.png} & \includegraphics[width=0.19\textwidth]{cv_small_1.png} \\
+        & Mistakes: & 0 & 12 & 3 \\
+        \hline
+        \includegraphics[width=0.19\textwidth]{trail_small_2.jpg} & \includegraphics[width=0.19\textwidth]{small_board_2.png} & \includegraphics[width=0.19\textwidth]{small_board_2.png} & \includegraphics[width=0.19\textwidth]{mym_small_2.png} & \includegraphics[width=0.19\textwidth]{cv_small_2.png} \\
+        & Mistakes: & 0 & 12 & 3 \\
+        \hline
+        \includegraphics[width=0.19\textwidth]{trail_small_3.jpg} & \includegraphics[width=0.19\textwidth]{small_board_3.png} & \includegraphics[width=0.19\textwidth]{small_board_3.png} & \includegraphics[width=0.19\textwidth]{mym_small_3.png} & \includegraphics[width=0.19\textwidth]{cv_small_3.png} \\
         & Mistakes: & 0 & 12 & 3 \\
         \hline
     \end{tabu}}
@@ -93,18 +102,37 @@ In addition to evalutaing the raw model's performance, six games of varying leng
 with the inference application.  
 How well does it perform.  What did it take to get there?
 
-\begin{center}
-\begin{tabular}{|c|c|c|c|}
+\begin{figure}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|}
+    \cline{4-6}
+    \multicolumn{3}{c|}{} &  \multicolumn{3}{c|}{Delay for Move to Register (s)} \\
     \hline
-    Game & No. Moves & Mean Delay (100 ms) & PGN 100\% Correct \\
+    Game & Total Moves & PGN 100\% Correct & Median & Mean & Std Dev \\
     \hline
-    Kasparov 1 & 84 & 30 &  \checkmark \\
-    Kasparov 2 & 43 & 32 & \checkmark \\
-    Kasparov 3 & 47 & - & - \\
-    Nakamura 4 & 122 & 25 & \checkmark \\
+    Carlsen/Wesley & 57 & \checkmark & 1.25 & 3.01 & 5.26 \\
+    Carlsen/Rapport & 36 & \checkmark & 1.13 & 3.21 & 4.97 \\
+    Carlsen/Nakamura & 71 & - & 0.95 & 1.82 & 2.09 \\
+    Carlsen/Aranian & 55 & \checkmark & 1.24 & 4.20 & 11.31 \\
+    Fool's Mate & 4 & \checkmark & 0.95 & 1.19 & 0.76 \\
     \hline
 \end{tabular}
-\end{center}
+\caption{Games played with the inference application}
+\label{fig:games}
+\end{figure}
+
+The one failed game was due to the inference application registering a rook movement before the 
+player lifted their hand from the rook and then decided to move it to a different square.
+
+The fastest move to register took 0.27s and the slowest took 76s which appeared to be when there 
+was lots of specular light reflecting from the pieces causing the model to confuse colors.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.6]{move_delay.png}
+    \caption{Histogram of move delay across all games in \autoref{fig:games} with arithmetic mean in red and sample standard deviation in yellow}
+\label{fig:delay}
+\end{figure}
 
 How about performance?
 Frames per second.  Analyse profiler.

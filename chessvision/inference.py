@@ -162,11 +162,10 @@ class LiveInference:
             print(f"found corners... \n {self.corners}\n")
             print("Press [ENTER] to record a snapshot")
             self.camera.loop(self.run_inference)
-            
+        finally:
             chess.pgn.Game.from_board(self.board).accept(
                 chess.pgn.FileExporter(open("game.pgn", "w", encoding="utf-8"))
             )
-        finally:
             cv2.destroyAllWindows()
             self.camera.close()
 

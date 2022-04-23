@@ -135,8 +135,15 @@ your training script, configuration files and commandline arguements.
 This method was greatly prefered to using a paid managed service or some other solution which requires a database to setup.  
 The previously mentioned dataset versioning method also greatly benefits from guilds use of the filesystem as within each run we can also store 
 the Games and Labeller that was used to train the model. 
-TesnorBoard integration also played a huge roll as it provided an easy to use, visual place to interpret and compare runs.  See \autoref{}
+TesnorBoard integration also played a huge roll as it provided an easy to use, visual place to interpret and compare runs.  See \autoref{fig:hyperparameters}
 for examples.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{hyperparameters.png}
+    \caption{A parallel coordinate view of runs within TensorBoard}
+    \label{fig:hyperparameters}
+\end{figure}
 
 \subsection{Board Segmentation}
 Aruco markers are chosen for board corner point detection as a very simple method that works reliably even with a board full of pieces.
@@ -166,7 +173,7 @@ iterative heatmap approach proposed in \cite{heatmap} would be recommended.
         \includegraphics[width=\textwidth]{separated.png}
         \caption{Square Segmentation}
     \end{subfigure}
-\caption{Board Squares Segmentation Process}
+\caption{Square segmentation process.  The 64 images in (c), after augmentation, is what ultimateley gets sent to the model}
 \label{fig:corner}
 \end{figure}
     
