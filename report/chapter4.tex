@@ -1,20 +1,11 @@
 \chapter{Discussion}
 \label{conclusions}
 
-\section{Workflow}
-Throughout development, every change was monitored and evaluated.  As expressed in \nameref{methods}, the use of the Game and Labeller
-abstractions along with guild for experiment tracking greatly increased speed and ability of evaluate changes.  
-
-What was the result of the data labelling pipeline
-How well did it work
-What could be improved
-
-\subsection{Dataset Management}
-
+\section{Results}
 
 \section{Board Segmentation}
-The decision to use aruco markers, while impractical for release, aided development in a couple of ways.  Firstly, they're reliable \cite{}.
-To correctly classify pieces, the segmentation of board squares was critical as a small error of even 10mm could completely throw the
+The decision to use aruco markers, while impractical for release, aided development by being an accurate localizer.
+To correctly classify pieces, the segmentation of board squares was critical as a small error of even 5mm could throw the
 model off as due to added perspective shift a square could now contain two pieces.  Compared to the iterative heatmap method \cite{} aruco 
 marker are not the best, but in a controlled environment this did not become a problem and more importantly they worked even with pieces on the
 board which enabled recalibration during inference and while collecting data.  This is unlike a lot of other proposed solutions \cite{}.
@@ -25,17 +16,15 @@ As this project focused on piece recognition and the development of an inference
 they come with deal breaking consequences if this method is to be used in production with many boards.  It's just too impractical to print and fix
 markers every time a new board is to be used with the system and again goes directly against the main purpose of this project: autonomy.
 
+\subsection{Piece Recognition}
+The main component that appears to have contributed to the success of the proposed solution is the use of multitask learning combined with the state-of-the-art
+CNN architecture, ConvNeXt.  Without exploring which classes benefitted from sharing parameters and the time put into hyperparameter tuning with the help of 
+careful experiment tracking the results were a lot worse.  Another important difference was the use of transfer learning, without parameter freezing like \cite{}. 
+This contributed to an accuracy increase of \textasciitilde10\%.
+
 
 \section{Inference}
-Added the ability to take snapshots of misclassification during inference which could be used to fine-tune the model and leads us down the 
-path of continual learning.  Outside the scope of this project.
-
 Surprised at how well it worked.
-
-\subsection{Multitask}
-Initially a benefit of having the depth sensor is an easier way to detech piece presence.  
-Fixed threshold vs clustering.  Adding a margin.  How we actually did it.
-Using paried T-test to evaulate.
 
 \section{Dataset}
 I found not only managing datasets but choosing and building them to be a big yet fun task.  No doubt by the legends who've built tools for me to use,
