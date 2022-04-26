@@ -1,55 +1,67 @@
 \chapter{Discussion}
 \label{conclusions}
 
-\section{Results}
+\section{Conclusions}
 
-\section{Board Segmentation}
-The decision to use aruco markers, while impractical for release, aided development by being an accurate localizer.
-To correctly classify pieces, the segmentation of board squares was critical as a small error of even 5mm could throw the
-model off as due to added perspective shift a square could now contain two pieces.  Compared to the iterative heatmap method \cite{} aruco 
-marker are not the best, but in a controlled environment this did not become a problem and more importantly they worked even with pieces on the
-board which enabled recalibration during inference and while collecting data.  This is unlike a lot of other proposed solutions \cite{}.
-Secondly they're fast \cite{}.  The iterative heatmap method can take around 5 seconds to segment the board which while not terrible can add up when 
-relabelling lots of data for many model experiments.
+\subsection{Data Collection}
+As expressed in \autoref{data collection} building and managing the datasets to solve a particular problem is by far the biggest task.  
+A creative and easy way to collect a large amount of chess data, label it and fit it to pre-existing network architectures has been found.  
+And the tools to do so were made such that anyone could collect chess datasets with little effort.
+This was one of the main goals for the project and as promised the dataset as well as the tools I made to create it will be made open source in 
+the hopes that the community can build a more diverse dataset of board from across the world.  This will help in comparing models and training them 
+to be used in a genuinely useful business setting.
 
-As this project focused on piece recognition and the development of an inference system, aruco markers proved to be a sensible choice.  However, 
-they come with deal breaking consequences if this method is to be used in production with many boards.  It's just too impractical to print and fix
-markers every time a new board is to be used with the system and again goes directly against the main purpose of this project: autonomy.
+It was not until I recorded and labeled lots of data (1000s images) that I suddenly started to see patterns in the data that were not visible before.  
+Small things like motion blur and pieces half across squares.  Only two boards were ever used throughout this project and so no doubt are more things 
+to be found in larger datasets.
+
+\subsection{Board Segmentation}
+As this project focused on piece recognition and the development of an inference system, aruco markers proved to be a sensible choice for chessboard 
+segmentation.  They're really quick to detect, accurate in their localization and work even with pieces on the board which is very useful for 
+data collection and inference alike. This is unlike a lot of other proposed solutions \cite{}.
+
+However, they come with deal breaking consequences for any method that is to be used in a production setting with many boards.  
+It's simply too impractical to print and fix markers every time a new board is to be used with the system and again goes directly against the main 
+purpose of this project: autonomy.  
+
+I would highly recommend the solution presented by \cite{} to be explored in future work.  While the method they propose can take up to around 5 seconds 
+to segment the board they showed it to work in a huge array of environments and would be really interesting to see how it could be combined with the 
+piece recognition system proposed in this report.
 
 \subsection{Piece Recognition}
-The main component that appears to have contributed to the success of the proposed solution is the use of multitask learning combined with the state-of-the-art
-CNN architecture, ConvNeXt.  Without exploring which classes benefitted from sharing parameters and the time put into hyperparameter tuning with the help of 
-careful experiment tracking the results were a lot worse.  Another important difference was the use of transfer learning, without parameter freezing like \cite{}. 
-This contributed to an accuracy increase of \textasciitilde10\%.
+\nameref{the model} presented for piece recognition outperformed the best open source alternatives by a considerable margin. 
+When tested on an unseen, and rather difficult chessboard, it achieved 96\% accuracy in comparison to the next best CNN model which achieved 86\%.
+
+The primary insights that contributed to this difference in performance is the exploitation of multitask learning with the state-of-the-art 
+CNN architecture, ConvNeXT.  Selecting which parameters to share and freeze during training and between tasks took a lot of experimentation but payed off.
+A good experiment tracking system that worked across machines was vital to be able to manage the some 2000 total models trained. 
+
+What was expected is that sharing weights between 
+the 'type' classifier and 'occupied' classifier would aid in identifying empty squares since the features that make up an empty square are just the lack of 
+features that make any of the classes in the 'type' classifier.  It turns out, however, that the empty classifier trains more effectively when it has its own 
+weights it can adjust as the proposed model shares very few weights between the 'occupied' classifier and every other class and the empty classifier in \cite{} 
+is completely independent as opposed to in \cite{} where all the features are shared.
+
+\subsection{Inference}
+For most games the inference application developed for this report successfully exported 100\% accurate PGN.  It was a delight to use and very impressive to 
+watch in person.  Integration with a chess engine, implementing motion detection and introducing the concept of memory are the three additional components 
+that can be accredited for the solutions reliability.  The links to five sample recordings are included in Appendix C.
 
 
-\section{Inference}
-Surprised at how well it worked.
-
-\section{Dataset}
-I found not only managing datasets but choosing and building them to be a big yet fun task.  No doubt by the legends who've built tools for me to use,
-my experience has been that most of the work is in the data. Creative ways to collect it, label it and fit it to pre-existing network architectures.  
-
-It was not until I recorded and labeled lots of data (1000s images) was it until I suddenly started to see new patterns I had not seen before.  Small 
-things like dark shadows, motion blur, pieces half across squares, poor resolution or exposured frames.
-
-More control over the sensor hardware sensors may have been useful.  Changes in the way we generate image (as in the autolabeller) or
-adding augmentation such as cropping and blurring helped which these changes that I would not have seen in my metrics before hand.
-
-\section{Conclusion}
-
-
-
-\section{Ideas for future work}
+\section{Ideas for Future Work}
 Firstly it would be nice to explore these methods with more extreme camera angles.  This would probably include extending the labeller too add more 
-margin in one direction to account for the perspective. As my model performs better than \cite{} who found decent performance with other angles, mine should 
-do pretty well, if not better.
+margin in one direction to account for the perspective shift.  This should be a fairly simple extension candidate if someone was looking to 
+get involved in the codebase as most of components are ready to go.  From here, it is very perceivable that a mobile app could be developed that utilizes this model. 
+With a mobile app almost anyone could record their chess games without the need for a specialized camera setup.  T
+he app could also integrate with a chess engine like Stockfish \cite{} or AlphaZero to provide analysis later or even suggest moves.  
+One consideration would be performance here as mobiles are more constrained by hardware than laptops and computers due to their size.  
+It would be an interesting task to take advantage of lots of moderns phones deep learning hardware acceleration like Google's Tensor chip \cite{}, 
+Apple's neural engine \cite{} and Qualcomm's AI Engine \cite{} and measure the performance.
 
-If assumptions about the environment are to be kept minimal
-then localising pieces in 3 dimensional space should be a requirement for robotic manipulation to be possible.
-
-Perhaps worth taking a step back and reconsidering the unanimously made decision by which chessboard state recognition is done.  Instead of splitting 
+If this solution is to enable autonomous robots in the game of chess then localising pieces in 3 dimensional space is a must have requirement.
+For this, it's worth taking a step back and reconsidering the unanimously made decision by which chessboard state recognition is done.  Instead of splitting 
 the board up into squares and using simple image classification it would be more useful for robotic systems to have a 3D representation of the space.
-It is the author's belief that "3d reconstruction" would kill two birds with one stone and the direction that future research should focus. 
-
-Explain.  Similar work in other areas.
+Future work could begin in 2D but instead perform instance segmentation across the whole input image, this may be able to provide enough information for a 
+control system to use for manipulation planning.  However, a more robust solution might instead want to perform 3D reconstruction from the input image.  
+Then object classification could be made on a point cloud.  Point clouds are commonly used within robotic grasping solutions \cite{} and so this would be the ideal 
+space representation to work in.

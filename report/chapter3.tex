@@ -9,24 +9,26 @@ to provide a better view of its utility.
 \label{evaluation}
 
 The best openly available solutions for chess piece recognition on real boards were found to be from NAME \cite{} and NAME \cite{}.
-It was hypothesized that through each iteration and optimization of hyper-parameters the presented solution was being overfit to the 
-images in the evaluation set despite never being directly trained on it giving the proposed solution an unfair advantage when tested on the original board.
+There was the concern that through each iteration and optimization of hyper-parameters the presented solution was being overfit to the 
+images in the evaluation set, despite never being directly trained on it.  This could give the proposed solution an unfair advantage when testing on the original board.
 And so, in order to make a fairer comparison, another board entirely was also chosen for these final tests.  
 Including a dataset from an unseen board should allow for more meaningful conclusions to be drawn regarding the generality of each model.
 Three tests, with the results shown in \autoref{table:results} were then performed.  The same training and evaluation splits were used for each model and 
 the metrics were averaged over 3 runs.  The first test used data from the original board only, the second with data from only the unseen board and the 
 third test included data from both boards.
 
-\cite{} Uses a pretrained VGG16, freezing all layers of the convolutional feature extractor, adding a head of 3 fully connected layers with a sum of 2.5M 
-trainable parameters.
-The final layer outputs a softmax distribution over all 13 class ('all' from \autoref{table:labellers}).  After getting familiar with the code base and running some 
-different experiments, a few minor improvements were spotted that could be made without changing the architecture, such as implementing early stopping. 
-In order to ensure a fair representation of the authors work those changes were implemented and the best results were used in \autoref{table:results}.
+Two metrics are presented in \ref{table:results}: Accuracy and Balanced Accuracy.  Accuracy was chosen due to its human
+interpretablility and intuitive definition as the percentage of correct classifications.  Balanced Accuracy is equivalent to the arithmetic mean of recalls 
+for each class which gives us some information that accuracy alone does not.  When the test dataset is unbalanced, accuracy gives a view of 
+how well each model performs over the whole dataset, but balanced accuracy gives the same weight to each class, therefore makes it easier to see problems 
+with under-represented classes.
 
-\cite{} Trains a Support Vector Machine classifier for each piece type including empty ('type+' from \autoref{table:labellers}) using the HOG features extracted 
-from each training image.  For each input image the classifier with the highest confidence determines the piece type, to determine piece color they use reference colors.
-This involved manually calculating reference colors for each piece and deciding on a suitable threshold value which was done separately for each board.  Unfortunately,
-this method made it difficult to generalize when using multiple boards and so the decision was made to exclude it from the final test.
+\begin{equation}
+    Accuracy = \frac{ \sum_{i=1}^{k}{tp_i} }{ \sum_{i=1}^{k}{tp_i + fp_i} }
+\end{equation}
+\begin{equation}
+    Balanced\;Accuracy = \frac{\sum_{i=1}^{k}{ \frac{tp_i+tn_i}{tp_i+fn_i+fp_i+tn_i}} }{k}
+\end{equation}
 
 \begin{figure}[h]
 \makebox[\textwidth][c]{
@@ -46,31 +48,42 @@ this method made it difficult to generalize when using multiple boards and so th
 \label{table:results}
 \end{figure}
 
-Weighted accuracy is the typicall accuracy calculation:
+\cite{} Uses a pretrained VGG16, freezing all layers of the convolutional feature extractor, adding a head of 3 fully connected layers with a sum of 2.5M 
+trainable parameters.
+The final layer outputs a softmax distribution over all 13 class ('all' from \autoref{table:labellers}).  After getting familiar with the code base and running some 
+different experiments, a few minor improvements were spotted that could be made without changing the architecture, such as implementing early stopping. 
+In order to ensure a fair representation of the authors work, those changes were implemented and the best results were used in \autoref{table:results}.
 
-\begin{equation}
-    Accuracy = \frac{ \sum_{i=1}^{k}{tp_i} }{ \sum_{i=1}^{k}{tp_i + fp_i} }
-\end{equation}
-\begin{equation}
-    Balanced\;Accuracy = \frac{\sum_{i=1}^{k}{ \frac{tp_i+tn_i}{tp_i+fn_i+fp_i+tn_i}} }{k}
-\end{equation}
+\cite{} Trains a Support Vector Machine classifier for each piece type including empty ('type+' from \autoref{table:labellers}) using the HOG features extracted 
+from each training image.  For each input image the classifier with the highest confidence determines the piece type, to determine piece color they use reference colors.
+This involved manually calculating reference colors for each piece and deciding on a suitable threshold value which was done separately for each board.  Unfortunately,
+this method made it difficult to generalize when using multiple boards and so the decision was made to exclude it from the final test.
+
+As can be seen the methods that employ CNNs dramatically outperform the more classical method using HOG descriptors which should not be surprising.  
+The proposed method then, not only achieves 10\% higher accuracy than the other CNN method, but it's balanced accuracy is almost the same it's accuracy, 
+which cannot be said for the others.  The main reason for this is the use of multitasking.  The most common class in the dataset is the empty square and so when 
+\cite{} model is learning, the empty square gets more influence on the gradient of the weights to be updated.  In turn this will end up with a model that has a high 
+accuracy on the evaluation set, but the recall of under-represented classes will suffer as a result. One method to avoid this is to prune the dataset 
+of empty squares, however correctly detecting empty squares is very important and the more that can be learnt from the data, the better. 
+And so the proposed solution of using a separate classifier for this class has proved to be very successful.
 
 \subsection{Trials}
 For a clearer comparison in the holistic task of full chessboard state recognition a similar methodology 
-to that of Ding, Czyzeqskil et al. \cite{Ding2016ChessVisionC, heatmap} is used.  It involves collecting a small yet diverse benchmark of chessboard images
-and evaluating the full chessboard prediction from each model.  This is in contrast to using the dataset used above which consists only of individual 
-pieces and their corresponding labels.
+to that of Ding, Czyzeqskil et al. \cite{Ding2016ChessVisionC, heatmap} is used.  It involves directly comparing the predictions of each model on a small 
+benchmark of chessboard images.  This is in contrast to using the dataset used above which consists only of individual pieces and their corresponding labels.
 
-\autoref{fig:trails} demonstrates the extent of the challenge by visualizing the actual predictions from each model along with the input and ground truth. 
-The results show...  as in \autoref{fig:trailstats} the overall performance.
+\autoref{fig:trails} truly demonstrates the extent of the challenge by visualizing the actual predictions from each model.
 
-Interestingly \cite{} method, while underperforming in accuracy on the evaluation tests, has a much higher recall of empty classifications compared to \cite{} 
-who utilizes a CNN as in the proposed solution which beats even \cite{}.  It is proposed that the reason for this is because of the multitasking element, which 
-is what was also found in the experimentation to find \nameref{the model} which is not what was expected.  What was expected is that sharing weights between 
-the 'type' classifier and 'occupied' classifier would aid in identifying empty squares since the features that make up an empty square are just the lack of 
-features that make any of the classes in the 'type' classifier.  It turns out, however, that the empty classifier trains more effectively when it has its own 
-weights it can adjust as the proposed model shares very few weights between the 'occupied' classifier and every other class and the empty classifier in \cite{} 
-is completely independent as opposed to in \cite{} where all the features are shared.
+Interestingly \cite{} method, while under-performing in accuracy on the evaluation tests, has a much higher recall of empty classifications compared to \cite{} 
+who utilizes a CNN.  The reason for this also explains the gap in accuracy and balanced accuracy of the solution from \autoref{table:results} and is that 
+they used a separate classifier for each class.  While the this works really well for the empty class, the HOG method does not perform as well on the other 
+classes which have a more complex structure and it comes at a big computational cost as can be seen in \autoref{fig:trailstats}.  
+
+The speed of each model was also measured and averaged over 7 runs with the sample standard deviation taken.  A run in this context refers to passing 64 images 
+(every square of the board) through the model and the value recorded in \autoref{fig:trailstats} is the time for all of these images to be processed.
+The CPU was used for each model just comparison as \cite{} method was not easily accelerated with a GPU, in the next section you'll see the actual performance 
+of the proposed model is a lot faster with GPU acceleration as single instruction, multiple data (SIMD) is massively relevant with neural networks where the same 
+operation such as convolution operations are performed many times over many input images which in itself can be tessellated and processed in parallel on the GPU.
 
 \begin{figure}[h]
     \centering
@@ -87,33 +100,31 @@ is completely independent as opposed to in \cite{} where all the features are sh
 \label{fig:trailstats}
 \end{figure}
 
-
 \begin{figure}[h]
 \makebox[\textwidth][c]{
-    {\tabulinesep=1.5mm
+    {\tabulinesep=2mm
     \begin{tabu}{|c|c|c|c|c|}
         \hline
         \textbf{Input} & \textbf{Ground Truth} & \textbf{Proposed} & \textbf{\cite{}} & \textbf{\cite{}} \\
         \hline
         \hline
         \includegraphics[width=0.19\textwidth]{trail_small_1.jpg} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{mym_small_1.png} & \includegraphics[width=0.19\textwidth]{cv_small_1.png} \\
-        & Mistakes: & 0 & 11 & 3 \\
         \hline
         \includegraphics[width=0.19\textwidth]{trail_small_2.jpg} & \includegraphics[width=0.19\textwidth]{small_board_2.png} & \includegraphics[width=0.19\textwidth]{small_board_2.png} & \includegraphics[width=0.19\textwidth]{mym_small_2.png} & \includegraphics[width=0.19\textwidth]{cv_small_2.png} \\
-        & Mistakes: & 0 & 12 & 3 \\
         \hline
         \includegraphics[width=0.19\textwidth]{trail_small_3.jpg} & \includegraphics[width=0.19\textwidth]{small_board_3.png} & \includegraphics[width=0.19\textwidth]{small_board_3.png} & \includegraphics[width=0.19\textwidth]{mym_small_3.png} & \includegraphics[width=0.19\textwidth]{cv_small_3.png} \\
-        & Mistakes: & 0 & 12 & 3 \\
         \hline
         \includegraphics[width=0.19\textwidth]{trail_big_1.jpg} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{mym_small_1.png} & \includegraphics[width=0.19\textwidth]{cv_small_1.png} \\
-        & Mistakes: & 0 & 12 & 3 \\
         \hline
         \includegraphics[width=0.19\textwidth]{trail_big_2.jpg} & \includegraphics[width=0.19\textwidth]{big_board_2.png} & \includegraphics[width=0.19\textwidth]{proposed_big_2.png} & \includegraphics[width=0.19\textwidth]{mym_small_2.png} & \includegraphics[width=0.19\textwidth]{cv_small_2.png} \\
-        & Mistakes: & 0 & 12 & 3 \\
         \hline
         \includegraphics[width=0.19\textwidth]{trail_big_3.jpg} & \includegraphics[width=0.19\textwidth]{big_board_3.png} & \includegraphics[width=0.19\textwidth]{proposed_big_3.png} & \includegraphics[width=0.19\textwidth]{mym_small_3.png} & \includegraphics[width=0.19\textwidth]{cv_small_3.png} \\
-        & Mistakes: & 0 & 12 & 3 \\
         \hline
+        \hline
+        \textbf{Input} & \textbf{Ground Truth} & \textbf{Proposed} & \textbf{\cite{}} & \textbf{\cite{}} \\
+        \hline
+        \multicolumn{1}{c}{} & Total Mistakes: & 0 & 12 & 3 \\
+        \cline{3-5}
     \end{tabu}}
 }
 \caption{A sample of six segmented chessboard images and their corresponding state prediction from each model}
@@ -121,9 +132,10 @@ is completely independent as opposed to in \cite{} where all the features are sh
 \end{figure}
 
 
+\FloatBarrier
 \section{Recording PGN}
 \label{evaluate pgn}
-In addition to evalutaing the raw model's performance, five games of varying length are played from beginning to end with the inference application.  
+In addition to evaluating the raw model's performance, five games of varying length are played from beginning to end with the inference application.  
 The games were played as normal with the only exception being that moves were only made after the inference application detected the previous move.
 These delays, as they'll be refereed to in \autoref{fig:games}, were measured with a timer and recorded.  
 If the model failed to correctly generate the correct PGN at the end of the game, or otherwise crashed, it was marked as a failure.
@@ -160,6 +172,7 @@ was lots of specular light reflecting from the pieces causing the model to confu
 \label{fig:delay}
 \end{figure}
 
+\FloatBarrier
 While the delays on the tail end of the distribution are certainly caused by uncertainty in the model, the cause of the median delay is more difficult to 
 pinpoint and so a profiler was used quite a lot through out the project and is shown here in \autoref{fig:profile}.  A reasonable chunk of time is consumed 
 by the display function which provides the user feedback as can be seen in the provided demo.  As this is not vital to the function of the application it would 

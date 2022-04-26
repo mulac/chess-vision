@@ -8,6 +8,7 @@ as it reduces the problem to a simple classification problem of only piece type 
 of chessboard detection.
 
 \section{Data Collection}
+\label{data collection}
 At the heart of any machine learning project is the data.  
 It is as important, often more important, than the code and presents many interesting
 challenges.  **Why is this?**
@@ -35,17 +36,21 @@ controlled lighting situation.  For the reasons outlined above the RGB camera st
 mainly relied upon but there will be some discussion and comparision of piece detection 
 with the depth sensor.  
 
-Talk about the generic camera
+In order to interact with the camera an abstract \verb|BaseCamera| class was defined that 
+exposes the interface through which any camera can be controlled \cite{}.  It includes three 
+actual implementations \verb|RealsenseCamera|, \verb|Camera|.  The Realsense camera allows 
+depth cameras from Intel to be used and the Camera class can work with almost any RGB camera.
+The Camera class also let's you use a video file as the source.  This is especially useful for 
+debugging and testing as a real camera and chessboard setup is not need.
 
 \subsection{Auto-Labelling}
 Talk about using a simulator.
 
 A closely related challenge of acquiring the data is that of labelling it too. 
 During \nameref{research} multiple past authors have stated the availability of 
-datasets for chess piece recognition is sparse \cite{} with some emphasizing
-dataset collection took the large majority of their time \cite{}.
-It is also widely known that neural networks scale with the number of examples \cite{}, 
-which will be explicitly explored for Chess Vision in \nameref{results}.
+datasets for chess piece recognition is sparse \cite{Ding2016ChessVisionC, heatmap} with some emphasizing
+dataset collection took the large majority of their time \cite{chessvgg}.
+It is also widely known that neural networks scale with the number of examples.
 This however poses the question: how do we get access to a lot of labelled data 
 for chess?
 
@@ -54,7 +59,7 @@ the approach taken here was to maximize speed of collection and flexibility.
 
 Portable Game Notation (PGN) is a common format for recording chess games as a 
 series of moves and are widely available online.  All the PGN files used in the 
-project were used from \cite{} which has over one million games.  Utilising this
+project were used from PGN Mentor which has over one million games.  Utilising this
 data not only has the benefit of an abundance of chess games but also that the 
 recorded games are real and contain positions more likely to appear in game play. 
 
@@ -74,12 +79,12 @@ that are used to train models.  This is a challenge with data for many reasons, 
 that performs really well, then you make some changes in say the balancing of the dataset or even the size and you train again.  If you go 
 through a series of changes like this and discover that it performed a lot better the way you had it previously then you might want to roll back.
 
-In typical software engineering a version control system like git \cite{} would be used.  While this is what was used to version the codebase of this project,
+In typical software engineering a version control system like git would be used.  While this is what was used to version the codebase of this project,
 there are different challenges with data, namely it's storage.  Code usually takes up megabytes of storage, the Linux Kernel source code for example contains
-27.8 million lines and is only around 1GB in size \cite{}.  The data used throughout this project came to >20GB.
+27.8 million lines and is only around 1GB in size.  The data used throughout this project came to >20GB.
 
-There are many proposed solutions for this problem, from managed service like Neptune \cite{} and wandb \cite{}, to self hosted opensource options.  In fact Git has its own
-solution called Git Large File Storage (Git LFS) \cite{} which uses the exact same methodology as with code except it will store large files in an external 
+There are many proposed solutions for this problem, from managed service like Neptune and wandb, to self hosted opensource options.  In fact Git has its own
+solution called Git Large File Storage (Git LFS) which uses the exact same methodology as with code except it will store large files in an external 
 remote and only reference those locations in your git repo using a hash of your data's content.  This means if you change any of your data a new copy 
 of that data will be stored and it's reference updated.  And so to maintain git's methodology of versioning any change of your data will mean a new copy 
 will be stored, rapidly increasing storage costs with changes.  Neptune instead is a more holistic machine learning platform that provides a whole bunch of 
@@ -124,7 +129,7 @@ Throughout this project, over 2000 models were trained, each slightly different,
 This makes the processes which is commonly refered to as Experiment Tracking a very important one.
 It would be good to visualise all these experiemnts and be able to roll back to old models.  As with dataset versioning there are a plethora of 
 new managed services that promise they can do this for you.
-The appoach opted for during this project utilised an opensource solution called Guild \cite{}.  The main reason for this choice was beacause of 
+The appoach opted for during this project utilised an opensource solution called Guild.  The main reason for this choice was beacause of 
 it's unopinionated nature, requiring zero code changes.  GuildAI leverages the filesystem to save \textit{runs} including the environment configuration
 at the time of training.  A run is made from the command line (i.e. \verb|guild run train --remote ec2 EPOCHS=10 LR=0.001|) and
 represents one iteration of a model and can even be executed remotely via ssh to give easy access to 
@@ -190,12 +195,12 @@ where $\bm{p} = (p_0, ..., p_k)$ and $p_i$ represents the probability of an imag
 Since $\sum_{k}{p_k} = 1$ you can generate the probabilities by normalising the count of each category in the training set.  Algorithmically 
 sampling from the distribution can be done using inversion sampling which requires calculating the cumulative distribution function.
 
-Starting with a known baseline is common practice in exploratory machine learning \cite{} so that transitions are always made from a known and working state.  
+Starting with a known baseline is common practice in exploratory machine learning \cite{mukhoti2018importance} so that transitions are always made from a known and working state.  
 It becomes very easy to see if an experiment is not working by comparing it to your baseline.
 
-Keeping to this strategy, the Multilayer Perception (MLP) or fully connected network \cite{} was the first neural network to be explored.
-We explore nerual network approaches as they have proved most effective for image classification \cite{}, they are also relatively simple to deal
-with as no hand-crafted feature extraction is needed and end-to-end solutions are much more viable.
+Keeping to this strategy, the Multilayer Perception (MLP) or fully connected network \cite{murtagh1991multilayer} was the first neural network to be explored.
+We explore nerual network approaches as they have proved most effective for image classification, they are also simple to deal
+with in the respect that no hand-crafted feature extraction is needed and end-to-end solutions are much more viable.
 By starting with the MLP, all complexity from the network is stripped away so the more extraneous elements such as the training loop and 
 evaluation metrics can be built and tested.
 
@@ -215,7 +220,7 @@ found difficult to classify giving hugely helpful insight into the dataset itsel
 
 Before training, a fixed random seed was important so that it was possible to tell whether or not any particular change was positive since all models started
 from the same initalisation.  The initalisation of the final layer was hard coded to be an equal distribution, sensible initalisations of final layer can have 
-a noticable effect on training convergence \cite{}.
+a noticable effect on training convergence \cite{kumar2017weight}.
 
 \begin{figure}[h]
     \centering
@@ -238,7 +243,7 @@ Once the full training and evaluation structure is functional, new features can 
  - human labelled dataset?
 
 Another strategy was to purposely overfit models during training.  It was easy to tell when a model was overfitting by splitting the data into
-training and validation sets \cite{} and viewing the relative losses in TensorBoard as can be seen in \autoref{}.  The reason for doing this
+training and validation sets and viewing the relative losses in TensorBoard as can be seen in \autoref{}.  The reason for doing this
 was that if the model was able to overfit (i.e. achieve $\sim100\%$ accuracy on the training set) then it was able and big enough to learn distinguishing features or
 as is sometimes put: the model has sufficient entropic capacity.  It is then a lot easier to make it generalise well, for example by reducing the number of parameters, 
 than to go from an underfitting model to a generalised one as you don't necessary know where the problem lies for not fitting to the data.
@@ -252,7 +257,7 @@ than to go from an underfitting model to a generalised one as you don't necessar
     \label{fig:overfit}
 \end{figure}
 
-There are many ways to fight overfitting as typically referered to as regularization techniques, perhaps the easiest of which is early stopping \cite{}.
+There are many ways to fight overfitting as typically referered to as regularization techniques, perhaps the easiest of which is early stopping \cite{yao2007early}.
 The way this was implemented in our Trainer was to save the model after the first epoch and consquently after every other epoch for which the validation 
 loss was less than the previously saved model.  It is possible to then stop training entirely if after a set number of iterations no improvement is seen 
 in the validation loss.
@@ -264,31 +269,30 @@ experiments including some final optimisations to squeeze as much performance ou
 
 
 \subsubsection{Architecture}
-ConvNext https://arxiv.org/pdf/2201.03545.pdf
+After implementing the first fully connected neural network a sequence of gradually more recent architectures were experiemnted with.
+The first experiment was to reimplemnt Yann LeCunn's LeNet from \ref{results}, after this however, it made much more sense to use the already implemented 
+and tested versions in pytorch's vision module.  The following additional networks were tested: ResNet \cite{he2016deep}, ViT \cite{ViT} and ConvNeXT \cite{liu2022convnet}.  
+In the end it was required to properly understand these implementations so that they could be altered for multitasking which will be discussed shortly.
 
-Due to the recent surge of deep learning research for computer vision there are a huge range of openly available models.
-During this project ResNet, ConvNext, and ViTs were experimented with.  How much detail should I go into here?
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.55\textwidth]{convnext.png}
+    \caption{A comparision of block designs for Swin Transformer, ResNet and ConvNeXt}
+    \label{fig:convnext}
+\end{figure}
 
-ResNet
-
-\subsubsection{Loss Function}
-https://towardsdatascience.com/choosing-and-customizing-loss-functions-for-image-processing-a0e4bf665b0a
-https://arxiv.org/pdf/2009.13935.pdf proposes SML may be better than cross-entropy
+In the end ConvNeXT was chosen for this project for it's simplicity over ViTs and notable performance increase over ResNets.  The ConvNeXT architecture is a pure 
+convolutional neural network and is built up directly from a standard ResNet.  
+The authors of ConvNeXT took an array of design choices from ViTs and applied them to ResNets.  
+Some notable changes that improved the performance, can be seen in \ref{fig:convnext} and include
+larger kernel sizes, few activations (and the use of GELU over ReLU), inverted bottleneck (the fully connected layer is 4 times wider than the input dimension).
 
 \subsubsection{Optimizer}
-
-[put into results]
-AdamW was found produce more attractive results from comparing SGD with/without momentum and Adam and AdamW \cite{}
-Learning Rate, Weight Regularization.
-
-Learning rate scheduler, leave this till the end.
-
-\subsubsection{Batch Normalization}
-https://arxiv.org/abs/1502.03167 and renorm for small batch sizes https://arxiv.org/abs/1702.03275
-
-https://arxiv.org/abs/1207.0580 shouldn't be used after convolution layers \cite{} there has been some work https://arxiv.org/abs/1904.03392
-
-Pooling and DropPaths
+Initally stochastic gradient decent with momentum of 0.9 and a learning rate of 2e-4 was used for all experiments.  Later when the architecture 
+was found, and larger datasets began to be used, both the Adam and AdamW optimizers were tested.  
+AdamW was found to dramatically speed up learning and even increase 
+accuracy by 0.4\%.  The final change that was made in this area was the use of a learning rate scheduler, in particular the 1cycle learning rate policy that 
+increases the learning rate from the inital rate before dropping it right down to some minimm towards the final epoch \cite{smith2019super}.
 
 \subsubsection{Transfer Learning}
 There appears to be a trend occuring in the deep learning space.  Some organisation spends millions training an impossibly large nerual network
@@ -344,17 +348,30 @@ the more difficult tasks.  This weight vector then becomes another hyperparamete
 individual loss functions across specific classes too.
 
 \subsubsection{Augmentation}
-Data augmentation is strategy every machine learning practioner has in their aresonal.  It addresses the data problem, allows us to truly 
-leverage the data we have and generalise our models further.  The MINST \cite{} dataset itself was created using data augmentation.
-In the case of chess piece classification, the correct augmentations or transformations should be chosen.
-Go onto list the transformations used and why.
+Data augmentation is often treated as a naive method to squeeze the most possible out of a given dataset that is possible, in fact the MINST dataset itself was 
+created using data augmentation \cite{cohen2017emnist}.  While this is true, I have found 
+it move more useful to look at data augmentation as just another regularization strategy to avoid overfitting to your training set.  For this reason 
+augmentations were not added until other more architectural decisions were made.
+
+It is important that the correct augmentations are chosen as just 
+throwing any augmentation function at a dataset isn't always going to improve results.
+For example, in the case here of chess piece classification random cropping is not going to help as chess pieces, especially in the dataset used throughout this 
+project, are always the same size relative to the sqaure.  In contrast, both horizontal and vertical flipping do apply as pieces can be placed in any orentation 
+within a square.
+In order to approach this selection of augmentation as systematically as possible, no assumptions are made and the hypothesis just made about which augmentations 
+may relavent are tested empirically.  See \autoref{fig:hyperparameters} for an idea as to how augmentations were tested, although note that only a few augmentations 
+are shown in that figure and is not an exhaustive list.
 
 \subsection{The Final Model}
 \label{the model}
-Augmentation as well?
-Talk about grayscale (a lot of previous works used gray scale do performant CNNs aid from gray or hinder?)
+The final model contained two base models based on the ConvNeXT architecture.  One of these specalised in occupancy detection and was trained with 'occupied' labels.
+The other was trained on the 'pieces' labeller with two heads, one for piece type classification and the other for piece color detection.  The output from these two 
+heads were concatenated and the CrossEntropyLoss is used against the 'pieces' labeller and optimised with AdamW.
+
+
 
 \section{Recording a Chess Game to PGN}
+\label{inference}
 The goal of this section is to discuss methods for using the proposed piece classifier to record an entire game of chess, played on a real board, 
 to a PGN formatted file.  This application is later referered to as the \textit{Inference Application}.
 

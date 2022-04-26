@@ -8,10 +8,30 @@
 <This appendix should contain everything covered by the 'self-appraisal' criterion in the mark scheme. Although there is no length limit for this section, 2---4 pages will normally be sufficient. The format of this section is not prescribed, but you may like to organise your discussion into the following sections and subsections.>
 
 \section{Critical self-evaluation}
+\subsection{Positives}
+By far the strongest aspect of my report is the actual solution I produced.  It performs better than any other openly available solution.  
+The code itself has received a great deal of attention and utilizes many software engineering principals to ensure the solution is easy to 
+read, extendable and performant:  
+\begin{itemize}
+    \item Environment variables are used to inject configuration into configuration classes  
+    \item Python generators were used to avoid loading many GB of data into memory  
+    \item Facades were used to abstract underlying implementations for Storage and Camera interfaces  
+    \item Proper experiment tracking was used to manage model versions and run experiments in the cloud with A6000 GPUs
+    \item Debuggers and profilers were used to benchmark performance and find bugs
+\end{itemize}
+The results also demonstrated a rigorous and scientific approach to evaluating my solution, improving upon existing solutions and ensuring there was 
+no bias when performing these tests.  Yet I was also clear about where my solution had limitations and expanded on what could be done 
+to mitigate those.
+
+\subsection{Negatives}
+I believe the report could be written better.  Despite some effective use of figures and a decent structure, the language is not up to par with 
+a lot of the published works I have read.  There were a lot of things I felt I wasn't able to convey clearly or at all, however, this is a skill I have 
+only just begun to stretch and I have found it enjoyable to exercise.
+
+\section{Personal reflection and lessons learned}
 Firstly found it to be a really fun project and enjoyed writing all the components that make a machine learning solution.  Seeing the end result was even better as 
 I'm genuienly surprised at how well it worked, beating all the open source solutions I could find out there.  Learnt a lot about statistics which I never covered at A-Level.
 
-\section{Personal reflection and lessons learned}
 Surpised at how effective transfer learning is and the significance of it's place in the future.
 The importance of experiment tracking for research.
 
@@ -43,15 +63,27 @@ This was not the aim of the project and more measures and effort would need to b
 % Any other appendices you wish to use should come after "Self-appraisal". You can have as many appendices as you like.
 %
 \chapter{External Material}
-<This appendix should provide a brief record of materials used in the solution that are not the student's own work. Such materials might be pieces of codes made available from a research group/company or from the internet, datasets prepared by external users or any preliminary materials/drafts/notes provided by a supervisor. It should be clear what was used as ready-made components and what was developed as part of the project. This appendix should be included even if no external materials were used, in which case a statement to that effect is all that is required.>
 
+\section{Software Libraries}
+\begin{itemize}
+    \item pytorch (https://pytorch.org/)
+    \item GuildAI (https://guild.ai/)
+    \item python-chess (https://github.com/niklasf/python-chess)
+    \item matplotlib (https://matplotlib.org/)
+    \item numpy (https://numpy.org/)
+    \item opencv (https://opencv.org/)
+    \item pandas (https://pandas.pydata.org/)
+    \item seaborn (https://seaborn.pydata.org/)
+\end{itemize}
 
-
+\section{PGN File}
+Any external PGN files that were not automatically generated from my solution came from PGN Mentor (https://www.pgnmentor.com/)
 
 %
 % Other appendices can be added here following the same pattern as above.
 %
 
+\chapter{Demos}
 
 
 \end{appendices}
