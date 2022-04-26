@@ -13,8 +13,10 @@ Limitations:
 
 [guild](https://guild.ai/) was used in this project for experiment tracking.  Highly recommend you go check it out if you haven't already.
 
-![A demo of the inference application](demo.fig)
+![A demo of the inference application](demo.gif)
 
+Generates PGN:
+`1. f4 e5 2. g4 Qh4# 0-1`
 
 ## Exploring The Code
 
