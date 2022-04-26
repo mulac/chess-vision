@@ -54,29 +54,29 @@ def label(game, stream='color'):
     images = skip(game.images, game.options.skip_moves-1)
     start_img = next(images)
     for square in range(64):
-        yield label_move(chess.Board(), start_img[stream], square, corners, game.options)
+        yield label_square(chess.Board(), start_img[stream], square, corners, game.options)
     for move, img in zip(game.pgn.mainline(), images):
-        yield label_move(move.board(), img[stream], move.move.to_square, corners, game.options)
-        yield label_move(move.board(), img[stream], move.move.from_square, corners, game.options)
+        yield label_square(move.board(), img[stream], move.move.to_square, corners, game.options)
+        yield label_square(move.board(), img[stream], move.move.from_square, corners, game.options)
 
 def label_pieces(game, stream='color'):
     corners = find_corners(game.images)
     images = skip(game.images, game.options.skip_moves-1)
     start_img = next(images)
     for square in chain(range(16), range(48, 64)):
-        yield label_move(chess.Board(), start_img[stream], square, corners, game.options)
+        yield label_square(chess.Board(), start_img[stream], square, corners, game.options)
     for move, img in zip(game.pgn.mainline(), images):
-        yield label_move(move.board(), img[stream], move.move.to_square, corners, game.options)
+        yield label_square(move.board(), img[stream], move.move.to_square, corners, game.options)
 
 def label_with_board(game, stream='color'):
     corners = find_corners(game.images)
     images = skip(game.images, game.options.skip_moves-1)
     img = next(images)
     for square in chain(range(16), range(48, 64)):
-        square, lbl = label_move(chess.Board(), img[stream], square, corners, game.options)
+        square, lbl = label_square(chess.Board(), img[stream], square, corners, game.options)
         yield (img[stream], square), lbl.color
     for move, img in zip(game.pgn.mainline(), images):
-        square, lbl = label_move(move.board(), img[stream], move.move.to_square, corners, game.options)
+        square, lbl = label_square(move.board(), img[stream], move.move.to_square, corners, game.options)
         yield (img[stream], square), lbl.color
 
 def label_color(game):
@@ -115,11 +115,11 @@ def get_corners(image):
 
 
 def label_occupied_move(pgn_board, img, square, corners=None, opts=LabelOptions()):
-    piece_img, piece = label_move(pgn_board, img, square, corners, opts)
+    piece_img, piece = label_square(pgn_board, img, square, corners, opts)
     return piece_img, piece is not EMPTY
 
 
-def label_move(pgn_board, img, square, corners=None, opts=LabelOptions()):
+def label_square(pgn_board, img, square, corners=None, opts=LabelOptions()):
     board_img = get_board(img, corners, opts) if corners is not None else img
     piece_img = get_square(square, board_img, opts)
     label = pgn_board.piece_at(square)

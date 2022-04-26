@@ -34,21 +34,21 @@ tasks = {'piece': TASK_WEIGHT, 'occupied': 1-TASK_WEIGHT}
 config = TrainerConfig(
     # train_folder = '/tmp/chess-vision-67d9jmlq',
     # test_folder = '/tmp/chess-vision-1qki2rng',
-    train_games = [
-        *(Game("Evans", i) for i in range(7)),
-        Game("Adams", 1),
-        Game("Adams", 2),
-        Game("Adams", 3),
-        Game("Kasparov", 0),
-        Game.from_file("Kasparov_0__.pkl"),
-    ],
-    test_games = [
-        Game("Evans", 7),
-        Game("Bird", 2),
-        Game.from_file("Kasparov_0_.pkl")
-    ],
-    # train_games = [Game("Nakamura", i) for i in range(3)],
-    # test_games = [Game("Nakamura", 3)],
+    # train_games = [
+    #     *(Game("Evans", i) for i in range(7)),
+    #     Game("Adams", 1),
+    #     Game("Adams", 2),
+    #     Game("Adams", 3),
+    #     Game("Kasparov", 0),
+    #     Game.from_file("Kasparov_0__.pkl"),
+    # ],
+    # test_games = [
+    #     Game("Evans", 7),
+    #     Game("Bird", 2),
+    #     Game.from_file("Kasparov_0_.pkl")
+    # ],
+    train_games = list(Game("Nakamura", i) for i in range(6)),
+    test_games = list(Game("Nakamura", i) for i in range(6, 8)),
     epochs = EPOCHS,
     batch_size = BATCH_SIZE,
     learning_rate = LR,
