@@ -13,6 +13,8 @@ Limitations:
 
 [guild](https://guild.ai/) was used in this project for experiment tracking.  Highly recommend you go check it out if you haven't already.
 
+![A demo of the inference application](demo.fig)
+
 
 ## Exploring The Code
 
