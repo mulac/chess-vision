@@ -1,10 +1,10 @@
 \chapter{Methods}
 \label{methods}
 
-To summarise, the overall approach for determining board state is to first segment each square of the board from the image,
-and use those subimages as input to a piece classifier from which the output can be concatenated into a view of the whole board.
-Splitting the input to a classifier up by square is a unanimous decision taken by previous authors discussed in \nameref{research} 
-as it reduces the problem to a simple classification problem of only piece type and can take advantage of the thoroughly researched area 
+The overall approach for determining board state is to first segment each square of the board from the image,
+and use those sub-images as input to a piece classifier, from which the output can be concatenated into a view of the whole board.
+Classifying individual square images is a unanimous decision taken by previous authors discussed in \nameref{research},
+as it reduces the problem to a simple classification problem of only piece type, and can take advantage of the thoroughly researched area 
 of chessboard detection.
 
 \section{Data Collection}
@@ -18,7 +18,7 @@ Discussed in the following sections are some of the challenges and decisions tha
 The eminent challenge is acquiring data in the first place and is highly context dependant,
 
 For vision there are a range of sensors we can use to gather data from the real world.
-Sensor choice is an important choice for any robotics application as there are 
+Sensor choice is an important choice for any robotics application because there are 
 important tradeoffs, as with any engineering challenge, which must be considered.
 
 **Outline some of the tradeoffs between spatial sensors**
@@ -47,46 +47,47 @@ debugging and testing as a real camera and chessboard setup is not need.
 Talk about using a simulator.
 
 A closely related challenge of acquiring the data is that of labelling it too. 
-During \nameref{research} multiple past authors have stated the availability of 
+Following from the \nameref{research}, multiple past authors have stated the availability of 
 datasets for chess piece recognition is sparse \cite{Ding2016ChessVisionC, heatmap} with some emphasizing
-dataset collection took the large majority of their time \cite{chessvgg}.
+dataset collection took the large majority of time \cite{chessvgg}.
 It is also widely known that neural networks scale with the number of examples.
-This however poses the question: how do we get access to a lot of labelled data 
+However this poses the question: how do we get access to a lot of labelled data 
 for chess?
 
 Unlike techniques in \cite{}  **Some examples of other auto labelling techniques**
-the approach taken here was to maximize speed of collection and flexibility.
+the approach taken in this report is to maximize speed of collection and flexibility.
 
 Portable Game Notation (PGN) is a common format for recording chess games as a 
-series of moves and are widely available online.  All the PGN files used in the 
-project were used from PGN Mentor which has over one million games.  Utilising this
-data not only has the benefit of an abundance of chess games but also that the 
+series of moves.  All the PGN files used in this 
+project were obtained from PGN Mentor, which has over one million games.  Utilising this
+data not only has the benefit of an abundance of chess games, but also that the 
 recorded games are real and contain positions more likely to appear in game play. 
 
 A program is developed for recording these games with the generic camera interface
 as previously described.  The program takes screenshots upon user input (with the
-[Enter] shortcut) displaying the move number and image as a result for visual feedback
+[Enter] key) displaying the move number and image as a result for visual feedback
 before saving to disk.  These games can then be automatically labelled using the matching
 PGN file.
 
-After the development of this pipeline it was possible to collect over 2,500 \textit{unique} labelled
+After the development of this pipeline, it was possible to collect over 2,500 \textit{unique} labelled
 images in under two hours.
 
 \subsection{Dataset Versioning}
 With all this data the next challenge becomes self evident. It is concerned with the question: How do we manage all of this?
-As experiments are carried out and iterations on the dataset are performed there will be many changes and variations of the data
-that are used to train models.  This is a challenge with data for many reasons, the first being reproducibility.  Say you train a model
-that performs really well, then you make some changes in say the balancing of the dataset or even the size and you train again.  If you go 
-through a series of changes like this and discover that it performed a lot better the way you had it previously then you might want to roll back.
+As experiments are carried out and iterations on the dataset are performed, there will be many changes and variations of the data
+that are used to train models.  This is a challenge with data for many reasons, the first being reproducibility.  Consider training a model
+that performs really well, then you make some changes in the balancing of the dataset and you train again.  If a series of changes like this 
+are made and then it is discovered that the model performed a lot better the way it was previously, then the option to roll back would be very useful.
 
 In typical software engineering a version control system like git would be used.  While this is what was used to version the codebase of this project,
-there are different challenges with data, namely it's storage.  Code usually takes up megabytes of storage, the Linux Kernel source code for example contains
+there are different challenges with visual data, namely it's size.  Code usually takes up megabytes of storage, the Linux Kernel source code for example contains
 27.8 million lines and is only around 1GB in size.  The data used throughout this project came to >20GB.
 
-There are many proposed solutions for this problem, from managed service like Neptune and wandb, to self hosted opensource options.  In fact Git has its own
-solution called Git Large File Storage (Git LFS) which uses the exact same methodology as with code except it will store large files in an external 
-remote and only reference those locations in your git repo using a hash of your data's content.  This means if you change any of your data a new copy 
-of that data will be stored and it's reference updated.  And so to maintain git's methodology of versioning any change of your data will mean a new copy 
+There are many proposed solutions for this problem, from managed services like Neptune and wandb, to self hosted opensource options.  Git has its own
+solution called Git Large File Storage (Git LFS), which uses the exact same methodology as it does with code, except it will store large files in an external 
+remote.  In your git repo, only then are references (made from a hash of the data) stored to the location of those files, instead of the files themselves.  
+This means if you change any of your data, a new copy 
+of that data will be stored and it's reference updated.  To maintain git's methodology of versioning, any change of your data will mean a new copy 
 will be stored, rapidly increasing storage costs with changes.  Neptune instead is a more holistic machine learning platform that provides a whole bunch of 
 features other than just dataset versioning.  As with other managed services these managed solutions are prone to lock-in and require you modifying your code 
 with a bunch of API calls to get them running.
