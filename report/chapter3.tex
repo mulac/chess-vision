@@ -8,7 +8,7 @@ to provide a better view of its utility.
 \section{Piece Recognition}
 \label{evaluation}
 
-The best openly available solutions for chess piece recognition on real boards were found to be from NAME \cite{} and NAME \cite{}.
+The best openly available solutions for chess piece recognition on real boards were found to be from Ding \cite{Ding2016ChessVisionC} and Underwood \cite{chessvgg}.
 There was the concern that through each iteration and optimization of hyper-parameters the presented solution was being overfit to the 
 images in the evaluation set, despite never being directly trained on it.  This could give the proposed solution an unfair advantage when testing on the original board.
 And so, in order to make a fairer comparison, another board entirely was also chosen for these final tests.  
@@ -18,7 +18,7 @@ the metrics were averaged over 3 runs.  The first test used data from the origin
 third test included data from both boards.
 
 Two metrics are presented in \ref{table:results}: Accuracy and Balanced Accuracy.  Accuracy was chosen due to its human
-interpretablility and intuitive definition as the percentage of correct classifications.  Balanced Accuracy is equivalent to the arithmetic mean of recalls 
+interpretability and intuitive definition as the percentage of correct classifications.  Balanced Accuracy is equivalent to the arithmetic mean of recalls 
 for each class which gives us some information that accuracy alone does not.  When the test dataset is unbalanced, accuracy gives a view of 
 how well each model performs over the whole dataset, but balanced accuracy gives the same weight to each class, therefore makes it easier to see problems 
 with under-represented classes.
@@ -38,9 +38,9 @@ with under-represented classes.
         \hline
         Method & Accuracy & Balanced & Accuracy & Balanced & Accuracy & Balanced \\
         \hline
-        proposed & \textbf{0.97} & \textbf{0.95} & \textbf{0.96} & \textbf{0.96} & todo & todo  \\
-        \cite{} & 0.87 & 0.71 & 0.86 & 0.75 & todo & todo  \\
-        \cite{} & 0.77 & 0.57 & 0.74 & 0.48 & - & -  \\
+        proposed & \textbf{0.97} & \textbf{0.95} & \textbf{0.96} & \textbf{0.96} & \textbf{0.96} & \textbf{0.95}  \\
+        \cite{chessvgg} & 0.87 & 0.71 & 0.86 & 0.75 & 0.81 & 0.57  \\
+        \cite{Ding2016ChessVisionC} & 0.77 & 0.57 & 0.74 & 0.48 & - & -  \\
         \hline
     \end{tabular}
 }
@@ -48,13 +48,13 @@ with under-represented classes.
 \label{table:results}
 \end{figure}
 
-\cite{} Uses a pretrained VGG16, freezing all layers of the convolutional feature extractor, adding a head of 3 fully connected layers with a sum of 2.5M 
+Underwood uses a pretrained VGG16, freezing all layers of the convolutional feature extractor, adding a head of 3 fully connected layers with a sum of 2.5M 
 trainable parameters.
 The final layer outputs a softmax distribution over all 13 class ('all' from \autoref{table:labellers}).  After getting familiar with the code base and running some 
 different experiments, a few minor improvements were spotted that could be made without changing the architecture, such as implementing early stopping. 
 In order to ensure a fair representation of the authors work, those changes were implemented and the best results were used in \autoref{table:results}.
 
-\cite{} Trains a Support Vector Machine classifier for each piece type including empty ('type+' from \autoref{table:labellers}) using the HOG features extracted 
+Ding trains a Support Vector Machine classifier for each piece type including empty ('type+' from \autoref{table:labellers}) using the HOG features extracted 
 from each training image.  For each input image the classifier with the highest confidence determines the piece type, to determine piece color they use reference colors.
 This involved manually calculating reference colors for each piece and deciding on a suitable threshold value which was done separately for each board.  Unfortunately,
 this method made it difficult to generalize when using multiple boards and so the decision was made to exclude it from the final test.
@@ -62,10 +62,13 @@ this method made it difficult to generalize when using multiple boards and so th
 As can be seen the methods that employ CNNs dramatically outperform the more classical method using HOG descriptors which should not be surprising.  
 The proposed method then, not only achieves 10\% higher accuracy than the other CNN method, but it's balanced accuracy is almost the same it's accuracy, 
 which cannot be said for the others.  The main reason for this is the use of multitasking.  The most common class in the dataset is the empty square and so when 
-\cite{} model is learning, the empty square gets more influence on the gradient of the weights to be updated.  In turn this will end up with a model that has a high 
+Underwood's model is learning, the empty square gets more influence on the gradient of the weights to be updated.  In turn this will end up with a model that has a high 
 accuracy on the evaluation set, but the recall of under-represented classes will suffer as a result. One method to avoid this is to prune the dataset 
 of empty squares, however correctly detecting empty squares is very important and the more that can be learnt from the data, the better. 
 And so the proposed solution of using a separate classifier for this class has proved to be very successful.
+
+Another take away is the generality of the proposed model.  The Accuracy does not drop when the model is trained to recognize two different sets of pieces, whereas 
+the other CNN approach takes a hit of 5\% to it's accuracy.  It would be good to see how this generality holds up when a dataset with many more boards is used.
 
 \subsection{Trials}
 For a clearer comparison in the holistic task of full chessboard state recognition a similar methodology 
@@ -74,26 +77,26 @@ benchmark of chessboard images.  This is in contrast to using the dataset used a
 
 \autoref{fig:trails} truly demonstrates the extent of the challenge by visualizing the actual predictions from each model.
 
-Interestingly \cite{} method, while under-performing in accuracy on the evaluation tests, has a much higher recall of empty classifications compared to \cite{} 
-who utilizes a CNN.  The reason for this also explains the gap in accuracy and balanced accuracy of the solution from \autoref{table:results} and is that 
+Interestingly Ding's method, while under-performing in accuracy on the evaluation tests, has a much higher recall of empty classifications compared to Underwood's 
+which utilizes a CNN.  The reason for this also explains the gap in accuracy and balanced accuracy of the solution from \autoref{table:results} and is that 
 they used a separate classifier for each class.  While the this works really well for the empty class, the HOG method does not perform as well on the other 
 classes which have a more complex structure and it comes at a big computational cost as can be seen in \autoref{fig:trailstats}.  
 
 The speed of each model was also measured and averaged over 7 runs with the sample standard deviation taken.  A run in this context refers to passing 64 images 
 (every square of the board) through the model and the value recorded in \autoref{fig:trailstats} is the time for all of these images to be processed.
-The CPU was used for each model just comparison as \cite{} method was not easily accelerated with a GPU, in the next section you'll see the actual performance 
+The CPU was used when benchmarking the inference time, as Ding's method was not easily accelerated with a GPU, in the next section you'll see the actual performance 
 of the proposed model is a lot faster with GPU acceleration as single instruction, multiple data (SIMD) is massively relevant with neural networks where the same 
 operation such as convolution operations are performed many times over many input images which in itself can be tessellated and processed in parallel on the GPU.
 
 \begin{figure}[h]
     \centering
-    \begin{tabular}{|c|c|c|c|}
+    \begin{tabular}{|c|c|c|}
         \hline
-        Method & Mean Inference Time & Total Misclassified Squares & Cross Entropy Loss \\
+        Method & Mean Inference Time & Total Misclassified Squares \\
         \hline
-        Proposed & 1.7s ± 61.4ms  & - & 3.01 \\
-        \cite{} & \textbf{1.5s ± 58.7ms} & - & 3.21 \\
-        \cite{} & 15s ± 417ms & - & 1.82 \\
+        Proposed & 1.7s ± 61.4ms  & 3  \\
+        \cite{chessvgg} & \textbf{1.5s ± 58.7ms} & 171 \\
+        \cite{Ding2016ChessVisionC} & 15s ± 417ms & 48  \\
         \hline
     \end{tabular}
 \caption{Games played with the inference application}
@@ -105,25 +108,25 @@ operation such as convolution operations are performed many times over many inpu
     {\tabulinesep=2mm
     \begin{tabu}{|c|c|c|c|c|}
         \hline
-        \textbf{Input} & \textbf{Ground Truth} & \textbf{Proposed} & \textbf{\cite{}} & \textbf{\cite{}} \\
+        \textbf{Input} & \textbf{Ground Truth} & \textbf{Proposed} & \textbf{\cite{chessvgg}} & \textbf{\cite{Ding2016ChessVisionC}} \\
         \hline
         \hline
-        \includegraphics[width=0.19\textwidth]{trail_small_1.jpg} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{mym_small_1.png} & \includegraphics[width=0.19\textwidth]{cv_small_1.png} \\
+        \includegraphics[width=0.19\textwidth]{trail_small_1.jpg} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{proposed_small_1.png} & \includegraphics[width=0.19\textwidth]{mym_small_1.png} & \includegraphics[width=0.19\textwidth]{cv_small_1.png} \\
         \hline
-        \includegraphics[width=0.19\textwidth]{trail_small_2.jpg} & \includegraphics[width=0.19\textwidth]{small_board_2.png} & \includegraphics[width=0.19\textwidth]{small_board_2.png} & \includegraphics[width=0.19\textwidth]{mym_small_2.png} & \includegraphics[width=0.19\textwidth]{cv_small_2.png} \\
+        \includegraphics[width=0.19\textwidth]{trail_big_1.jpg} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{mym_big_1.png} & \includegraphics[width=0.19\textwidth]{cv_big_1.png} \\
         \hline
-        \includegraphics[width=0.19\textwidth]{trail_small_3.jpg} & \includegraphics[width=0.19\textwidth]{small_board_3.png} & \includegraphics[width=0.19\textwidth]{small_board_3.png} & \includegraphics[width=0.19\textwidth]{mym_small_3.png} & \includegraphics[width=0.19\textwidth]{cv_small_3.png} \\
+        \includegraphics[width=0.19\textwidth]{trail_small_2.jpg} & \includegraphics[width=0.19\textwidth]{small_board_2.png} & \includegraphics[width=0.19\textwidth]{proposed_small_2.png} & \includegraphics[width=0.19\textwidth]{mym_small_2.png} & \includegraphics[width=0.19\textwidth]{cv_small_2.png} \\
         \hline
-        \includegraphics[width=0.19\textwidth]{trail_big_1.jpg} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{starting_board.png} & \includegraphics[width=0.19\textwidth]{mym_small_1.png} & \includegraphics[width=0.19\textwidth]{cv_small_1.png} \\
+        \includegraphics[width=0.19\textwidth]{trail_big_2.jpg} & \includegraphics[width=0.19\textwidth]{big_board_2.png} & \includegraphics[width=0.19\textwidth]{proposed_big_2.png} & \includegraphics[width=0.19\textwidth]{mym_big_2.png} & \includegraphics[width=0.19\textwidth]{cv_big_2.png} \\
         \hline
-        \includegraphics[width=0.19\textwidth]{trail_big_2.jpg} & \includegraphics[width=0.19\textwidth]{big_board_2.png} & \includegraphics[width=0.19\textwidth]{proposed_big_2.png} & \includegraphics[width=0.19\textwidth]{mym_small_2.png} & \includegraphics[width=0.19\textwidth]{cv_small_2.png} \\
+        \includegraphics[width=0.19\textwidth]{trail_small_3.jpg} & \includegraphics[width=0.19\textwidth]{small_board_3.png} & \includegraphics[width=0.19\textwidth]{proposed_small_3.png} & \includegraphics[width=0.19\textwidth]{mym_small_3.png} & \includegraphics[width=0.19\textwidth]{cv_small_3.png} \\
         \hline
-        \includegraphics[width=0.19\textwidth]{trail_big_3.jpg} & \includegraphics[width=0.19\textwidth]{big_board_3.png} & \includegraphics[width=0.19\textwidth]{proposed_big_3.png} & \includegraphics[width=0.19\textwidth]{mym_small_3.png} & \includegraphics[width=0.19\textwidth]{cv_small_3.png} \\
+        \includegraphics[width=0.19\textwidth]{trail_big_3.jpg} & \includegraphics[width=0.19\textwidth]{big_board_3.png} & \includegraphics[width=0.19\textwidth]{proposed_big_3.png} & \includegraphics[width=0.19\textwidth]{mym_big_3.png} & \includegraphics[width=0.19\textwidth]{cv_big_3.png} \\
         \hline
         \hline
-        \textbf{Input} & \textbf{Ground Truth} & \textbf{Proposed} & \textbf{\cite{}} & \textbf{\cite{}} \\
+        \textbf{Input} & \textbf{Ground Truth} & \textbf{Proposed} & \textbf{\cite{chessvgg}} & \textbf{\cite{Ding2016ChessVisionC}} \\
         \hline
-        \multicolumn{1}{c}{} & Total Mistakes: & 0 & 12 & 3 \\
+        \multicolumn{1}{c}{} & Total Mistakes: & 3 & 171 & 48 \\
         \cline{3-5}
     \end{tabu}}
 }

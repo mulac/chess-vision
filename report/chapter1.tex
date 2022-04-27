@@ -69,16 +69,13 @@ This method is widely known as SIFT, or scale-invariant feature transform, and h
 become a catalyst for many more approaches that follow a similar approach: RIFT (rotation-invariant feature transform) \cite{rift}, SURF (speeded up robust features) \cite{bay2006surf},
 Gauss-SIFT \cite{lindeberg2015image} and many more.
 
-Face detection algorithm. Viola/Jones
-
-
 \subsubsection{Neural Networks}
-Fast forwarding to 2022 almost all state-of-the-art computer vision solutions are built with deep learning.  A field that aims not only to solve vision but intelligence
+Fast forward to 2022 and almost all state-of-the-art computer vision solutions are built with deep learning.  A field that aims not only to solve vision but intelligence
 more generally.  Deep learning is centered around artificial neural networks which roughly mimic the behavior of neurons within biological brains \cite{eluyode2013comparative}.
 Arguably the first neural network applied to computer vision is the neocognitron by Kunihiko Fukushima in 1979 and was used for handwritten character recognition \cite{fukushima1982neocognitron}.
 At Bell Labs Yann LeCun pushed the use of neural networks for real world vision problems forward, applying the backpropogation algorithm and differentiable convolution operators to a 
 neural network like Fukushima's allowing raw images to be used as input to detect hand written digits \cite{lecun1989backpropagation}.  
-This then, in 1989, is largely considered the birth of Convolutional Neural Networks (CNNs) and the beginning of the infamous MNIST dataset.  There was another
+This then, in 1989, is largely considered the birth of Convolutional Neural Networks (CNNs) and the beginning of the infamous MNIST dataset.  Then came another
 dataset however; ImageNet.  ImageNet was the first dataset in computer vision of its size with over 11 million labelled images and 1000+ classes.  A competition was
 held every year starting in 2010 \cite{deng2009imagenet}, but the best performing methods remained as classical techniques such as SIFT.
 Two years later, a submission for this competition, AlexNet \cite{krizhevsky2012imagenet}, marked a breakthrough moment for CNNs beating the previous
@@ -88,27 +85,9 @@ CNNs have since progressively improved remaining in the number one position.  Mo
 and overfitting with techniques like skip connections \cite{he2016deep}.
 This was until the rise of transformers which signified another step change, not only for the field of computer vision but almost any field
 were neural networks are useful.
-Transformers doubled down on global attention based mechanisms, dispensing convolutions entirely \cite{vaswani2017attention}.
+Transformers doubled down on a global attention based mechanisms, dispensing with convolutions entirely \cite{vaswani2017attention}.
 Originally made for the problem of machine translation in natural language processing, transformers changed the game, enabling language models such as GPT-3 \cite{radford2019language}
 and BERT \cite{devlin2018bert} that have seen mainstream media attention.
-
-
-
-% \textbf{Image Recognition}
-% the way back in 1980 \cite{} convolutions showed promise in simple computer vision tasks, 
-% convolutions since have showed extreme promise \cite{}
-% Le Ye Cunn's work with convolutions \cite{} and MNIST \cite{} and more recently ImageNet \cite{} having become incredibly well known.
-% New methods such as Transformers from the world have NLP have generalised the convolution operation have proved 
-% very successful and lots of work here has been applied to vision. \cite{} \cite{} \cite{} (Attention is all you need, ViT, generic model from deepmind)
-% \textbf{Object Detection}
-% But in most applications there will be many things we want to recognise in an image.  The RCNN \cite{} enters.  How Faster-RCNN improves on this \cite{}.
-% Why YOLO \cite{} has been so successful (realtime).  Transformers are applicable here too.
-% \textbf{Instance Segmentation}
-% Why bounding boxes are not enough.  What is segmentation? Why instance segmentation is what we actually want. \cite{}
-% \textbf{Adding More Dimensions}
-% The real world is not percepived in static 2d images.  How do we add an understanding of 3 dimensions and time in our computer vision models? \cite{}
-% Important for localisation in the real world.  Important for understanding things like object permenance.
-
 
 \subsection{Computer Vision for Chess}
 Despite chess being a very narrow application of computer vision, the amount of research effort gone into the problem of determining
@@ -125,20 +104,21 @@ This forced these authors to take the approach of an initial setup stage at infe
 
 Due to a chessboard's simple features many early works of line and corner point detection can be applied.  For example Hough
 transforms are used to detect the lines of a chessboard \cite{CVChess, nusChessVision}.  Corner point detection methods such as the
-Harris and Stephens's \cite{} were also common among solutions \cite{}, with some authors combining approaches with further
-processing such as canny edge detection \cite{} to yield more reliable results.
+Harris and Stephens's \cite{harris1988combined} were also common among solutions, with some authors combining approaches with further
+processing such as canny edge detection to yield more reliable results \cite{irobot, CVChess, nusChessVision}.
 
-ChESS was another corner detection algorithm that out performed the Harris and Stephen's algorithm \cite{}. This was, perhaps
+ChESS was another corner detection algorithm that out performed the Harris and Stephen's algorithm \cite{ChESS}. This was, perhaps
 interestingly, created for real-time measurement of lung function in humans, further demonstrating the attention chess board
 detection has received due to its general applicability.
 
-There are many other algorithms that require simplifications, such as custom green and red chessboards \cite{}, multiple camera angles \cite{},
-or even the requirement of user input for entering the corners of the chessboard \cite{}.
+There are many other algorithms that require simplifications, such as custom green and red chessboards \cite{5967178, Ding2016ChessVisionC, Danner2015VisualCR}, 
+multiple camera angles \cite{5967178},
+or even the requirement of user input for entering the corners of the chessboard \cite{mannualcorners, irobot}.
 
 The most impressive work came out of Poznan University of Technology, which proposes many interesting ideas that perform more
-reliably in a wider range of difficult situations such as pieces being present on the board \cite{}.  They employ an iterative
+reliably in a wider range of difficult situations such as pieces being present on the board \cite{heatmap}.  They employ an iterative
 approach, with each iteration containing 3 sub-tasks: line segment detection, lattice point search and chessboard position search.
-In each iteration of line detection, a canny lines detector \cite{} is used on many preprocessed variations of the input image
+In each iteration of line detection, a canny lines detector is used on many preprocessed variations of the input image
 to maximize the number of relevant line detections, which are then merged using a linking function. The lattice point search starts with
 the intersection of all merged lines as input, converting these intersection points to a 21x21 pixel binary image of the surrounding area and
 runs them through a classifier to remove outliers.  The addition of a neural network as a classifier greatly improves
@@ -152,43 +132,63 @@ For most use cases however this will be sufficient, unless realtime board traini
 
 \subsubsection{Piece Recognition}
 
-Piece recognition has had less active research than board segmentation.  Most chess vision systems completely avoid classifying pieces by
-type (knight, king, ect.) all together \cite{}.  These approaches typically get around this by requiring the board to start in a known position.
+Piece recognition has had less active research than board segmentation.  Most chess vision systems completely avoid directly classifying pieces by
+type (knight, king, ect.) all together \cite{Koray2016ACV, bowers_2014, larregay2018design, irobot}.  
+These approaches typically get around this by requiring the board to start in a known position.
 From this known state, the normal rules of chess can be used to infer what pieces are where after each move.  This of course requires detecting 
 the movement of pieces.  Simpler methods
-require human input to prompt when a move has been taken \cite{}, more sophisticated attempt to do this move detection automatically.
+require human input to prompt when a move has been taken \cite{CVChess}, more sophisticated attempt to do this move detection automatically.
 
 These automatic move detection methods tend to all follow the same overarching processes.  They all use thresholding, 
-whether on color \cite{} or even the edges within each square \cite{}.
-Most authors recognise the dependence this approach has on lighting variations, with Otsu thresholding \cite{} sometimes being used to minimise
+whether on color or even the edges within each square.
+Most authors recognise the dependence this approach has on lighting variations, with Otsu thresholding \cite{otsu} sometimes being used to minimise
 the negative impact when lighting changed.  While this improved results for what may be considered normal lighting conditions, they still suffered.
 They calculate reference colors for all 4 variations (white square, black square, white piece, black piece).
 All of these then only work in situations where a series of moves are to be recorded according to typical chess rules, and not the chessboard state at any given moment.
 
-A couple of methods stood out from the rest each in their own way.  One used fourier descriptors to model piece types from a training set
-and the other modelled the pieces in Blender, a 3D modelling software, utilising template matching to determine piece type.  The fourier method is very sensitive
+A couple of methods stood out from the rest each in their own way.  One used Fourier descriptors to model piece types from a training set \cite{Danner2015VisualCR}
+and the other modelled the pieces in Blender, a 3D modelling software, utilising template matching to determine piece type \cite{oremuvschess}.  The Fourier method is very sensitive
 to change in camera angles, preferring a side view angle that unfortunately causes too many occlusions to be practical.  The template matching approach
 took over 150 seconds on average to predict board state from one image, which does not lend itself to interactive play in a robotic environment.
 
-Go to standford dude and the heatmap guys as the best approach out there. They use SIFT and hard coded color alogrithms.  heatmap guys improved on this
-only by adding more restrictions by assuming the board much be valid and making statistical assumptions on
-what state is most likely.  Oh and a HOG method.  The one that said SIFT didn't work well because the lack of texture.
+The best of the solutions using mainly classical techniques are from Ding \cite{Ding2016ChessVisionC} and Czyzewski et al. \cite{heatmap}.  
+Ding compares both the SIFT and Histogram of Oriented Gradients (HOG) algorithms for piece type detection using hard coded thresholding for color detection.  
+HOG is another feature descriptor, that directly describes higher order features as a distribution of intensity gradients.
+HOG however does not perform template matching like SIFT and thus requires another machine learning technique to classify the extracted features.  In Ding's case,
+a Support Vector Machine (SVM) was used and outperformed SIFT.
+Czyzewski et al. found similar results to Ding even when using neural networks and improved on their work only by 
+adding more assumptions about the board.  They also used statistical analysis from previous chess games to determine which states are more likely.  
+This again however adds assumptions, specifically the normal rules of chess have to be abided by.
 
-"
-Histogram of oriented gradients (HOG) is an example of a higher level feature extractor that does not perform template matching.  Instead it directly describes
-higher order features as a distribution of intensity gradients.
-And thus, unlike many other methods, does not benefit from preprocessing in the form of thresholding, blurring or edge detection.
-"
-
-More recently another group of methods have surfaced using neural networks, specifically convolutional neural networks (CNNs) \cite{}.
-One of these used a pretrained Inception-ResNet-v2 model \cite{} and only had 6 classes, resorting to the more traditional approaches for color detection.
-In particular binary thresholding with added morphological transformations to reduce noise as seen in previous works \cite{}.
+More recently another group of methods have surfaced using CNNs.
+One of these used a pretrained Inception-ResNet-v2 model and only had 6 classes, resorting to the more traditional approaches for color detection \cite{6classes}.
+In particular binary thresholding with added morphological transformations to reduce noise as seen in previous works.
 Interestingly the six chosen classes were 'empty', 'pawn', 'knight', 'bishop', 'rook' and 'king\_or\_queen', as they claim kings and queens can be
 difficult even for human eyes to distinguish.  Because of the choice of classes, this method falls back to relying on a chess engine to determine piece type.
 While usually correct for normal games of play, this makes the method unusable for games played with a variation on the normal rules of play.
-The other two methods used a simpler CNN structure, similar to that of VGG \cite{} with 13 classes; one for every colored piece as well as the empty square.
+The other two methods used a simpler CNN structure, similar to that of VGG with 13 classes; one for every colored piece as well as the empty square \cite{chessvgg, alexnetchess}.
 
+The relative performance of the above piece recognition solutions are hard to gauge simply from their reports, due to the lack of common datasets.  
+This is something that will be addressed directly by producing a dataset creation tool that will allow a larger dataset then has ever been created in this 
+area before.  
+A clear comparison of classical vs neural network approaches will then be discussed in the \nameref{results}.
 
-\subsection{Prior Work From the Author}
-Previously has built a robotic arm and vision system that can successfully play two counter board games
-Mention robotic arm and vision system for two counter board games as well as automatic differentiation library.
+\section{Prior Work From the Author}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.3]{robot.png}
+    \caption{Screenshot of the robot in play.  Longer video can be seen at https://www.youtube.com/watch?v=f7gmhgkUHVI}
+\label{fig:robot}
+\end{figure}
+
+To briefly add to the motivation of this project it's worth noting a robotic arm and vision system I have built that can successfully play board games.
+It was found that in building such a system, one of the hardest things to get right was the vision system.  As can be seen, this robot arm is 
+made of wood, Lego, strings, elastic band and still is able to play a full game through.
+Unfortunately this vision system only works with board games with two counters, specifically circular counters that work well with the 
+Hough transform.  
+The goal, is to build a vision system that would spark the creation of a robot that can play chess with you.
+In this journey to build such a system, I knew neural networks would be necessary, and I thought I had a good chance at beating the existing solutions
+out there by leveraging the amazing work that has come out of the deep learning community.
+But first, it was important for me to understand the fundamentals so I built an automatic differentiation library, similar to that of pytorch which can be
+viewed on github (https://github.com/Mulac/autograd-light).

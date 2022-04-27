@@ -18,13 +18,13 @@ to be found in larger datasets.
 \subsection{Board Segmentation}
 As this project focused on piece recognition and the development of an inference system, aruco markers proved to be a sensible choice for chessboard 
 segmentation.  They're really quick to detect, accurate in their localization and work even with pieces on the board which is very useful for 
-data collection and inference alike. This is unlike a lot of other proposed solutions \cite{}.
+data collection and inference alike. This is unlike a lot of other proposed solutions \cite{Koray2016ACV, bowers_2014, CVChess, nusChessVision}.
 
 However, they come with deal breaking consequences for any method that is to be used in a production setting with many boards.  
 It's simply too impractical to print and fix markers every time a new board is to be used with the system and again goes directly against the main 
 purpose of this project: autonomy.  
 
-I would highly recommend the solution presented by \cite{} to be explored in future work.  While the method they propose can take up to around 5 seconds 
+I would highly recommend the solution presented by Czyzewski et al. \cite{heatmap} to be explored in future work.  While the method they propose can take up to around 5 seconds 
 to segment the board they showed it to work in a huge array of environments and would be really interesting to see how it could be combined with the 
 piece recognition system proposed in this report.
 
@@ -38,30 +38,28 @@ A good experiment tracking system that worked across machines was vital to be ab
 
 What was expected is that sharing weights between 
 the 'type' classifier and 'occupied' classifier would aid in identifying empty squares since the features that make up an empty square are just the lack of 
-features that make any of the classes in the 'type' classifier.  It turns out, however, that the empty classifier trains more effectively when it has its own 
-weights it can adjust as the proposed model shares very few weights between the 'occupied' classifier and every other class and the empty classifier in \cite{} 
-is completely independent as opposed to in \cite{} where all the features are shared.
+features that make any of the classes in the 'type' classifier.  It turns out, however, that the empty classifier not only trains more effectively when it has its own 
+parameters, but is hindered if just a few blocks are shared with 'type' classifier. 
 
 \subsection{Inference}
 For most games the inference application developed for this report successfully exported 100\% accurate PGN.  It was a delight to use and very impressive to 
 watch in person.  Integration with a chess engine, implementing motion detection and introducing the concept of memory are the three additional components 
-that can be accredited for the solutions reliability.  The links to five sample recordings are included in Appendix C.
-
+that can be accredited for the solutions reliability.  The links to five sample recordings are included in \autoref{demos}.
 
 \section{Ideas for Future Work}
 Firstly it would be nice to explore these methods with more extreme camera angles.  This would probably include extending the labeller too add more 
 margin in one direction to account for the perspective shift.  This should be a fairly simple extension candidate if someone was looking to 
 get involved in the codebase as most of components are ready to go.  From here, it is very perceivable that a mobile app could be developed that utilizes this model. 
 With a mobile app almost anyone could record their chess games without the need for a specialized camera setup.  T
-he app could also integrate with a chess engine like Stockfish \cite{} or AlphaZero to provide analysis later or even suggest moves.  
+he app could also integrate with a chess engine like Stockfish or AlphaZero to provide analysis later or even suggest moves.  
 One consideration would be performance here as mobiles are more constrained by hardware than laptops and computers due to their size.  
-It would be an interesting task to take advantage of lots of moderns phones deep learning hardware acceleration like Google's Tensor chip \cite{}, 
-Apple's neural engine \cite{} and Qualcomm's AI Engine \cite{} and measure the performance.
+It would be an interesting task to take advantage of lots of moderns phones deep learning hardware acceleration like Google's Tensor chip, 
+Apple's neural engine or Qualcomm's AI Engine, and measure the performance.
 
 If this solution is to enable autonomous robots in the game of chess then localising pieces in 3 dimensional space is a must have requirement.
 For this, it's worth taking a step back and reconsidering the unanimously made decision by which chessboard state recognition is done.  Instead of splitting 
 the board up into squares and using simple image classification it would be more useful for robotic systems to have a 3D representation of the space.
 Future work could begin in 2D but instead perform instance segmentation across the whole input image, this may be able to provide enough information for a 
 control system to use for manipulation planning.  However, a more robust solution might instead want to perform 3D reconstruction from the input image.  
-Then object classification could be made on a point cloud.  Point clouds are commonly used within robotic grasping solutions \cite{} and so this would be the ideal 
+Then object classification could be made on a point cloud.  Point clouds are commonly used within robotic grasping solutions \cite{bicchi2000robotic} and so this would be the ideal 
 space representation to work in.

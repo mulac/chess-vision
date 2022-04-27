@@ -7,59 +7,63 @@ Classifying individual square images is a unanimous decision taken by previous a
 as it reduces the problem to a simple classification problem of only piece type, and can take advantage of the thoroughly researched area 
 of chessboard detection.
 
+Where the presented approach diverges from most of the previous works is that no assumptions about the board will be made. 
+The approach is simple, as after each square has been classified the work is done, no further processing or analysis needs to be performed.
+However, in order to achieve the performance necessary to be useful in a robotic or analytical solution, careful attention will need to 
+paid to the dataset construction, training process and architectural decisions.
+
 \section{Data Collection}
 \label{data collection}
 At the heart of any machine learning project is the data.  
-It is as important, often more important, than the code and presents many interesting
-challenges.  **Why is this?**
+It is as important, often more important, than the code and presents many interesting challenges, especially at large scale.
 Discussed in the following sections are some of the challenges and decisions that were considered.
 
 \subsection{Sensors}
-The eminent challenge is acquiring data in the first place and is highly context dependant,
-
-For vision there are a range of sensors we can use to gather data from the real world.
+The eminent challenge of acquiring data in the first place is highly context dependant,
+for vision there are a range of sensors we can use to gather data from the real world.
 Sensor choice is an important choice for any robotics application because there are 
 important tradeoffs, as with any engineering challenge, which must be considered.
 
-**Outline some of the tradeoffs between spatial sensors**
-
 One important distinction to make is the difference between training and inference.
 Requirements at the time of training my differ significantly to the requirements at 
-inference.  Processing power, energy supply and realtime operation are some
-of the constraints that will have to be met when considering different sensors.
-
-Talk about single camera. 
+inference.  For example while I have access to a depth camera for the training duration 
+of this project, if someone else would like to use my solution it is more unlikely they 
+will as well have a depth camera.
+Using only one camera was also an important decision to keep the project as cost efficient and 
+accessible to others.
 
 The sensor used throughout this project is the RealSense SR305 which is a RGB-D camera
 using structured and coded light to determine depth, it functions best indoors or in a 
 controlled lighting situation.  For the reasons outlined above the RGB camera stream is 
-mainly relied upon but there will be some discussion and comparision of piece detection 
-with the depth sensor.  
+mainly relied upon but the depth capability may be useful for labelling or comparing piece detection 
+against the system utilizing RGB only.  
 
 In order to interact with the camera an abstract \verb|BaseCamera| class was defined that 
-exposes the interface through which any camera can be controlled \cite{}.  It includes three 
-actual implementations \verb|RealsenseCamera|, \verb|Camera|.  The Realsense camera allows 
-depth cameras from Intel to be used and the Camera class can work with almost any RGB camera.
+exposes the interface through which any camera can be controlled.  It includes multiple 
+actual implementations including \verb|RealsenseCamera|, \verb|Camera|.  The Realsense camera allows 
+depth cameras from Intel to be used and the Camera class can work with almost any RGB camera using opencv.
 The Camera class also let's you use a video file as the source.  This is especially useful for 
 debugging and testing as a real camera and chessboard setup is not need.
 
 \subsection{Auto-Labelling}
-Talk about using a simulator.
-
 A closely related challenge of acquiring the data is that of labelling it too. 
 Following from the \nameref{research}, multiple past authors have stated the availability of 
 datasets for chess piece recognition is sparse \cite{Ding2016ChessVisionC, heatmap} with some emphasizing
 dataset collection took the large majority of time \cite{chessvgg}.
 It is also widely known that neural networks scale with the number of examples.
-However this poses the question: how do we get access to a lot of labelled data 
+And so this poses the question: how do we get access to a lot of labelled data 
 for chess?
 
-Unlike techniques in \cite{}  **Some examples of other auto labelling techniques**
-the approach taken in this report is to maximize speed of collection and flexibility.
+One method is to collect a huge array of chess piece images and manually label each one, either independently 
+like some previous solutions \cite{Ding2016ChessVisionC}, or with the use of labelling teams.
+Another more scalable solution employe the use of compute to generate images in simulation which enables you to 
+get the labels for free.  The disadvantage of this approach is that it is quite difficult to collect a diverse enough 
+dataset from simulation alone as the real world is surprisingly chaotic.
 
-Portable Game Notation (PGN) is a common format for recording chess games as a 
+In this report a new method is proposed that gets the best of both worlds and it centers around 
+Portable Game Notation (PGN). PGN is a common format for recording chess games as a 
 series of moves.  All the PGN files used in this 
-project were obtained from PGN Mentor, which has over one million games.  Utilising this
+project were obtained from PGN Mentor, which has over one million games.  Utilizing this
 data not only has the benefit of an abundance of chess games, but also that the 
 recorded games are real and contain positions more likely to appear in game play. 
 
@@ -87,61 +91,46 @@ There are many proposed solutions for this problem, from managed services like N
 solution called Git Large File Storage (Git LFS), which uses the exact same methodology as it does with code, except it will store large files in an external 
 remote.  In your git repo, only then are references (made from a hash of the data) stored to the location of those files, instead of the files themselves.  
 This means if you change any of your data, a new copy 
-of that data will be stored and it's reference updated.  To maintain git's methodology of versioning, any change of your data will mean a new copy 
-will be stored, rapidly increasing storage costs with changes.  Neptune instead is a more holistic machine learning platform that provides a whole bunch of 
-features other than just dataset versioning.  As with other managed services these managed solutions are prone to lock-in and require you modifying your code 
-with a bunch of API calls to get them running.
-In the end it was found that a custom solution utilising some cloud based object storage proved most useful, with the least amount of effort and cost.  
-Perhaps the wide variety of solutions all with different approaches is evidence of this not yet being
-a solved problem.  To demonstrate the cost difference, Git LFS per GB cost is \$0.1 a month which is 4 times more expensive
-than amazons most expensive rate of \$0.023 per GB.  With optimisations you can get the amazon S3 bucket price down to \$0.0125 making Git LFS 8 times
+of that data will be stored and it's reference updated.  To maintain git's methodology of versioning, any change of data will mean a new copy 
+will be stored, rapidly increasing storage costs with changes.  In contrast, Neptune is a more holistic machine learning platform that provides a full suite of 
+features other than dataset versioning alone.  As with other managed services, these managed solutions are prone to lock-in and requires modifying your code 
+with a scattering of API calls to get them running.
+
+In the end, it was found that a custom solution utilizing cloud based object storage proved most useful, with the least amount of time and cost.  
+Perhaps the wide variety of solutions all with different approaches is evidence, of this not yet being
+a solved problem.  To demonstrate the cost difference, Git LFS per GB cost is \$0.1 a month, which is 4 times more expensive
+than Amazon's most expensive rate of \$0.023 per GB.  With optimizations you can get the Amazon S3 bucket price down to \$0.0125, making Git LFS 8 times
 more expensive.  These numbers may look small but they add up with time and scale, especially when versioning many changes where copies and diffs need
 to also be stored.
 
-The solution used in this projects centers around 3 elements: The \textit{Game}, a \textit{Labeller} and the \textit{Storage} facade.  
+The solution used in this project centers around 3 elements: The \textit{Game}, a \textit{Labeller} and the \textit{Storage} facade.  
 
 The storage 
 facade's purpose is to abstract file storage so that it could work with any backend and provide a simple to use interface for fetching files using a file system.
 \verb|file = open(Storage("img.png"))| 
 for example will give you the file descriptor for img.png cached from the filesystem if it exists, pulling it from an external store if not.  
-This was very useful for training across different VMs in the cloud and could work with any storage implementation.
-The only backend implemented was Amazon S3 bucket store, and used less than 50 lines of code.
+This proved very useful for training across different VMs in the cloud,S and could work with any storage implementation.
+The only backend implemented was Amazon S3 bucket store, which could be written less than 50 lines of code.
 
-The Game class \ref{} is how chess data specifically is managed.  Each instance of Game represents one 'unit' of data where each unit is a recorded chess game.
-You can record a game by using the recorder application described in the autolabelling section and is simply a sequence of images with
+The Game class is how chess data, specifically, is managed.  Each instance of Game represents one 'unit' of data, where each unit is a recorded chess game.
+A game is recorded using the recorder application described in the autolabelling section, and is simply a sequence of images with
 an associating PGN description. \textit{LabelOptions} can be set on a game which will be used by a Labeller to describe exactly how the autolabeller 
 should function.  For example, \verb|Game("Kasparov", LabelOptions(margin=50))| will create a game that should be labelled
-with a margin of 50px surrounding each square.  As will be discussed later it is this game object that will version the data used to train a model while dramatically
-decreasing the storage cost.  This is opposed to storing a new entire labelled dataset everytime a slight change is made, i.e chaning the margin of each square.
+with a margin of 50px surrounding each square.  As will be discussed later, it is this game object that will version the data used to train a model while dramatically
+decreasing the storage cost.  This is opposed to storing a new entire labelled dataset everytime a slight change is made, i.e changing the margin of each square.
 
 As different model architectures were explored, different labelled data was need entirely.  For example, one model may only be 
-predicting whether a piece is a black or white pieces whereas another may be prediting the type of piece.  To cater for this variance while keeping the rest of the 
-training pipeline unchanged the Labeller abstraction is used.  Each labeller has a function that can take in a Game and output a series of X, Y input, target pairs.
+predicting whether a piece is a black or white, whereas another may be prediting the type of piece.  To cater for this variance whilst keeping the rest of the 
+training pipeline unchanged, the Labeller abstraction is used.  Each labeller has a function that can take in a Game and output a series of \verb|(input, target)| pairs.
 These can then be saved to disk for the \textit{ChessFolder} pytorch dataset to handle. 
 This could even be extended to more complicated labels like bounding boxes or multiple input images.
 
-One important note in implementation is the use of python generators which dramatically reduce memory usage and speed up the auto-labelling pipeline by over 10 fold in 
+One important note in implementation is the use of python generators, which dramatically reduce memory usage and speed up the auto-labelling pipeline by over 10 fold in 
 places.
 
 \section{Model Training}
 
 \subsection{Experiment Tracking}
-Throughout this project, over 2000 models were trained, each slightly different, whether in architecture, hyperparameters or the in the data used.  
-This makes the processes which is commonly refered to as Experiment Tracking a very important one.
-It would be good to visualise all these experiemnts and be able to roll back to old models.  As with dataset versioning there are a plethora of 
-new managed services that promise they can do this for you.
-The appoach opted for during this project utilised an opensource solution called Guild.  The main reason for this choice was beacause of 
-it's unopinionated nature, requiring zero code changes.  GuildAI leverages the filesystem to save \textit{runs} including the environment configuration
-at the time of training.  A run is made from the command line (i.e. \verb|guild run train --remote ec2 EPOCHS=10 LR=0.001|) and
-represents one iteration of a model and can even be executed remotely via ssh to give easy access to 
-GPU machines.  It can also perform hyperparameter optimization using built in techniques like grid search, random search, gradient boosted regression trees 
-or even your own custom optimizer.  To enable the zero code change promise, guild fetches hyperparameters from a variety of places including globals set within 
-your training script, configuration files and commandline arguements.
-This method was greatly prefered to using a paid managed service or some other solution which requires a database to setup.  
-The previously mentioned dataset versioning method also greatly benefits from guilds use of the filesystem as within each run we can also store 
-the Games and Labeller that was used to train the model. 
-TesnorBoard integration also played a huge roll as it provided an easy to use, visual place to interpret and compare runs.  See \autoref{fig:hyperparameters}
-for examples.
 
 \begin{figure}[h]
     \centering
@@ -150,13 +139,31 @@ for examples.
     \label{fig:hyperparameters}
 \end{figure}
 
+\FloatBarrier
+Throughout this project, over 2000 models were trained, each slightly different whether in architecture, hyperparameters, or the in the data used.  
+This makes the processes which is commonly refered to as Experiment Tracking a very important one.
+Ideally it would be possible to visualise all these experiments and be able to roll back to old models.  As with dataset versioning, there are a plethora of 
+new managed services all position themselves to solve this problem.
+The appoach opted for during this project utilised an opensource solution called Guild.  The main reason for this choice was beacause of 
+its unopinionated nature, requiring zero code changes.  Guild leverages the filesystem to save \textit{runs}, including the environment configuration
+at the time of training.  A run is made from the command line (i.e. \verb|guild run train --remote ec2 EPOCHS=10 LR=0.001|) and
+represents one iteration of a model.  A run can even be executed remotely via ssh to give easy access to 
+GPU machines.  It can also perform hyperparameter optimization using built in techniques like grid search, random search, gradient boosted regression trees 
+or a custom defined optimizer.  To enable the zero code change promise, guild fetches hyperparameters from a variety of places including globals set within 
+your training script, configuration files and commandline arguments.
+This method is greatly favoired over a paid managed service or some other solution which requires a database to setup.  
+The previously mentioned dataset versioning method also greatly benefits from Guild's use of the filesystem as within each run we can also store 
+the Games and Labeller that was used to train the model. 
+TensorBoard integration also played a huge role, as it provided an easy to use, visual place to interpret and compare runs.  See \autoref{fig:hyperparameters}
+for examples.
+
+
 \subsection{Board Segmentation}
 Aruco markers are chosen for board corner point detection as a very simple method that works reliably even with a board full of pieces.
-With the corner points of the board the perspective transformation is calculated using
+With the corner points of the board, the perspective transformation is calculated using
 Gaussian elimination \cite{gauss}, as demonstrated in \autoref{fig:corner}.
-Although Aruco markers require customizing the environment they are very fast at 
-inference and allow the focus to remain on piece recognition, from which
-\nameref{research} showed is less studied and reliable.  In a more holistic solution the 
+Although Aruco markers require customizing the environment, they are very fast at 
+inference and allow the focus to remain on piece recognition.  In a more holistic solution, the 
 iterative heatmap approach proposed in \cite{heatmap} would be recommended.
 
 \begin{figure}[h]
@@ -184,7 +191,7 @@ iterative heatmap approach proposed in \cite{heatmap} would be recommended.
     
 
 \subsection{Piece Recognition}
-Now that the board has been segmented including all of it's squares, it is time for the fun stuff.  That is
+Now that the board has been segmented including all of it's squares, it is time to classify them.  That is,
 to determine what piece, if any, occupy each square.  To start, a good baseline is found.  
 A good baseline is a simple model to understand and easy to get decent results with.
 For classification, the pathological baseline would be a uniformly random model, which could easily be extended to use a categorical distribution.
@@ -194,34 +201,33 @@ $$ f(x \;|\; \bm{p}) = \prod\limits_{i=0}^{k}{p_i^{[x=i]}} $$
 
 where $\bm{p} = (p_0, ..., p_k)$ and $p_i$ represents the probability of an image of category $k$ being sampled from the training set.
 Since $\sum_{k}{p_k} = 1$ you can generate the probabilities by normalising the count of each category in the training set.  Algorithmically 
-sampling from the distribution can be done using inversion sampling which requires calculating the cumulative distribution function.
+sampling from the distribution can be done using inversion sampling, which requires calculating the cumulative distribution function.
 
-Starting with a known baseline is common practice in exploratory machine learning \cite{mukhoti2018importance} so that transitions are always made from a known and working state.  
-It becomes very easy to see if an experiment is not working by comparing it to your baseline.
+Starting with a known baseline is common practice in exploratory machine learning \cite{mukhoti2018importance}, so that transitions are always made from a known and working state.  
+It becomes very easy to see if an experiment is not working by comparing it to the baseline.
 
 Keeping to this strategy, the Multilayer Perception (MLP) or fully connected network \cite{murtagh1991multilayer} was the first neural network to be explored.
-We explore nerual network approaches as they have proved most effective for image classification, they are also simple to deal
-with in the respect that no hand-crafted feature extraction is needed and end-to-end solutions are much more viable.
+We explore nerual network approaches as they have proved most effective for image classification. 
 By starting with the MLP, all complexity from the network is stripped away so the more extraneous elements such as the training loop and 
 evaluation metrics can be built and tested.
+Once the full training and evaluation structure is functional, new features can be incrementally added and architectures explored.
 
-Evaluation metrics were very imporatnt in developing as loss is not that human interpretable.  Firstly accuracy, which is much more interpreatable, 
-is calculated to be the ratio of correct classifications to total number of sample images.  This could then be extended to top-n accuracy which 
+Evaluation metrics were very imporatnt during development, as loss is not that human interpretable.  Accuracy, which is much more interpretable, 
+is calculated to be the ratio of correct classifications to total number of sample images.  This could then be extended to top-n accuracy, which 
 takes correct classifications (true positives) to be the count of classifications where the actual class was within the top $n$ confidence scores 
-of the models output.  This is useful for problems where there are a large number of classes or when at inference there is the intent to do a search
-through the output probability distribution which is more relavent to this project as there is at most only 13 classes and a search through the probability 
+of the models output.  This is useful for problems where there are a large number of classes, or when at inference there is the intent to do a search
+through the output probability distribution.  The later is more relavent to this project as there is at most only 13 classes, and a search through the probability 
 space at the inference stage is entirely possible.
 
-
-As the number of evaluation metrics grew it became prudent to encapsulate them into an \textit{Interpreter} class so as to not clog up our 
-training loop which itself is within a \textit{Trainer} class to encapsulate it's implementation away from the training script which will 
+As the number of evaluation metrics grew, it became prudent to encapsulate them into an \textit{Interpreter} class so as to not clog up our 
+training loop.  The training loop is iteself within a \textit{Trainer} class to encapsulate it's implementation away from the training script which will 
 see frequent changes during experimentation.  Some of the first additional methods added to the Interpreter is \verb|plot_top_losses| and
-\verb|plot_confusion_matrix| to make it significantly easier to find which classes the model was confusing and which specific images it 
-found difficult to classify giving hugely helpful insight into the dataset itself and even finding bugs in the autolabelling pipeline.
-
-Before training, a fixed random seed was important so that it was possible to tell whether or not any particular change was positive since all models started
-from the same initalisation.  The initalisation of the final layer was hard coded to be an equal distribution, sensible initalisations of final layer can have 
-a noticable effect on training convergence \cite{kumar2017weight}.
+\verb|plot_confusion_matrix|.  These made it significantly easier to find which classes the model was confusing, and which specific images it 
+found difficult to classify.  Resulting in hugely helpful insight into the dataset itself, and even finding bugs in the autolabelling pipeline.
+Another method to interprer neural networks that was also implemented in the Interpreter was filter visualisation.  This is the process 
+of finding the input that optimally excites a particular filter.  For example if you consider the first neuron of the final fully connectied 
+layer of a classifer to be your filter and visualise it, you should see what the neural network considers to be the optimal input for that 
+first class.  This works by performing stochastic gradient decent to optimise the actual pixel values of the input to maximally excite that filter.
 
 \begin{figure}[h]
     \centering
@@ -240,33 +246,34 @@ a noticable effect on training convergence \cite{kumar2017weight}.
 \label{fig:plots}
 \end{figure}
 
-Once the full training and evaluation structure is functional, new features can be incrementally added and architectures explored.
- - human labelled dataset?
+Before training, a fixed random seed was important so that it was possible to tell whether or not any particular change was positive, since all models started
+from the same initalisation.  The initalisation of the final layer was hard coded to be an equal distribution, since sensible initalisations of final layer can have 
+a noticable effect on training convergence \cite{kumar2017weight}.
 
-Another strategy was to purposely overfit models during training.  It was easy to tell when a model was overfitting by splitting the data into
-training and validation sets and viewing the relative losses in TensorBoard as can be seen in \autoref{}.  The reason for doing this
-was that if the model was able to overfit (i.e. achieve $\sim100\%$ accuracy on the training set) then it was able and big enough to learn distinguishing features or
+During training I used the strategy of purposely overfitting models.  It is easy to tell when a model was overfit by splitting the data into
+training and validation sets, and viewing the relative losses in TensorBoard as can be seen in \autoref{fig:overfit}.  The reason for doing this
+is that if the model was able to overfit (i.e. achieve $\sim100\%$ accuracy on the training set), then it was able and had enough parameters to learn distinguishing features, or
 as is sometimes put: the model has sufficient entropic capacity.  It is then a lot easier to make it generalise well, for example by reducing the number of parameters, 
 than to go from an underfitting model to a generalised one as you don't necessary know where the problem lies for not fitting to the data.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.4\textwidth]{overfit.png}
-    \caption{Demonstration of overfitting.  Loss against epoch. The validation loss in orange is seen diverging above and the training loss in green is seen tending
-    to zero below2.
+    \caption{A demonstration of overfitting.  The graph plots loss against epoch. The validation loss (in orange) is seen above, diverging from the training loss (in green) which is seen tending
+    to zero.
     A model should be saved at roughly epoch 125.}
     \label{fig:overfit}
 \end{figure}
 
-There are many ways to fight overfitting as typically referered to as regularization techniques, perhaps the easiest of which is early stopping \cite{yao2007early}.
-The way this was implemented in our Trainer was to save the model after the first epoch and consquently after every other epoch for which the validation 
+There are many ways to fight overfitting which are typically referered to as regularization techniques, perhaps the easiest of which is early stopping \cite{yao2007early}.
+The way this was implemented in the Trainer was to save the model after the first epoch, and consquently after every other epoch for which the validation 
 loss was less than the previously saved model.  It is possible to then stop training entirely if after a set number of iterations no improvement is seen 
 in the validation loss.
 
-As mentioned in \nameref{research} convolution operations, and in particular differentiable convolutional operations have had monumental 
-impact on the field of computer vision and so this was the next experiment. Quite quickly, especially with a limited dataset, overfitting 
-became a major problem to overcome and so many experiments were positioned to solve this problem.  Below are an overview of some of those 
-experiments including some final optimisations to squeeze as much performance out of our model as possible.
+As mentioned in \nameref{research}, CNNs have had monumental 
+impact on the field of computer vision, and so this was the next experiment.  Overfitting, especially with a limited dataset,
+became a major problem to overcome, and so many experiments were constructed to solve this.  Below is an overview of some of those 
+experiments, including some final optimisations to squeeze as much performance out of the model as possible.
 
 
 \subsubsection{Architecture}
@@ -278,7 +285,7 @@ In the end it was required to properly understand these implementations so that 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.55\textwidth]{convnext.png}
-    \caption{A comparision of block designs for Swin Transformer, ResNet and ConvNeXt}
+    \caption{A comparision of block designs for Swin Transformer, ResNet and ConvNeXt (obtained from \cite{liu2022convnet})}
     \label{fig:convnext}
 \end{figure}
 
@@ -297,26 +304,27 @@ increases the learning rate from the inital rate before dropping it right down t
 
 \subsubsection{Transfer Learning}
 There appears to be a trend occuring in the deep learning space.  Some organisation spends millions training an impossibly large nerual network
-and others more and more are using these models, often fine-tuning for their own use cases.  \cite{} uses these large models as fixed feature extractors.
+and others just use these pretrained networks, often fine-tuning, for their own use case.
+This approach makes sense as it is impractical to retrain huge neural networks that take weeks, millions of dollars and wasteful amounts of energy
+to train \cite{silver2018general}.
 
-This appraoch makes sense as it is inpractical to retrain huge nerual networks that take weeks, millions of dollars and wasteful amounts of energy
-to train \cite{}.
-
-In the case of CNNs we can see the features that kernals in the early layers learn \cite{} are often very simple shapes and will be common for all
-computer vision tasks.  This will explored this further in the results section as we visualise kernals from both random initalised models and 
-pretrained models.
+In the case of CNNs we can see the features that kernels in the early layers learn are often very simple shapes and will be common for most
+computer vision tasks \cite{simonyan2013deep}.  
+Because of this it is common practice to freeze a number of the early layers when fine tuning, which will save computation. 
+However, in this usecase, while using a pretrained model was found to help training immensley, it was more effective when the early 
+layers were also retrained.
 
 \subsubsection{Ensemble and Multitask Learning}
-Another regularization technique is known as ensemble learning and is common practice in deep learning to reduce variance inherent to stochastic training 
+Another regularization technique is known as ensemble learning, and is common practice in deep learning to reduce variance inherent to stochastic training 
 with random initalisation \cite{deeplearningbook}.  The technique involves training several models (with different random seeds or configurations) and 
 combining their outputs. Using an ensemble almost always beats training a single model as two models are unlikely to make exactly the same errors on an unseen dataset.
 This projects extends on this idea to also combine models with different class predictions.
 
-In the two previous deep learning solutions for chess piece recognition, neither researched into the effect of using differnt class groups, 
-despite chosing differently.
+In the two previous deep learning solutions for chess piece recognition, neither researched into the effect of using different class groups, 
+despite choosing differently.
 In this work, 5 sets of classes were considered as shown in \autoref{table:labellers}.  Models trained on each set of classes were compared
-with accross each metric and some were selected to be used together.  For example, combining the predicitions of 3 model separately trained with
-the 'piece', 'color' and 'occupied' labellers would yeild the same class of predicitions as in 'all'.
+with across each metric and some were selected to be used together.  For example, combining the predicitions of 3 models separately trained with
+the 'piece', 'color' and 'occupied' labellers would yield the same class of predicitions as in 'all'.
 \begin{center}
 \begin{figure}
 \begin{tabular}{|r|c|l|}
@@ -341,7 +349,7 @@ approach called mutlitask learning which separates heads for different classes i
 Part of the benefit of separating models for different classes (which can be 
 refered to as tasks in this context) is that they each get their own parameters they can optimise.  By using 'all', each task has to fight for optimisation.
 Some tasks may train well together and benefit from sharing parameters, some may not.  Multitask learning is the study of finding this balance of which 
-parameters should be shared amoung each task.
+parameters should be shared among each task.
 
 It is also worth mentioning loss functions here as they will need some attention if multitask learning is to be used.  Typically a separate loss function will be 
 used for each task and then these are simply summed together before performing backpropogation.  One useful technique is to be able to weight these losses towards 
@@ -401,7 +409,7 @@ This tree structure gives flexibility for many variations of the same game to be
 \end{figure}
 
 \subsection{Leveraging a Chess Engine}
-As leveraged by others before \cite{} a chess engine and other statistical methods \cite{} can be used to increase the reliability of board state 
+As leveraged by others before a chess engine and other statistical methods can be used to increase the reliability of board state 
 prediction when the normal rules of chess can be assumed to be abided by.  The proposed piece classifier in \ref{the model} makes no such assumptions, which
 lends it self to a wider array of circumstances even when the normal rules of chess are not being used.
 When a game is to be recorded to a PGN file however there are some rules you must follow so that a game can be encoded.  Typically chess engines can handle a few
@@ -415,20 +423,20 @@ representation of board as the model sees it in the last fetched frame.  The Boa
 any time step represents a legal move from the current BoardState.  When the BoardState reaches a terminal state, or otherwise receives a cancel signal in cases of a 
 draw or resignation, the game tree is parsed and the PGN saved to disk.
 
-Since our classifier is almost guarenteed to never achieve 100\% accuracy on new unseen data, especially as more chess sets of different shapes and sizes are used, it 
-is likely to have varying uncertaintly.  Often, the more uncertain predictions of a particular square may result in flickering, that is for example it deduces the piece to 
+Since our classifier is almost guaranteed to never achieve 100\% accuracy on new unseen data, especially as more chess sets of different shapes and sizes are used, it 
+is likely to have varying uncertainty.  Often, the more uncertain predictions of a particular square may result in flickering, that is for example it deduces the piece to 
 be white in one frame yet black in the next.  This occurs when the resulting probability distribution for a given input looks something like 
 $p = [0.38, 0.39, 0.09, 0.04, 0.1]$ as it is not unlikely with the next frame we see it change to $p = [0.39, 0.38, 0.09, 0.04, 0.1]$ resulting in a different classification.
 To cater for this uncertainty like this, the VisionState also has a concept of memory with length $N$, where memory is in an average of states 
 over the last $N$ frames.
 
 \subsection{Motion Detection}
-One factor that was found to still sometimes break this system was motion.  Moving pieces across squares and hands flailing over the board confused the
+One factor that was found to still sometimes break this system, was motion.  Moving pieces across squares and hands flailing over the board confused the
 model.  Even with the separation of the BoardState and memory to remove anomalous predictions - especially when motion persisted for longer periods.  
 
-In a lot of these situations the actual board state in undefined.  That is because a piece has been lifted and so most now be moved but not yet let go 
-and so it's definition may be undetermined.  Because of this is it not unreasonable to halt inference all together.  User input to indicate when a move
-has been completed is a common strategy \cite{}, but goes against the purpose of building such a system all together - autonomy.  Instead a motion detector is 
+In a lot of these situations the actual board state in undefined.  That is because a piece has been lifted and so most now be moved by the rules of the game.
+When it is not let go its position is undetermined.  Because of this is it not unreasonable to halt inference all together.  User input to indicate when a move
+has been completed is a common strategy \cite{mannualcorners}, but goes against the purpose of building such a system all together - autonomy.  Instead a motion detector is 
 employed.  Even the naive motion detector of using a threshold over the absolute difference between each consecutive frame was found to be sufficient for removing these
 disturbances.  Some other methods such as SIFT and SURF were also explored but found to be more computationally expensive that necessary.
 
@@ -436,4 +444,4 @@ disturbances.  Some other methods such as SIFT and SURF were also explored but f
 Another feature added to the Inference Application was the ability to save snapshots.  During inference it was not uncommon to see the vision state make mistakes,
 and while the above features usually enabled us to generate an accurate PGN file, this is still useful data.
 By giving the user the ability to save snapshots when they see an error it is now possible to feed this data back into fine-tuning the model.  This is the process of 
-continual learning and is an active area of research \cite{}.
+continual learning and is an active area of research \cite{delange2021continual}.

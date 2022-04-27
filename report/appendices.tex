@@ -5,8 +5,6 @@
 %
 \chapter{Self-appraisal}
 
-<This appendix should contain everything covered by the 'self-appraisal' criterion in the mark scheme. Although there is no length limit for this section, 2---4 pages will normally be sufficient. The format of this section is not prescribed, but you may like to organise your discussion into the following sections and subsections.>
-
 \section{Critical self-evaluation}
 \subsection{Positives}
 By far the strongest aspect of my report is the actual solution I produced.  It performs better than any other openly available solution.  
@@ -24,16 +22,26 @@ no bias when performing these tests.  Yet I was also clear about where my soluti
 to mitigate those.
 
 \subsection{Negatives}
-I believe the report could be written better.  Despite some effective use of figures and a decent structure, the language is not up to par with 
-a lot of the published works I have read.  There were a lot of things I felt I wasn't able to convey clearly or at all, however, this is a skill I have 
-only just begun to stretch and I have found it enjoyable to exercise.
+I believe the report could be written better - it is definitely the weakest aspect. 
+Despite some effective use of figures and a decent structure, the language is not up to par with a lot of the published works I have read.  
+There were a lot of things I felt I wasn't able to convey clearly and at time the language was not consistent, 
+however, this is a skill I am glad to have started to learn.
+The results section while detailed a comparison against alternative solutions only provided an end-to-end analysis.  
+Many more experiments were actually performed during the development of the solution, to measure different aspects and to make data driven design decisions, but 
+these were not presented or conveyed to the reader.
+The report also didn't really demonstrate my understanding of the underlying architectures and their differences.  However as this is not what I contributed, it 
+perhaps isn't necessary.
 
 \section{Personal reflection and lessons learned}
-Firstly found it to be a really fun project and enjoyed writing all the components that make a machine learning solution.  Seeing the end result was even better as 
-I'm genuienly surprised at how well it worked, beating all the open source solutions I could find out there.  Learnt a lot about statistics which I never covered at A-Level.
+Firstly, this project has been really fun and I have learnt a lot about what it takes to produce even a simple machine learning solution.  
+Seeing the end result was even better and I'm genuinely surprised at how well it worked.
 
-Surpised at how effective transfer learning is and the significance of it's place in the future.
-The importance of experiment tracking for research.
+One particular area I Learnt a lot about statistics which I never covered at A-Level.
+
+I was also surprised at how effective transfer learning is and has changed my view of its significance in the future.
+I trained over 2000 models and was very thankful to my previous self for finding a decent solution at experiment tracking.  This and the data management aspects 
+of the project actually peaked my interest the most and has made me very curious as to how these sorts of problems should be solved at massive scale.
+
 
 \section{Legal, social, ethical and professional issues}
 
@@ -84,6 +92,23 @@ Any external PGN files that were not automatically generated from my solution ca
 %
 
 \chapter{Demos}
+\label{demos}
 
+\begin{figure}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        Game & Total Moves & PGN 100\% Correct & Video  \\
+        \hline
+        Carlsen/Wesley & 57 & \checkmark & \verb|https://youtu.be/j59y4qAOjcU| \\
+        Carlsen/Rapport & 36 & \checkmark & \verb|https://youtu.be/N_vxSqjUWPs|  \\
+        Carlsen/Nakamura & 71 & - & \verb|https://youtu.be/3Ji34t7AqWE| \\
+        Carlsen/Aranian & 55 & \checkmark & \verb|https://youtu.be/EHoWjNZyeTE|  \\
+        Fool's Mate & 4 & \checkmark & \verb|https://youtu.be/Gr4cr5Uptpo| \\
+        \hline
+    \end{tabular}
+    \caption{Games played with the inference application}
+    \label{fig:games}
+    \end{figure}
 
 \end{appendices}
